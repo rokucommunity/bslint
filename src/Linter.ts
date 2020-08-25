@@ -2,19 +2,19 @@ import { BsLintConfig } from './index';
 import { ProgramBuilder, BsConfig } from 'brighterscript';
 
 export default class Linter {
-	builder: ProgramBuilder;
+    builder: ProgramBuilder;
 
-	constructor() {
-		this.builder = new ProgramBuilder();
-	}
+    constructor() {
+        this.builder = new ProgramBuilder();
+    }
 
-	async run(config: BsLintConfig) {
-		const options: BsConfig = {
-			...config,
-			createPackage: false,
-			copyToStaging: false
-		};
-		await this.builder.run(options);
-		return this.builder.getDiagnostics();
-	}
+    async run(config: BsLintConfig) {
+        const options: BsConfig = {
+            ...config,
+            createPackage: false,
+            copyToStaging: false
+        };
+        await this.builder.run(options);
+        return this.builder.getDiagnostics();
+    }
 }

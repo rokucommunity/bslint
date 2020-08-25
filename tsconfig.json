@@ -14,10 +14,18 @@
     "downlevelIteration": true,
     "noUnusedLocals": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["es2017", "es2019.array"]
+    "lib": [
+      "es2017",
+      "es2019.array"
+    ]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules/**/*", "src/**/*.spec.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules/**/*",
+    "src/**/*.spec.ts"
+  ],
   "ts-node": {
     "transpileOnly": true
   }
