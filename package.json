@@ -15,6 +15,12 @@
     "watch": "tsc --watch",
     "publish-coverage": "nyc report --reporter=text-lcov | coveralls"
   },
+  "files": [
+    "dist/**/*",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
+  ],
   "keywords": [
     "roku",
     "brightscript"
