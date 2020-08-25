@@ -41,10 +41,10 @@ interface ReturnInfo {
 }
 
 enum ValidationKind {
-    Assignment,
-    UninitialisedVar,
-    UninitialisedFn,
-    Unsafe
+    Assignment = 'Assignment',
+    UninitializedVar = 'UninitializedVar',
+    UninitialisedFn = 'UninitialisedFn',
+    Unsafe = 'Unsafe'
 }
 
 interface ValidationInfo {
@@ -55,15 +55,15 @@ interface ValidationInfo {
 }
 
 enum LintError {
-    UNINITIALIZED_VAR = 2001,
-    UNSAFE_ITERATOR_VAR = 2002,
-    UNSAFE_INITIALIZATION = 2003,
-    UNREACHEABLE_CODE = 2004,
-    RETURN_VALUE_UNEXPECTED = 2005,
-    RETURN_VALUE_EXPECTED = 2006,
-    UNSAFE_RETURN_VALUE = 2007,
-    RETURN_VALUE_REQUIRED = 2008,
-    RETURN_VALUE_MISSING = 2009
+    UninitializedVar = 2001,
+    UnsafeIteratorVar = 2002,
+    UnsafeInitialization = 2003,
+    UnreachableCode = 2004,
+    ReturnValueUnexpected = 2005,
+    ReturnValueExpected = 2006,
+    UnsafeReturnValue = 2007,
+    ReturnValueRequired = 2008,
+    ReturnValueMissing = 2009
 }
 
 let context: PluginContext = { severity: getDefaultSeverity() };
@@ -324,7 +324,7 @@ function createVarLinter(
             // TODO rule for case sensitive vars?
             if (!local) {
                 deferred.push({
-                    kind: expr.isCalled ? ValidationKind.UninitialisedFn : ValidationKind.UninitialisedVar,
+                    kind: expr.isCalled ? ValidationKind.UninitialisedFn : ValidationKind.UninitializedVar,
                     name: name,
                     range: expr.range
                 });
@@ -332,7 +332,7 @@ function createVarLinter(
                 if (local.isIterator) {
                     diagnostics.push({
                         severity: context.severity.unsafeIterators,
-                        code: LintError.UNSAFE_ITERATOR_VAR,
+                        code: LintError.UnsafeIteratorVar,
                         message: `Using iterator variable '${name}' outside loop`,
                         range: expr.range,
                         file: file
@@ -340,7 +340,7 @@ function createVarLinter(
                 } else {
                     diagnostics.push({
                         severity: context.severity.unsafePathLoop,
-                        code: LintError.UNSAFE_INITIALIZATION,
+                        code: LintError.UnsafeInitialization,
                         message: `Not all the code paths assign '${name}'`,
                         range: expr.range,
                         file: file
@@ -369,11 +369,11 @@ function deferredVarLinter(
         const key = name?.toLowerCase();
         const hasCallable = key ? !!callables[key] : false;
         switch (kind) {
-            case ValidationKind.UninitialisedVar:
+            case ValidationKind.UninitializedVar:
                 if (!hasCallable) {
                     diagnostics.push({
                         severity: DiagnosticSeverity.Error,
-                        code: LintError.UNINITIALIZED_VAR,
+                        code: LintError.UninitializedVar,
                         message: `Using uninitialised variable '${name}' when this file is included in scope '${scope.name}'`,
                         range: range,
                         file: file
@@ -385,7 +385,7 @@ function deferredVarLinter(
                 if (!hasCallable) {
                     diagnostics.push({
                         severity: DiagnosticSeverity.Error,
-                        code: LintError.UNINITIALIZED_VAR,
+                        code: LintError.UninitializedVar,
                         message: `Using uninitialised variable '${name}' when this file is included in scope '${scope.name}'`,
                         range: range,
                         file: file
@@ -429,7 +429,7 @@ function createReturnLinter(
             if (!isCommentStatement(curr.stat)) {
                 diagnostics.push({
                     severity: context.severity.unreachableCode,
-                    code: LintError.UNREACHEABLE_CODE,
+                    code: LintError.UnreachableCode,
                     message: 'Unreachable code',
                     range: curr.stat.range,
                     file: file,
@@ -453,7 +453,7 @@ function createReturnLinter(
         if (parent?.returns) {
             diagnostics.push({
                 severity: context.severity.unreachableCode,
-                code: LintError.UNREACHEABLE_CODE,
+                code: LintError.UnreachableCode,
                 message: 'Unreachable code',
                 range: block.stat.range,
                 file: file,
@@ -493,7 +493,7 @@ function createReturnLinter(
                 returnedValues.forEach((r) => {
                     diagnostics.push({
                         severity: consistentReturn,
-                        code: LintError.RETURN_VALUE_UNEXPECTED,
+                        code: LintError.ReturnValueUnexpected,
                         message: 'Function as void should not return a value',
                         range: r.stat?.range || fun.range,
                         file: file
@@ -512,7 +512,7 @@ function createReturnLinter(
         if ((requiresReturnValue || hasReturnedValue) && (missingBranches || returns.length === 0)) {
             diagnostics.push({
                 severity: consistentReturn,
-                code: LintError.UNSAFE_RETURN_VALUE,
+                code: LintError.UnsafeReturnValue,
                 message: 'Not all code paths return a value',
                 range: fun.range,
                 file: file
@@ -526,7 +526,7 @@ function createReturnLinter(
                 .forEach((r) => {
                     diagnostics.push({
                         severity: consistentReturn,
-                        code: LintError.RETURN_VALUE_MISSING,
+                        code: LintError.ReturnValueMissing,
                         message: 'This function should consistently return a value',
                         range: r.stat.range || fun.range,
                         file: file
