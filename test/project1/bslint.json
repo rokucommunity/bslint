@@ -1,0 +1,5 @@
+{
+    "rules": {
+        "unreachable-code": "info"
+    }
+}
