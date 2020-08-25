@@ -393,6 +393,12 @@ function deferredVarLinter(
                 }
                 // TODO else test case
                 break;
+            case ValidationKind.Assignment:
+                //TODO implement this
+                break;
+            case ValidationKind.Unsafe:
+                //TODO implement this
+                break;
         }
     });
 }
