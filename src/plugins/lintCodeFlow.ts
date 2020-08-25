@@ -503,7 +503,7 @@ function createReturnLinter(
 
         // Function doesn't consistently return,
         // or doesn't return at all but has an explicit type
-        if ((requiresReturnValue || hasReturnedValue) && (missingBranches || returns.length == 0)) {
+        if ((requiresReturnValue || hasReturnedValue) && (missingBranches || returns.length === 0)) {
             diagnostics.push({
                 severity: consistentReturn,
                 code: LintError.UNSAFE_RETURN_VALUE,
