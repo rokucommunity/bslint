@@ -7,13 +7,19 @@
     "bslint": "dist/cli.js"
   },
   "scripts": {
-    "format": "prettier --write src",
-    "test": "mocha -r ts-node/register --extension ts src/*.spec.ts src/**/*.spec.ts --timeout 10000",
-    "test:watch": "npm run test -- --watch --watch-files src/**/*.ts,test/**/*.brs",
     "build": "tsc",
-    "watch": "tsc --watch"
+    "format": "prettier --write src",
+    "lint": "prettier --check \"src/**/*.ts\"",
+    "test": "nyc mocha",
+    "test:nocover": "mocha",
+    "test:watch": "npm run test -- --watch --watch-files \"src/**/*.ts,test/**/*.brs\"",
+    "watch": "tsc --watch",
+    "publish-coverage": "nyc report --reporter=text-lcov | coveralls"
   },
-  "keywords": ["roku", "brightscript"],
+  "keywords": [
+    "roku",
+    "brightscript"
+  ],
   "author": "rokucommunity",
   "license": "ISC",
   "homepage": "https://github.com/rokucommunity/bslint",
@@ -28,9 +34,48 @@
     "@types/mock-fs": "^4.10.0",
     "@types/node": "^14.6.0",
     "chai": "^4.2.0",
+    "coveralls": "^3.1.0",
     "mocha": "^8.1.1",
+    "nyc": "^15.1.0",
     "prettier": "^2.0.5",
+    "source-map-support": "^0.5.19",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
+  },
+  "mocha": {
+    "spec": "src/**/*.spec.ts",
+    "require": [
+      "source-map-support/register",
+      "ts-node/register"
+    ],
+    "fullTrace": true,
+    "watchExtensions": [
+      "ts"
+    ],
+    "timeout": "10000"
+  },
+  "nyc": {
+    "include": [
+      "src/**/*.ts",
+      "!src/**/*.spec.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register",
+      "source-map-support/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true,
+    "check-coverage": false,
+    "lines": 100,
+    "statements": 100,
+    "functions": 100,
+    "branches": 100
   }
 }
