@@ -117,8 +117,7 @@ describe('lintCodeFlow', () => {
             ...project1,
             files: ['source/consistent-return.brs'],
             rules: {
-                'consistent-return': 'error',
-                'optional-return': 'error'
+                'consistent-return': 'error'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
