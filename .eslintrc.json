@@ -158,7 +158,7 @@
         "require-unicode-regexp": "off",
         "sort-imports": "off",
         "sort-keys": "off",
-        "spaced-comment": "off",
+        "spaced-comment": ["error", "always", { "exceptions": ["*"] }],
         "vars-on-top": "off",
         "wrap-regex": "off"
     },
