@@ -56,7 +56,8 @@ describe('lintCodeFlow', () => {
             `06:2003:Not all the code paths assign 'b'`,
             `16:2003:Not all the code paths assign 'b'`,
             `25:2003:Not all the code paths assign 'b'`,
-            `42:2003:Not all the code paths assign 'b'`
+            `42:2003:Not all the code paths assign 'b'`,
+            `51:2003:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
     });

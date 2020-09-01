@@ -1,24 +1,26 @@
 import { BrsFile, Scope, XmlFile, BsDiagnostic, TokenKind, ProgramBuilder, CallableContainerMap } from 'brighterscript';
-import { Statement, ReturnStatement, Expression, FunctionExpression, BlockOf } from 'brighterscript/dist/parser';
+import { Statement, ReturnStatement, Expression, FunctionExpression } from 'brighterscript/dist/parser';
 import {
     createStatementExpressionsVisitor,
+    DiagnosticSeverity,
+    DiagnosticTag,
     isAssignmentStatement,
+    isBlock,
+    isCommentStatement,
+    isForEachStatement,
+    isForStatement,
     isIfStatement,
     isReturnStatement,
-    isForStatement,
-    isForEachStatement,
-    isBlock,
     isVariableExpression,
-    walkStatements,
-    isCommentStatement,
+    isWhileStatement,
     Range,
-    DiagnosticSeverity,
-    DiagnosticTag
+    walkStatements
 } from 'brighterscript/dist/parser/ASTUtils';
 import { PluginContext, resolveContext, getDefaultSeverity } from '../util';
 
 interface StatementInfo {
     stat: Statement;
+    parent: Statement;
     depth: number;
     locals?: Map<string, VarInfo>;
     branches?: number;
@@ -109,8 +111,8 @@ export function validateFile(file: BrsFile) {
         const returnLinter = createReturnLinter(file, fun, blocks, diagnostics, deferred);
         const varLinter = createVarLinter(file, fun, blocks, diagnostics, deferred);
 
-        function statementVisitor(stat: Statement, depth: number) {
-            const curr = { stat: stat, depth: depth };
+        function statementVisitor(stat: Statement, parent: Statement, depth: number) {
+            const curr = { stat: stat, parent: parent, depth: depth };
             // block closing
             while (blocks.length > 1 && blocks[0].depth >= depth) {
                 const block = blocks.shift();
@@ -157,14 +159,7 @@ function branchesCount({ stat: s }: StatementInfo) {
 
 // `if` and `for/while` are considered as multi-branch
 function isBranchedBlock(block: StatementInfo) {
-    if (isIfStatement(block.stat)) {
-        return true;
-    }
-    return (
-        isBlock(block.stat) &&
-        context.severity.unsafePathLoop !== DiagnosticSeverity.Information &&
-        block.stat.of >= BlockOf.ForBody
-    );
+    return isIfStatement(block.stat) || isForStatement(block.parent) || isForEachStatement(block.parent) || isWhileStatement(block.parent);
 }
 
 /** VARIABLES LINTER **/

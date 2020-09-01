@@ -42,6 +42,15 @@ sub error4()
     print "b"; b 'error
 end sub
 
+sub error5()
+    a = Rnd(10)
+    while a > 0
+        b = a
+        a--
+    end while
+    print "b"; b 'error
+end sub
+
 sub ok1()
     a = Rnd(10)
     if a > 0
