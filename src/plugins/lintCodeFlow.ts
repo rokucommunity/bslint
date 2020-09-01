@@ -71,16 +71,9 @@ let context: PluginContext = { severity: getDefaultSeverity() };
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
 export function initPlugin(builder: ProgramBuilder) {
-    builder.on('program-created', (program) => {
-        context = resolveContext(program);
-        registerScope(program.getScopeByName('source'));
-        program.on('scope-created', registerScope);
-        program.on('file-validated', validateFile);
-    });
-}
-
-function registerScope(scope: Scope) {
-    scope.on('validate-start', validateScope);
+    builder.on('program-created', program => (context = resolveContext(program)));
+    builder.on('scope-validate-start', validateScope);
+    builder.on('file-validated', validateFile);
 }
 
 export function validateScope(scope: Scope, files: (BrsFile | XmlFile)[], callables: CallableContainerMap) {
