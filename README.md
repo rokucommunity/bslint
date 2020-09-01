@@ -1,7 +1,13 @@
 # bslint - BrighterScript Lint
 
-`bslint` is a [BrighterScript](https://github.com/rokucommunity/brighterscript) 
-plugin offring additional insights on your Roku BrightScript code.
+[brighterscript](https://github.com/rokucommunity/brighterscript) is a Roku
+BrightScript compiler featuring many diagnostics out of the box: syntax check,
+function calls validation, script imports verification...
+
+`bslint` is:
+
+- a CLI tool to lint your code without compiling your project,
+- a `brighterscript` plugin offering **additional insights** on your code.
 
 ## Installation
 
@@ -15,7 +21,7 @@ npm init -y
 npm install brighterscript @rokucommunity/bslint
 ```
 
-Add the plugin to your `bsconfig.json` file in the root of your project, 
+Add the plugin to your `bsconfig.json` file in the root of your project,
 or create a minimal file like that:
 
 ```json
@@ -29,7 +35,8 @@ or create a minimal file like that:
 The `bslint` command will run the BrighterScript compiler without publishing
 step, only outputing the diagnostics.
 
-*Note: the CLI can be used without adding the `bslint` plugin.*
+*Note: the CLI can be used without adding the `bslint` plugin; you will only
+get the default `brighterscript` diagnostics.*
 
 ```bash
 npx bslint --help
@@ -76,7 +83,7 @@ Rules:
 - `assign-all-paths`: a variable is not assigned in all the possible code paths,
     ```brightscript
     if a then
-        b = 'something'
+        b = "something"
     end if
     print b ' error
     ```
@@ -100,6 +107,6 @@ Rules:
     return
     print "is unreachable"
     ```
-- `consistent-return`: verifies consistency of `sub`/`function` returned values 
+- `consistent-return`: verifies consistency of `sub`/`function` returned values
   (missing return, missing value, returned value while function is `as void`,...)
 
