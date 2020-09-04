@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { Linter } from '..';
-import * as lintCodeFlow from './lintCodeFlow';
 import { BsDiagnostic } from 'brighterscript';
+import Linter from '../Linter';
+import * as trackCodeFlow from './trackCodeFlow';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
@@ -22,7 +22,7 @@ describe('lintCodeFlow', () => {
 
     beforeEach(() => {
         linter = new Linter();
-        linter.builder.addPlugin(lintCodeFlow);
+        linter.builder.addPlugin(trackCodeFlow);
     });
 
     it('detects use of uninitialized vars', async () => {
@@ -93,7 +93,7 @@ describe('lintCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
-    it('implements unreachable-code', async () => {
+    it.only('implements unreachable-code', async () => {
         const diagnostics = await linter.run({
             ...project1,
             files: ['source/unreachable-code.brs'],

@@ -3,7 +3,7 @@ import { BsLintConfig, BsLintRules, RuleSeverity, BsLintSeverity } from './index
 import { readFileSync, existsSync } from 'fs';
 import * as path from 'path';
 import { Program } from 'brighterscript';
-import { DiagnosticSeverity } from 'brighterscript/dist/parser/ASTUtils';
+import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 
 export function getDefaultRules(): BsLintConfig['rules'] {
     return {
