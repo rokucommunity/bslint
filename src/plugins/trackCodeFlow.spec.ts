@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { BsDiagnostic } from 'brighterscript';
 import Linter from '../Linter';
-import * as trackCodeFlow from './trackCodeFlow';
+import trackCodeFlow from './trackCodeFlow';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;

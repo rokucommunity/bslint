@@ -1,4 +1,4 @@
-import { BrsFile, Scope, XmlFile, BsDiagnostic, TokenKind, ProgramBuilder, CallableContainerMap } from 'brighterscript';
+import { BrsFile, Scope, XmlFile, BsDiagnostic, TokenKind, CallableContainerMap, Program, CompilerPlugin } from 'brighterscript';
 import { Statement, ReturnStatement, Expression, FunctionExpression } from 'brighterscript/dist/parser';
 import {
     createStatementExpressionsVisitor,
@@ -77,13 +77,20 @@ interface LintState {
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
-export function initPlugin(builder: ProgramBuilder) {
-    builder.on('program-created', program => (lintContext = resolveContext(program)));
-    builder.on('scope-validate-start', validateScope);
-    builder.on('file-validated', validateFile);
+const pluginInterface: CompilerPlugin = {
+    getName: () => 'trackCodeFlow',
+    programCreated,
+    scopeValidateStart,
+    fileValidated
+};
+export default pluginInterface;
+
+function programCreated(program: Program) {
+    program.plugins.add(pluginInterface);
+    lintContext = resolveContext(program);
 }
 
-export function validateScope(scope: Scope, files: (BrsFile | XmlFile)[], callables: CallableContainerMap) {
+function scopeValidateStart(scope: Scope, files: (BrsFile | XmlFile)[], callables: CallableContainerMap) {
     const diagnostics: BsDiagnostic[] = [];
     files.forEach((file) => {
         const deferred = deferredValidation.get(file.pathAbsolute);
@@ -94,7 +101,7 @@ export function validateScope(scope: Scope, files: (BrsFile | XmlFile)[], callab
     scope.addDiagnostics(diagnostics);
 }
 
-export function validateFile(file: BrsFile) {
+function fileValidated(file: BrsFile) {
     const diagnostics: BsDiagnostic[] = [];
     const deferred: ValidationInfo[] = [];
 

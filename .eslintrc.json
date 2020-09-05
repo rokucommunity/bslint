@@ -139,10 +139,7 @@
             "always"
         ],
         "object-property-newline": "off",
-        "object-shorthand": [
-            "error",
-            "never"
-        ],
+        "object-shorthand": "off",
         "one-var": [
             "error",
             "never"
