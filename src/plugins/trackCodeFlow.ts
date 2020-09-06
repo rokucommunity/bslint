@@ -78,7 +78,7 @@ interface LintState {
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
 const pluginInterface: CompilerPlugin = {
-    getName: () => 'trackCodeFlow',
+    name: 'trackCodeFlow',
     programCreated,
     scopeValidateStart,
     fileValidated
