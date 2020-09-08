@@ -51,6 +51,17 @@ sub error5()
     print "b"; b 'error
 end sub
 
+sub error6()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if b <> invalid  ' opposite of narrowed exit
+        return
+    end if
+    print "b"; b ' error
+end sub
+
 sub ok1()
     a = Rnd(10)
     if a > 0
@@ -141,6 +152,61 @@ sub ok7()
         if a < -3
             b = 3
         end if
+    end if
+    print "b"; b
+end sub
+
+sub ok8()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if b <> invalid ' narrowed
+        print "b"; b
+    end if
+end sub
+
+sub ok9()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if (b = invalid) ' narrowed
+        print "b"; b
+    end if
+end sub
+
+sub ok10()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if b = invalid ' narrowed exit
+        return
+    end if
+    print "b"; b
+end sub
+
+sub ok11()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if b = invalid ' narrowed exit
+        return
+    end if
+    print "b"; b
+end sub
+
+sub ok12()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if b <> invalid
+        print "b"; b
+    else ' narrowed exit
+        return
     end if
     print "b"; b
 end sub

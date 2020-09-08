@@ -1,5 +1,5 @@
 import { BrsFile, Scope, XmlFile, BsDiagnostic, TokenKind, CallableContainerMap, Program, CompilerPlugin } from 'brighterscript';
-import { Statement, ReturnStatement, Expression, FunctionExpression } from 'brighterscript/dist/parser';
+import { Statement, ReturnStatement, Expression, FunctionExpression, IfStatement } from 'brighterscript/dist/parser';
 import {
     createStatementExpressionsVisitor,
     DiagnosticSeverity,
@@ -14,9 +14,19 @@ import {
     isWhileStatement,
     Range,
     walkStatements,
-    createStackedVisitor
+    createStackedVisitor,
+    isBinaryExpression,
+    isLiteralInvalid,
+    isGroupingExpression
 } from 'brighterscript/dist/astUtils';
 import { PluginContext, resolveContext, getDefaultSeverity } from '../util';
+
+interface NarrowingInfo {
+    name: string;
+    type: 'valid' | 'invalid';
+    branch: number;
+    block: Statement;
+}
 
 interface StatementInfo {
     stat: Statement;
@@ -24,6 +34,7 @@ interface StatementInfo {
     locals?: Map<string, VarInfo>;
     branches?: number;
     returns?: boolean;
+    narrows?: NarrowingInfo[];
 }
 
 interface VarInfo {
@@ -34,6 +45,7 @@ interface VarInfo {
     isUnsafe?: boolean;
     parent?: StatementInfo;
     metBranches?: number;
+    narrowed?: NarrowingInfo;
 }
 
 interface ReturnInfo {
@@ -73,6 +85,8 @@ interface LintState {
     parent: StatementInfo;
     stack: Statement[];
     blocks: WeakMap<Statement, StatementInfo>;
+    ifs: StatementInfo;
+    branch: StatementInfo;
 }
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
@@ -81,7 +95,7 @@ const pluginInterface: CompilerPlugin = {
     name: 'trackCodeFlow',
     programCreated,
     scopeValidateStart,
-    fileValidated
+    fileValidation
 };
 export default pluginInterface;
 
@@ -101,7 +115,7 @@ function scopeValidateStart(scope: Scope, files: (BrsFile | XmlFile)[], callable
     scope.addDiagnostics(diagnostics);
 }
 
-function fileValidated(file: BrsFile) {
+function fileValidation(file: BrsFile) {
     const diagnostics: BsDiagnostic[] = [];
     const deferred: ValidationInfo[] = [];
 
@@ -109,7 +123,9 @@ function fileValidated(file: BrsFile) {
         const state: LintState = {
             parent: undefined,
             stack: [],
-            blocks: new WeakMap()
+            blocks: new WeakMap(),
+            ifs: undefined,
+            branch: undefined
         };
         let curr: StatementInfo;
         const returnLinter = createReturnLinter(file, fun, state, diagnostics, deferred);
@@ -127,10 +143,20 @@ function fileValidated(file: BrsFile) {
             state.blocks.set(opened, curr);
             returnLinter.openBlock(curr);
             varLinter.openBlock(curr);
+            if (isIfStatement(opened)) {
+                state.ifs = curr;
+            } else if (!curr.parent || isIfStatement(curr.parent)) {
+                state.branch = curr;
+            }
             state.parent = curr;
         }, (closed, stack) => {
             const block = state.blocks.get(closed);
             state.parent = state.blocks.get(stack[stack.length - 1]);
+            if (isIfStatement(closed)) {
+                const { ifs, branch } = findBranch(state);
+                state.ifs = ifs;
+                state.branch = branch;
+            }
             returnLinter.closeBlock(block);
             varLinter.closeBlock(block);
         });
@@ -154,6 +180,22 @@ function fileValidated(file: BrsFile) {
 
     deferredValidation.set(file.pathAbsolute, deferred);
     file.addDiagnostics(diagnostics);
+}
+
+function findBranch(state: LintState): { ifs?: StatementInfo; branch?: StatementInfo } {
+    const { blocks, parent, stack } = state;
+    for (let i = stack.length - 2; i >= 0; i--) {
+        if (isIfStatement(stack[i])) {
+            return {
+                ifs: blocks.get(stack[i]),
+                branch: blocks.get(stack[i + 1])
+            };
+        }
+    }
+    return {
+        ifs: undefined,
+        branch: parent
+    };
 }
 
 function branchesCount({ stat: s }: StatementInfo) {
@@ -183,17 +225,17 @@ function createVarLinter(
         args.set(name.toLowerCase(), { name: name, isParam: true });
     });
 
-    function setLocal(parent: StatementInfo, name: string, isIterator: boolean) {
+    function setLocal(parent: StatementInfo, name: string, isIterator: boolean): VarInfo {
         const key = name.toLowerCase();
         const arg = args.get(key);
+        const local = { name: name, parent: parent, isIterator: isIterator, metBranches: 1 };
         if (arg) {
-            return;
+            return local;
         }
 
         if (!parent.locals) {
             parent.locals = new Map();
         }
-        const local = { name: name, parent: parent, isIterator: isIterator, metBranches: 1 };
         parent.locals.set(key, local);
 
         deferred.push({
@@ -201,6 +243,8 @@ function createVarLinter(
             name: name,
             local: local
         });
+
+        return local;
     }
 
     function findLocal(name: string): VarInfo | undefined {
@@ -234,16 +278,37 @@ function createVarLinter(
     }
 
     function openBlock(block: StatementInfo) {
-        const { stat } = block;
-        // we want to declare iterator variable only when the for/foreach inner block opens
+        const { stat, parent } = block;
         if (isForStatement(stat)) {
+            // declare `for` iterator variable
             const name = stat.counterDeclaration.name.text;
             setLocal(block, name, true);
             // value = stat.counterDeclaration.value;
         } else if (isForEachStatement(stat)) {
+            // declare `for each` iterator variable
             const name = stat.item.text;
             setLocal(block, name, true);
+        } else if (isIfStatement(parent)) {
+            if (state.parent.narrows) {
+                narrowBlock(block);
+            }
         }
+    }
+
+    function narrowBlock(block: StatementInfo) {
+        const { parent } = state;
+        const { stat } = block;
+        parent.narrows?.forEach(narrow => {
+            if (narrow.block === stat) {
+                setLocal(block, narrow.name, false).narrowed = narrow;
+            } else {
+                // opposite narrowing for other branches
+                setLocal(block, narrow.name, false).narrowed = {
+                    ...narrow,
+                    type: narrow.type === 'invalid' ? 'valid' : 'invalid'
+                };
+            }
+        });
     }
 
     function visitStatement(curr: StatementInfo) {
@@ -256,12 +321,12 @@ function createVarLinter(
     }
 
     function closeBlock(closed: StatementInfo) {
-        const { locals, branches } = closed;
+        const { locals, branches, returns } = closed;
         const { parent } = state;
         if (!locals || !parent) {
             return;
         }
-        // when closing an if, evaluate vars with partial branches covered
+        // when closing a branched statement, evaluate vars with partial branches covered
         if (isBranchedBlock(closed)) {
             const numBranches = branches || 1;
             locals.forEach((local) => {
@@ -269,6 +334,15 @@ function createVarLinter(
                     local.isUnsafe = true;
                 }
                 local.metBranches = 1;
+            });
+        } else if (isIfStatement(parent.stat)) {
+            locals.forEach(local => {
+                // keep narrowed vars if we `return` the invalid branch
+                if (local.narrowed) {
+                    if (!returns || local.narrowed.type === 'valid') {
+                        locals.delete(local.name.toLowerCase());
+                    }
+                }
             });
         }
         // move locals to parent
@@ -299,7 +373,7 @@ function createVarLinter(
         }
     }
 
-    function visitExpression(expr: Expression, context: Expression, curr: StatementInfo) {
+    function visitExpression(expr: Expression, parent: Expression, curr: StatementInfo) {
         if (isVariableExpression(expr)) {
             const name = expr.name.text;
             if (name === 'm') {
@@ -322,7 +396,7 @@ function createVarLinter(
                         range: expr.range,
                         file: file
                     });
-                } else {
+                } else if (!isNarrowing(local, expr, parent, curr)) {
                     diagnostics.push({
                         severity: lintContext.severity.unsafePathLoop,
                         code: LintError.UnsafeInitialization,
@@ -333,6 +407,50 @@ function createVarLinter(
                 }
             }
         }
+    }
+
+    function isNarrowing(local: VarInfo, expr: Expression, parent: Expression, curr: StatementInfo) {
+        // look for a statement testing whether variable is `invalid`,
+        // like `if x <> invalid` or `else if x = invalid`
+        if (!isIfStatement(curr.stat)) {
+            return false;
+        }
+        if (!isBinaryExpression(parent) || !(isLiteralInvalid(parent.left) || isLiteralInvalid(parent.right))) {
+            return false;
+        }
+        const operator = parent.operator.kind;
+        if (operator !== TokenKind.Equal && operator !== TokenKind.LessGreater) {
+            return false;
+        }
+        // find branch where the condition is used
+        const ifs = curr.stat;
+        let branch = 0;
+        let block = ifs.thenBranch;
+        if (ifs.elseIfs.length > 0 && !isCondition(ifs.condition, parent)) {
+            branch = 1 + ifs.elseIfs.findIndex((b) => isCondition(b.condition, parent));
+            if (branch > 0) {
+                block = ifs.elseIfs[branch - 1].thenBranch;
+            }
+        }
+        const narrow: NarrowingInfo = {
+            name: local.name,
+            type: operator === TokenKind.Equal ? 'invalid' : 'valid',
+            branch,
+            block
+        };
+        if (!curr.narrows) {
+            curr.narrows = [];
+        }
+        curr.narrows.push(narrow);
+        return true;
+    }
+
+    function isCondition(test, condition) {
+        // ignore parenthesis
+        if (isGroupingExpression(test)) {
+            test = test.expression;
+        }
+        return test === condition;
     }
 
     return {
@@ -397,16 +515,6 @@ function createReturnLinter(
 ) {
     const returns: ReturnInfo[] = [];
 
-    function findBranch(): StatementInfo | undefined {
-        const { blocks, parent, stack } = state;
-        for (let i = stack.length - 2; i >= 0; i--) {
-            if (isIfStatement(stack[i])) {
-                return blocks.get(stack[i + 1]);
-            }
-        }
-        return parent;
-    }
-
     function visitStatement(curr: StatementInfo) {
         const { parent } = state;
         if (parent?.returns) {
@@ -421,13 +529,15 @@ function createReturnLinter(
                 });
             }
         } else if (isReturnStatement(curr.stat)) {
+            const { ifs, branch, parent } = state;
             returns.push({
                 stat: curr.stat,
                 hasValue: curr.stat.value && !isCommentStatement(curr.stat.value)
             });
-            const branch = findBranch();
-            if (!branch.returns && parent.branches === 1) {
-                branch.returns = true;
+            // flag parent branch to return
+            const returnBlock = ifs ? branch : parent;
+            if (parent.branches === 1) {
+                returnBlock.returns = true;
             }
         }
     }

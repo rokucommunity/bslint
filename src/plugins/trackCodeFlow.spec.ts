@@ -57,7 +57,8 @@ describe('lintCodeFlow', () => {
             `16:2003:Not all the code paths assign 'b'`,
             `25:2003:Not all the code paths assign 'b'`,
             `42:2003:Not all the code paths assign 'b'`,
-            `51:2003:Not all the code paths assign 'b'`
+            `51:2003:Not all the code paths assign 'b'`,
+            `62:2003:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -93,7 +94,7 @@ describe('lintCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
-    it.only('implements unreachable-code', async () => {
+    it('implements unreachable-code', async () => {
         const diagnostics = await linter.run({
             ...project1,
             files: ['source/unreachable-code.brs'],
