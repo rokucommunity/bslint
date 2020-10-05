@@ -1,7 +1,6 @@
 import { BrsFile, Scope, XmlFile, BsDiagnostic, TokenKind, CallableContainerMap, Program, CompilerPlugin } from 'brighterscript';
-import { Statement, ReturnStatement, Expression, FunctionExpression, IfStatement } from 'brighterscript/dist/parser';
+import { Statement, ReturnStatement, Expression, FunctionExpression } from 'brighterscript/dist/parser';
 import {
-    createStatementExpressionsVisitor,
     DiagnosticSeverity,
     DiagnosticTag,
     isAssignmentStatement,
@@ -13,11 +12,12 @@ import {
     isVariableExpression,
     isWhileStatement,
     Range,
-    walkStatements,
     createStackedVisitor,
     isBinaryExpression,
     isLiteralInvalid,
-    isGroupingExpression
+    isGroupingExpression,
+    isBrsFile,
+    isStatement, WalkMode
 } from 'brighterscript/dist/astUtils';
 import { PluginContext, resolveContext, getDefaultSeverity } from '../util';
 
@@ -93,18 +93,18 @@ const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
 const pluginInterface: CompilerPlugin = {
     name: 'trackCodeFlow',
-    programCreated,
-    scopeValidateStart,
-    fileValidation
+    afterProgramCreate,
+    afterScopeValidate,
+    afterFileValidate
 };
 export default pluginInterface;
 
-function programCreated(program: Program) {
+function afterProgramCreate(program: Program) {
     program.plugins.add(pluginInterface);
     lintContext = resolveContext(program);
 }
 
-function scopeValidateStart(scope: Scope, files: (BrsFile | XmlFile)[], callables: CallableContainerMap) {
+function afterScopeValidate(scope: Scope, files: (BrsFile | XmlFile)[], callables: CallableContainerMap) {
     const diagnostics: BsDiagnostic[] = [];
     files.forEach((file) => {
         const deferred = deferredValidation.get(file.pathAbsolute);
@@ -115,11 +115,14 @@ function scopeValidateStart(scope: Scope, files: (BrsFile | XmlFile)[], callable
     scope.addDiagnostics(diagnostics);
 }
 
-function fileValidation(file: BrsFile) {
+function afterFileValidate(file: (BrsFile | XmlFile)) {
+    if (!isBrsFile(file)) {
+        return;
+    }
     const diagnostics: BsDiagnostic[] = [];
     const deferred: ValidationInfo[] = [];
 
-    file.parser.functionExpressions.forEach((fun) => {
+    file.parser.references.functionExpressions.forEach((fun) => {
         const state: LintState = {
             parent: undefined,
             stack: [],
@@ -134,7 +137,7 @@ function fileValidation(file: BrsFile) {
         // 1. close
         // 2. visit -> curr
         // 3. open -> curr becomes parent
-        const statementVisitor = createStackedVisitor((stat: Statement, stack: Statement[]) => {
+        const visitStatement = createStackedVisitor((stat: Statement, stack: Statement[]) => {
             state.stack = stack;
             curr = { stat: stat, parent: stack[stack.length - 1] };
             returnLinter.visitStatement(curr);
@@ -161,12 +164,16 @@ function fileValidation(file: BrsFile) {
             varLinter.closeBlock(block);
         });
 
-        function expressionVisitor(expr: Expression, context: Expression) {
-            varLinter.visitExpression(expr, context, curr);
-        }
+        visitStatement(fun.body, undefined);
 
-        const visitor = createStatementExpressionsVisitor(statementVisitor, expressionVisitor);
-        walkStatements(fun.body, visitor);
+        /* eslint-disable no-bitwise */
+        fun.body.walk((elem, parent) => {
+            if (isStatement(elem)) {
+                visitStatement(elem, parent);
+            } else {
+                varLinter.visitExpression(elem, parent, curr);
+            }
+        }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions });
 
         // close remaining open blocks
         let remain = state.stack.length;
@@ -280,10 +287,7 @@ function createVarLinter(
     function openBlock(block: StatementInfo) {
         const { stat, parent } = block;
         if (isForStatement(stat)) {
-            // declare `for` iterator variable
-            const name = stat.counterDeclaration.name.text;
-            setLocal(block, name, true);
-            // value = stat.counterDeclaration.value;
+            // for iterator will be declared by the next assignement statement
         } else if (isForEachStatement(stat)) {
             // declare `for each` iterator variable
             const name = stat.item.text;
@@ -316,7 +320,7 @@ function createVarLinter(
         if (isAssignmentStatement(stat)) {
             const name = stat.name.text;
             // value = stat.value;
-            setLocal(state.parent, name, false);
+            setLocal(state.parent, name, isForStatement(state.parent.stat));
         }
     }
 

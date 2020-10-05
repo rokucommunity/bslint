@@ -9,3 +9,10 @@ end sub
 sub error3()
     Rnd(a) ' error
 end sub
+
+sub error4()
+    a = 1
+    Rnd(sub ()
+        return a 'error
+    end sub)
+end sub

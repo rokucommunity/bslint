@@ -22,7 +22,7 @@ describe('lintCodeFlow', () => {
 
     beforeEach(() => {
         linter = new Linter();
-        linter.builder.addPlugin(trackCodeFlow);
+        linter.builder.plugins.add(trackCodeFlow);
     });
 
     it('detects use of uninitialized vars', async () => {
@@ -37,7 +37,8 @@ describe('lintCodeFlow', () => {
         const expected = [
             `02:2001:Using uninitialised variable 'a' when this file is included in scope 'source'`,
             `06:2001:Using uninitialised variable 'a' when this file is included in scope 'source'`,
-            `10:2001:Using uninitialised variable 'a' when this file is included in scope 'source'`
+            `10:2001:Using uninitialised variable 'a' when this file is included in scope 'source'`,
+            `16:2001:Using uninitialised variable 'a' when this file is included in scope 'source'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -59,6 +60,23 @@ describe('lintCodeFlow', () => {
             `42:2003:Not all the code paths assign 'b'`,
             `51:2003:Not all the code paths assign 'b'`,
             `62:2003:Not all the code paths assign 'b'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('report errors for classes', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/class-methods.bs'],
+            rules: {
+                'assign-all-paths': 'error',
+                'consistent-return': 'off'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `10:2003:Not all the code paths assign 'b'`,
+            `19:2003:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
     });

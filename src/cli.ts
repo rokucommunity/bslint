@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as yargs from 'yargs';
-import { DiagnosticSeverity } from 'brighterscript/dist/parser/ASTUtils';
+import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 import { BsLintConfig, Linter } from '.';
 import { normalizeConfig } from './util';
 
