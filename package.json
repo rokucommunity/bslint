@@ -29,7 +29,7 @@
   "license": "ISC",
   "homepage": "https://github.com/rokucommunity/bslint",
   "dependencies": {
-    "brighterscript": "^0.16.1",
+    "brighterscript": "^0.16.12",
     "jsonc-parser": "^2.3.0",
     "yargs": "^15.4.1"
   },

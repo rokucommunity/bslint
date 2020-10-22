@@ -35,11 +35,18 @@ sub error7() as string ' error
     end for
 end sub
 
-sub ok1() as string
+sub ok1()
+    return
+end sub
+
+function ok2()
+end function
+
+sub ok3() as string
     return 1
 end sub
 
-sub ok2() as string
+sub ok4() as string
     a = 1
     if a > 0
         return 1
@@ -47,7 +54,7 @@ sub ok2() as string
     return 2
 end sub
 
-sub ok3()
+sub ok5()
     a = 1
     b = 2
     if a > 0 then

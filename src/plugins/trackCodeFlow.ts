@@ -17,7 +17,9 @@ import {
     isLiteralInvalid,
     isGroupingExpression,
     isBrsFile,
-    isStatement, WalkMode
+    isStatement,
+    isExpression,
+    WalkMode
 } from 'brighterscript/dist/astUtils';
 import { PluginContext, resolveContext, getDefaultSeverity } from '../util';
 
@@ -166,14 +168,21 @@ function afterFileValidate(file: (BrsFile | XmlFile)) {
 
         visitStatement(fun.body, undefined);
 
-        /* eslint-disable no-bitwise */
-        fun.body.walk((elem, parent) => {
-            if (isStatement(elem)) {
-                visitStatement(elem, parent);
-            } else {
-                varLinter.visitExpression(elem, parent, curr);
-            }
-        }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions });
+        if (fun.body.statements.length > 0) {
+            /* eslint-disable no-bitwise */
+            fun.body.walk((elem, parent) => {
+                // note: logic to ignore CommentStatement used as expression
+                if (isStatement(elem) && !isExpression(parent)) {
+                    visitStatement(elem, parent);
+                } else {
+                    varLinter.visitExpression(elem, parent, curr);
+                }
+            }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions });
+        } else {
+            // ensure empty functions are finalized
+            state.blocks.set(fun.body, curr);
+            state.stack.push(fun.body);
+        }
 
         // close remaining open blocks
         let remain = state.stack.length;
@@ -474,7 +483,7 @@ function deferredVarLinter(
 ) {
     deferred.forEach(({ kind, name, local, range }) => {
         const key = name?.toLowerCase();
-        const hasCallable = key ? !!callables[key] : false;
+        const hasCallable = key ? !!callables.has(key) : false;
         switch (kind) {
             case ValidationKind.UninitializedVar:
                 if (!hasCallable) {
@@ -590,8 +599,11 @@ function createReturnLinter(
             return;
         }
 
-        const requiresReturnValue = !!fun.returnTypeToken;
-        const missingValue = returnedValues.length !== returns.length;
+        const requiresReturnValue =
+            !!fun.returnTypeToken ||
+            returnedValues.length > 0 ||
+            (fun.functionType.kind === TokenKind.Function && returns.length > 0);
+        const missingValue = requiresReturnValue && returnedValues.length !== returns.length;
         const missingBranches = !last.returns;
 
         // Function doesn't consistently return,
