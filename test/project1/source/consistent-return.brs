@@ -35,6 +35,17 @@ sub error7() as string ' error
     end for
 end sub
 
+sub error8()
+    some(function () 'error
+        if true then return 0
+    end function)
+end sub
+
+sub error9()
+    some(sub () as string 'error
+    end sub)
+end sub
+
 sub ok1()
     return
 end sub
@@ -71,3 +82,7 @@ end sub
 function ok6() as void
     return ' error
 end function
+
+sub some(o)
+    print o
+end sub

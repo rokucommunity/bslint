@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { BsDiagnostic } from 'brighterscript';
-import Linter from '../Linter';
-import trackCodeFlow from './trackCodeFlow';
+import Linter from '../../Linter';
+import trackCodeFlow from '.';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
@@ -123,11 +123,11 @@ describe('lintCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:2004:Unreachable code`,
-            `10:2004:Unreachable code`,
-            `26:2004:Unreachable code`,
-            `41:2004:Unreachable code`,
-            `50:2004:Unreachable code`
+            `04:2011:Unreachable code`,
+            `10:2011:Unreachable code`,
+            `26:2011:Unreachable code`,
+            `41:2011:Unreachable code`,
+            `50:2011:Unreachable code`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -142,13 +142,15 @@ describe('lintCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:2009:This function should consistently return a value`,
-            `11:2005:Function as void should not return a value`,
-            `15:2009:This function should consistently return a value`,
-            `18:2007:Not all code paths return a value`,
-            `22:2009:This function should consistently return a value`,
-            `25:2007:Not all code paths return a value`,
-            `32:2007:Not all code paths return a value`
+            `06:2016:This function should consistently return a value`,
+            `11:2012:Function as void should not return a value`,
+            `15:2016:This function should consistently return a value`,
+            `18:2014:Not all code paths return a value`,
+            `22:2016:This function should consistently return a value`,
+            `25:2014:Not all code paths return a value`,
+            `32:2014:Not all code paths return a value`,
+            `39:2014:Not all code paths return a value`,
+            `45:2014:Not all code paths return a value`
         ];
         expect(actual).deep.equal(expected);
     });
