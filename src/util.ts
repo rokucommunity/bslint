@@ -110,8 +110,7 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         unreachableCode: ruleToSeverity(rules['unreachable-code']),
         unsafePathLoop: ruleToSeverity(rules['unsafe-path-loop']),
         unsafeIterators: ruleToSeverity(rules['unsafe-iterators']),
-        consistentReturn: ruleToSeverity(rules['consistent-return']),
-        optionalReturn: ruleToSeverity(rules['optional-return'])
+        consistentReturn: ruleToSeverity(rules['consistent-return'])
     };
 }
 

@@ -35,5 +35,5 @@ export interface BsLintRules {
 export { Linter };
 
 export function afterProgramCreate(program: Program) {
-    trackCodeFlow.afterProgramCreate(program);
+    trackCodeFlow.afterProgramCreate?.(program);
 }

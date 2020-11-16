@@ -1,5 +1,5 @@
 import { BrsFile, Scope, XmlFile, BsDiagnostic, TokenKind, CallableContainerMap, Program, CompilerPlugin } from 'brighterscript';
-import { Statement, ReturnStatement, Expression, FunctionExpression } from 'brighterscript/dist/parser';
+import { Statement, ReturnStatement, Expression, FunctionExpression, EmptyStatement } from 'brighterscript/dist/parser';
 import {
     DiagnosticSeverity,
     DiagnosticTag,
@@ -24,7 +24,8 @@ import {
 import { PluginContext, resolveContext, getDefaultSeverity } from '../util';
 
 interface NarrowingInfo {
-    name: string;
+    text: string;
+    range: Range;
     type: 'valid' | 'invalid';
     branch: number;
     block: Statement;
@@ -32,7 +33,7 @@ interface NarrowingInfo {
 
 interface StatementInfo {
     stat: Statement;
-    parent: Statement;
+    parent?: Statement;
     locals?: Map<string, VarInfo>;
     branches?: number;
     returns?: boolean;
@@ -41,10 +42,11 @@ interface StatementInfo {
 
 interface VarInfo {
     name: string;
+    range: Range;
     isGlobal?: boolean;
     isParam?: boolean;
     isIterator?: boolean;
-    isUnsafe?: boolean;
+    isUnsafe: boolean;
     parent?: StatementInfo;
     metBranches?: number;
     narrowed?: NarrowingInfo;
@@ -66,7 +68,7 @@ interface ValidationInfo {
     kind: ValidationKind;
     name: string;
     local?: VarInfo;
-    range?: Range;
+    range: Range;
 }
 
 enum LintError {
@@ -78,17 +80,18 @@ enum LintError {
     ReturnValueExpected = 2006,
     UnsafeReturnValue = 2007,
     ReturnValueRequired = 2008,
-    ReturnValueMissing = 2009
+    ReturnValueMissing = 2009,
+    LastReturnValueMissing = 2010
 }
 
 let lintContext: PluginContext = { severity: getDefaultSeverity() };
 
 interface LintState {
-    parent: StatementInfo;
+    parent?: StatementInfo;
     stack: Statement[];
     blocks: WeakMap<Statement, StatementInfo>;
-    ifs: StatementInfo;
-    branch: StatementInfo;
+    ifs?: StatementInfo;
+    branch?: StatementInfo;
 }
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
@@ -132,7 +135,9 @@ function afterFileValidate(file: (BrsFile | XmlFile)) {
             ifs: undefined,
             branch: undefined
         };
-        let curr: StatementInfo;
+        let curr: StatementInfo = {
+            stat: new EmptyStatement()
+        };
         const returnLinter = createReturnLinter(file, fun, state, diagnostics, deferred);
         const varLinter = createVarLinter(file, fun, state, diagnostics, deferred);
 
@@ -141,7 +146,7 @@ function afterFileValidate(file: (BrsFile | XmlFile)) {
         // 3. open -> curr becomes parent
         const visitStatement = createStackedVisitor((stat: Statement, stack: Statement[]) => {
             state.stack = stack;
-            curr = { stat: stat, parent: stack[stack.length - 1] };
+            curr = { stat: stat, parent: stack[stack.length - 1], branches: 0 };
             returnLinter.visitStatement(curr);
             varLinter.visitStatement(curr);
         }, (opened) => {
@@ -162,8 +167,10 @@ function afterFileValidate(file: (BrsFile | XmlFile)) {
                 state.ifs = ifs;
                 state.branch = branch;
             }
-            returnLinter.closeBlock(block);
-            varLinter.closeBlock(block);
+            if (block) {
+                returnLinter.closeBlock(block);
+                varLinter.closeBlock(block);
+            }
         });
 
         visitStatement(fun.body, undefined);
@@ -174,7 +181,7 @@ function afterFileValidate(file: (BrsFile | XmlFile)) {
                 // note: logic to ignore CommentStatement used as expression
                 if (isStatement(elem) && !isExpression(parent)) {
                     visitStatement(elem, parent);
-                } else {
+                } else if (parent) {
                     varLinter.visitExpression(elem, parent, curr);
                 }
             }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions });
@@ -187,10 +194,16 @@ function afterFileValidate(file: (BrsFile | XmlFile)) {
         // close remaining open blocks
         let remain = state.stack.length;
         while (remain-- > 0) {
-            const block = state.blocks.get(state.stack.pop());
+            const last = state.stack.pop();
+            if (!last) {
+                continue;
+            }
+            const block = state.blocks.get(last);
             state.parent = remain > 0 ? state.blocks.get(state.stack[remain - 1]) : undefined;
-            returnLinter.closeBlock(block);
-            varLinter.closeBlock(block);
+            if (block) {
+                returnLinter.closeBlock(block);
+                varLinter.closeBlock(block);
+            }
         }
     });
 
@@ -238,13 +251,20 @@ function createVarLinter(
     const args: Map<string, VarInfo> = new Map();
     fun.parameters.forEach((p) => {
         const name = p.name.text;
-        args.set(name.toLowerCase(), { name: name, isParam: true });
+        args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false });
     });
 
-    function setLocal(parent: StatementInfo, name: string, isIterator: boolean): VarInfo {
-        const key = name.toLowerCase();
+    function setLocal(parent: StatementInfo, name: { text: string; range: Range }, isIterator: boolean): VarInfo {
+        const key = name.text.toLowerCase();
         const arg = args.get(key);
-        const local = { name: name, parent: parent, isIterator: isIterator, metBranches: 1 };
+        const local = {
+            name: name.text,
+            range: name.range,
+            parent: parent,
+            isIterator: isIterator,
+            metBranches: 1,
+            isUnsafe: false
+        };
         if (arg) {
             return local;
         }
@@ -256,8 +276,9 @@ function createVarLinter(
 
         deferred.push({
             kind: ValidationKind.Assignment,
-            name: name,
-            local: local
+            name: name.text,
+            local: local,
+            range: name.range
         });
 
         return local;
@@ -270,11 +291,11 @@ function createVarLinter(
             return arg;
         }
         const { parent, blocks, stack } = state;
-        let found: VarInfo;
+        let found: VarInfo | undefined;
 
-        if (parent.locals?.has(key)) {
+        if (parent?.locals?.has(key)) {
             found = parent.locals.get(key);
-            if (!found.isUnsafe) {
+            if (!found?.isUnsafe) {
                 return found;
             }
         }
@@ -299,10 +320,9 @@ function createVarLinter(
             // for iterator will be declared by the next assignement statement
         } else if (isForEachStatement(stat)) {
             // declare `for each` iterator variable
-            const name = stat.item.text;
-            setLocal(block, name, true);
-        } else if (isIfStatement(parent)) {
-            if (state.parent.narrows) {
+            setLocal(block, stat.item, true);
+        } else if (parent && isIfStatement(parent)) {
+            if (state.parent?.narrows) {
                 narrowBlock(block);
             }
         }
@@ -311,12 +331,12 @@ function createVarLinter(
     function narrowBlock(block: StatementInfo) {
         const { parent } = state;
         const { stat } = block;
-        parent.narrows?.forEach(narrow => {
+        parent?.narrows?.forEach(narrow => {
             if (narrow.block === stat) {
-                setLocal(block, narrow.name, false).narrowed = narrow;
+                setLocal(block, narrow, false).narrowed = narrow;
             } else {
                 // opposite narrowing for other branches
-                setLocal(block, narrow.name, false).narrowed = {
+                setLocal(block, narrow, false).narrowed = {
                     ...narrow,
                     type: narrow.type === 'invalid' ? 'valid' : 'invalid'
                 };
@@ -326,10 +346,9 @@ function createVarLinter(
 
     function visitStatement(curr: StatementInfo) {
         const { stat } = curr;
-        if (isAssignmentStatement(stat)) {
-            const name = stat.name.text;
+        if (isAssignmentStatement(stat) && state.parent) {
             // value = stat.value;
-            setLocal(state.parent, name, isForStatement(state.parent.stat));
+            setLocal(state.parent, stat.name, isForStatement(state.parent.stat));
         }
     }
 
@@ -341,7 +360,7 @@ function createVarLinter(
         }
         // when closing a branched statement, evaluate vars with partial branches covered
         if (isBranchedBlock(closed)) {
-            const numBranches = branches || 1;
+            const numBranches = branches ?? 1;
             locals.forEach((local) => {
                 if (local.metBranches !== numBranches) {
                     local.isUnsafe = true;
@@ -364,7 +383,7 @@ function createVarLinter(
         } else {
             const isParentIf = isIfStatement(parent.stat);
             locals.forEach((local, name) => {
-                const parentLocal = parent.locals.get(name);
+                const parentLocal = parent.locals?.get(name);
                 // if var is an iterator var, flag as partial
                 if (local.isIterator) {
                     local.isUnsafe = true;
@@ -373,7 +392,7 @@ function createVarLinter(
                 if (isParentIf) {
                     if (parentLocal) {
                         local.isUnsafe = parentLocal.isUnsafe || local.isUnsafe;
-                        local.metBranches = parentLocal.metBranches + 1;
+                        local.metBranches = (parentLocal.metBranches ?? 0) + 1;
                     }
                 } else if (parentLocal && !parentLocal.isUnsafe) {
                     local.isUnsafe = false;
@@ -381,7 +400,7 @@ function createVarLinter(
                 if (parentLocal?.isIterator) {
                     local.isIterator = parentLocal.isIterator;
                 }
-                parent.locals.set(name, local);
+                parent.locals?.set(name, local);
             });
         }
     }
@@ -446,7 +465,8 @@ function createVarLinter(
             }
         }
         const narrow: NarrowingInfo = {
-            name: local.name,
+            text: local.name,
+            range: local.range,
             type: operator === TokenKind.Equal ? 'invalid' : 'valid',
             branch,
             block
@@ -545,11 +565,11 @@ function createReturnLinter(
             const { ifs, branch, parent } = state;
             returns.push({
                 stat: curr.stat,
-                hasValue: curr.stat.value && !isCommentStatement(curr.stat.value)
+                hasValue: !!curr.stat.value && !isCommentStatement(curr.stat.value)
             });
             // flag parent branch to return
             const returnBlock = ifs ? branch : parent;
-            if (parent.branches === 1) {
+            if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
             }
         }
@@ -573,7 +593,7 @@ function createReturnLinter(
             }
         } else if (closed.returns) {
             if (isIfStatement(parent.stat)) {
-                parent.branches--;
+                parent.branches = (parent.branches ?? 2) - 1;
             }
         }
     }
@@ -602,7 +622,7 @@ function createReturnLinter(
         const requiresReturnValue =
             !!fun.returnTypeToken ||
             returnedValues.length > 0 ||
-            (fun.functionType.kind === TokenKind.Function && returns.length > 0);
+            (fun.functionType?.kind === TokenKind.Function && returns.length > 0);
         const missingValue = requiresReturnValue && returnedValues.length !== returns.length;
         const missingBranches = !last.returns;
 

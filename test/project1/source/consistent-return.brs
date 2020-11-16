@@ -67,3 +67,7 @@ sub ok5()
         return 3
     end if
 end sub
+
+function ok6() as void
+    return ' error
+end function
