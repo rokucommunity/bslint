@@ -59,7 +59,10 @@ describe('lintCodeFlow', () => {
             `25:2003:Not all the code paths assign 'b'`,
             `42:2003:Not all the code paths assign 'b'`,
             `51:2003:Not all the code paths assign 'b'`,
-            `62:2003:Not all the code paths assign 'b'`
+            `62:2003:Not all the code paths assign 'b'`,
+            `71:2003:Not all the code paths assign 'b'`,
+            `83:2003:Not all the code paths assign 'b'`,
+            `85:2003:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -132,6 +135,26 @@ describe('lintCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('implements case-sensitivity', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/case-sensitivity.brs'],
+            rules: {
+                'case-sensitivity': 'error'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `03:2004:Variable 'A' was previously set with a different casing as 'a'`,
+            `04:2004:Variable 'A' was previously set with a different casing as 'a'`,
+            `05:2004:Variable 'A' was previously set with a different casing as 'a'`,
+            `06:2004:Variable 'A' was previously set with a different casing as 'a'`,
+            `11:2004:Variable 'A' was previously set with a different casing as 'a'`,
+            `15:2004:Variable 'a' was previously set with a different casing as 'A'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
     it('implements consistent-return', async () => {
         const diagnostics = await linter.run({
             ...project1,
@@ -142,11 +165,11 @@ describe('lintCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:2016:This function should consistently return a value`,
+            `04:2012:Sub as void should not return a value`,
             `11:2012:Function as void should not return a value`,
-            `15:2016:This function should consistently return a value`,
+            `15:2016:Sub should consistently return a value`,
             `18:2014:Not all code paths return a value`,
-            `22:2016:This function should consistently return a value`,
+            `22:2016:Function should consistently return a value`,
             `25:2014:Not all code paths return a value`,
             `32:2014:Not all code paths return a value`,
             `39:2014:Not all code paths return a value`,

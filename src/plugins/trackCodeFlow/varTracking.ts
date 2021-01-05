@@ -1,11 +1,13 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, isLiteralInvalid, TokenKind, isGroupingExpression, Scope, CallableContainerMap, DiagnosticSeverity } from 'brighterscript';
-import { LintState, StatementInfo, isBranchedBlock, NarrowingInfo, VarInfo } from '.';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, IfStatement, Block, LiteralExpression, isLiteralExpression, isInvalidType } from 'brighterscript';
+import { InvalidType } from 'brighterscript/dist/types/InvalidType';
+import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
 import { BsLintRules } from '../..';
 
 enum VarLintError {
     UninitializedVar = 2001,
     UnsafeIteratorVar = 2002,
-    UnsafeInitialization = 2003
+    UnsafeInitialization = 2003,
+    CaseMismatch = 2004
 }
 
 enum ValidationKind {
@@ -50,6 +52,18 @@ export function createVarLinter(
         args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false });
     });
 
+    function verifyVarCasing(curr: VarInfo, name: { text: string; range: Range }) {
+        if (curr && curr.name !== name.text) {
+            diagnostics.push({
+                severity: severity.caseSensitivity,
+                code: VarLintError.CaseMismatch,
+                message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
+                range: name.range,
+                file: file
+            });
+        }
+    }
+
     function setLocal(parent: StatementInfo, name: { text: string; range: Range }, isIterator: boolean): VarInfo {
         const key = name.text.toLowerCase();
         const arg = args.get(key);
@@ -62,11 +76,14 @@ export function createVarLinter(
             isUnsafe: false
         };
         if (arg) {
+            verifyVarCasing(arg, name);
             return local;
         }
 
         if (!parent.locals) {
             parent.locals = new Map();
+        } else {
+            verifyVarCasing(parent.locals.get(key), name);
         }
         parent.locals.set(key, local);
 
@@ -111,22 +128,26 @@ export function createVarLinter(
     }
 
     function openBlock(block: StatementInfo) {
-        const { stat, parent } = block;
+        const { stat } = block;
         if (isForStatement(stat)) {
             // for iterator will be declared by the next assignement statement
         } else if (isForEachStatement(stat)) {
             // declare `for each` iterator variable
             setLocal(block, stat.item, true);
-        } else if (parent && isIfStatement(parent)) {
-            if (state.parent?.narrows) {
-                narrowBlock(block);
-            }
+        } else if (state.parent?.narrows) {
+            narrowBlock(block);
         }
     }
 
     function narrowBlock(block: StatementInfo) {
         const { parent } = state;
         const { stat } = block;
+
+        if (isIfStatement(stat) && isIfStatement(parent.stat)) {
+            block.narrows = parent?.narrows;
+            return;
+        }
+
         parent?.narrows?.forEach(narrow => {
             if (narrow.block === stat) {
                 setLocal(block, narrow, false).narrowed = narrow;
@@ -155,10 +176,9 @@ export function createVarLinter(
             return;
         }
         // when closing a branched statement, evaluate vars with partial branches covered
-        if (isBranchedBlock(closed)) {
-            const numBranches = branches ?? 1;
+        if (branches > 1) {
             locals.forEach((local) => {
-                if (local.metBranches !== numBranches) {
+                if (local.metBranches !== branches) {
                     local.isUnsafe = true;
                 }
                 local.metBranches = 1;
@@ -207,15 +227,20 @@ export function createVarLinter(
             if (name === 'm') {
                 return;
             }
+
             const local = findLocal(name);
-            // TODO rule for case sensitive vars?
             if (!local) {
                 deferred.push({
                     kind: expr.isCalled ? ValidationKind.UninitialisedFn : ValidationKind.UninitializedVar,
                     name: name,
                     range: expr.range
                 });
-            } else if (local.isUnsafe) {
+                return;
+            } else {
+                verifyVarCasing(local, expr.name);
+            }
+
+            if (local.isUnsafe) {
                 if (local.isIterator) {
                     diagnostics.push({
                         severity: severity.unsafeIterators,
@@ -237,34 +262,27 @@ export function createVarLinter(
         }
     }
 
-    function isNarrowing(local: VarInfo, expr: Expression, parent: Expression, curr: StatementInfo) {
-        // look for a statement testing whether variable is `invalid`,
-        // like `if x <> invalid` or `else if x = invalid`
+    function isNarrowing(local: VarInfo, expr: Expression, parent: Expression, curr: StatementInfo): boolean {
+        // Are we inside an `if/elseif` statement condition?
         if (!isIfStatement(curr.stat)) {
             return false;
         }
+        const block = curr.stat.thenBranch;
+        // look for a statement testing whether variable is `invalid`,
+        // like `if x <> invalid` or `else if x = invalid`
         if (!isBinaryExpression(parent) || !(isLiteralInvalid(parent.left) || isLiteralInvalid(parent.right))) {
-            return false;
+            // maybe the variable was narrowed as part of the condition
+            // e.g. 2nd condition in: if x <> invalid and x.y = z
+            return curr.narrows?.some(narrow => narrow.text === local.name);
         }
         const operator = parent.operator.kind;
         if (operator !== TokenKind.Equal && operator !== TokenKind.LessGreater) {
             return false;
         }
-        // find branch where the condition is used
-        const ifs = curr.stat;
-        let branch = 0;
-        let block = ifs.thenBranch;
-        if (ifs.elseIfs.length > 0 && !isCondition(ifs.condition, parent)) {
-            branch = 1 + ifs.elseIfs.findIndex((b) => isCondition(b.condition, parent));
-            if (branch > 0) {
-                block = ifs.elseIfs[branch - 1].thenBranch;
-            }
-        }
         const narrow: NarrowingInfo = {
             text: local.name,
             range: local.range,
             type: operator === TokenKind.Equal ? 'invalid' : 'valid',
-            branch,
             block
         };
         if (!curr.narrows) {
@@ -272,14 +290,6 @@ export function createVarLinter(
         }
         curr.narrows.push(narrow);
         return true;
-    }
-
-    function isCondition(test, condition) {
-        // ignore parenthesis
-        if (isGroupingExpression(test)) {
-            test = test.expression;
-        }
-        return test === condition;
     }
 
     return {
@@ -342,4 +352,8 @@ function deferredVarLinter(
                 break;
         }
     });
+}
+
+function isLiteralInvalid(e: any): e is LiteralExpression & { type: InvalidType } {
+    return isLiteralExpression(e) && isInvalidType(e.type);
 }

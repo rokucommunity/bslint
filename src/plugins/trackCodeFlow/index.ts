@@ -1,5 +1,5 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, Program, CompilerPlugin } from 'brighterscript';
-import { Statement, EmptyStatement } from 'brighterscript/dist/parser';
+import { BscFile, Scope, BsDiagnostic, CallableContainerMap, Program, CompilerPlugin, BrsFile } from 'brighterscript';
+import { Statement, EmptyStatement, FunctionExpression } from 'brighterscript/dist/parser';
 import { isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode } from 'brighterscript/dist/astUtils';
 import { PluginContext, resolveContext, getDefaultSeverity } from '../../util';
 import { createReturnLinter } from './returnTracking';
@@ -9,7 +9,6 @@ export interface NarrowingInfo {
     text: string;
     range: Range;
     type: 'valid' | 'invalid';
-    branch: number;
     block: Statement;
 }
 
@@ -37,6 +36,8 @@ export interface VarInfo {
 let lintContext: PluginContext = { severity: getDefaultSeverity() };
 
 export interface LintState {
+    file: BrsFile;
+    fun: FunctionExpression;
     parent?: StatementInfo;
     stack: Statement[];
     blocks: WeakMap<Statement, StatementInfo>;
@@ -71,6 +72,8 @@ function afterFileValidate(file: BscFile) {
 
     file.parser.references.functionExpressions.forEach((fun) => {
         const state: LintState = {
+            file: file,
+            fun: fun,
             parent: undefined,
             stack: [],
             blocks: new WeakMap(),
@@ -88,19 +91,25 @@ function afterFileValidate(file: BscFile) {
         // 3. open -> curr becomes parent
         const visitStatement = createStackedVisitor((stat: Statement, stack: Statement[]) => {
             state.stack = stack;
-            curr = { stat: stat, parent: stack[stack.length - 1], branches: 0 };
+            curr = {
+                stat: stat,
+                parent: stack[stack.length - 1],
+                branches: isBranchedStatement(stat) ? 2 : 1
+            };
             returnLinter.visitStatement(curr);
             varLinter.visitStatement(curr);
+
         }, (opened) => {
             state.blocks.set(opened, curr);
-            returnLinter.openBlock(curr);
             varLinter.openBlock(curr);
+
             if (isIfStatement(opened)) {
                 state.ifs = curr;
             } else if (!curr.parent || isIfStatement(curr.parent)) {
                 state.branch = curr;
             }
             state.parent = curr;
+
         }, (closed, stack) => {
             const block = state.blocks.get(closed);
             state.parent = state.blocks.get(stack[stack.length - 1]);
@@ -170,7 +179,6 @@ function findBranch(state: LintState): { ifs?: StatementInfo; branch?: Statement
 }
 
 // `if` and `for/while` are considered as multi-branch
-export function isBranchedBlock(block: StatementInfo) {
-    return isIfStatement(block.stat) || isForStatement(block.stat) || isForEachStatement(block.stat) || isWhileStatement(block.stat);
+export function isBranchedStatement(stat: Statement) {
+    return isIfStatement(stat) || isForStatement(stat) || isForEachStatement(stat) || isWhileStatement(stat);
 }
-

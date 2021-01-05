@@ -1,5 +1,5 @@
 import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, TokenKind, util, ReturnStatement } from 'brighterscript';
-import { isBranchedBlock, LintState, StatementInfo } from '.';
+import { LintState, StatementInfo } from '.';
 import { BsLintRules } from '../..';
 
 interface ReturnInfo {
@@ -53,14 +53,6 @@ export function createReturnLinter(
         }
     }
 
-    function openBlock(block: StatementInfo) {
-        if (isBranchedBlock(block)) {
-            block.branches = branchesCount(block);
-        } else {
-            block.branches = 1;
-        }
-    }
-
     function closeBlock(closed: StatementInfo) {
         const { parent } = state;
         if (!parent) {
@@ -68,16 +60,18 @@ export function createReturnLinter(
         } else if (isIfStatement(closed.stat)) {
             if (closed.branches === 0) {
                 parent.returns = true;
+                parent.branches--;
             }
         } else if (closed.returns) {
             if (isIfStatement(parent.stat)) {
-                parent.branches = (parent.branches ?? 2) - 1;
+                parent.branches--;
             }
         }
     }
 
     function finalize(last: StatementInfo) {
         const { consistentReturn } = severity;
+        const kind = fun.functionType?.kind === TokenKind.Sub ? 'Sub' : 'Function';
         const returnedValues = returns.filter((r) => r.hasValue);
         const hasReturnedValue = returnedValues.length > 0;
         // Function range only includes the function signature
@@ -85,14 +79,17 @@ export function createReturnLinter(
         const funRangeEnd = (fun.returnTypeToken ?? fun.rightParen).range.end;
         const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
 
-        // Explicit `as void` should never return a value
-        if (fun.returnTypeToken?.kind === TokenKind.Void) {
+        // Explicit `as void` or `sub` without return type should never return a value
+        if (
+            fun.returnTypeToken?.kind === TokenKind.Void ||
+            (kind === 'Sub' && !fun.returnTypeToken)
+        ) {
             if (hasReturnedValue) {
                 returnedValues.forEach((r) => {
                     diagnostics.push({
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueUnexpected,
-                        message: 'Function as void should not return a value',
+                        message: `${kind} as void should not return a value`,
                         range: r.stat?.range || funRange,
                         file: file
                     });
@@ -104,7 +101,7 @@ export function createReturnLinter(
         const requiresReturnValue =
             !!fun.returnTypeToken ||
             returnedValues.length > 0 ||
-            (fun.functionType?.kind === TokenKind.Function && returns.length > 0);
+            (kind === 'Function' && returns.length > 0);
         const missingValue = requiresReturnValue && returnedValues.length !== returns.length;
         const missingBranches = !last.returns;
 
@@ -128,7 +125,7 @@ export function createReturnLinter(
                     diagnostics.push({
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueMissing,
-                        message: 'This function should consistently return a value',
+                        message: `${kind} should consistently return a value`,
                         range: r.stat.range || funRange,
                         file: file
                     });
@@ -137,15 +134,7 @@ export function createReturnLinter(
     }
 
     return {
-        openBlock: openBlock,
         closeBlock: closeBlock,
         visitStatement: visitStatement
     };
-}
-
-function branchesCount({ stat: s }: StatementInfo) {
-    if (isIfStatement(s)) {
-        return 1 + s.elseIfs.length + 1;
-    }
-    return 2;
 }

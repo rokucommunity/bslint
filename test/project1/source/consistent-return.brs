@@ -7,9 +7,9 @@ sub error1()
     end if
 end sub
 
-sub error2() as void
+function error2() as void
     return "nope" ' error
-end sub
+end function
 
 sub error3() as string
     return ' error
@@ -65,7 +65,7 @@ sub ok4() as string
     return 2
 end sub
 
-sub ok5()
+sub ok5() as integer
     a = 1
     b = 2
     if a > 0 then

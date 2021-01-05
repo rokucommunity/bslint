@@ -9,12 +9,17 @@ export default class Linter {
     }
 
     async run(config: BsLintConfig) {
-        const options: BsConfig = {
-            ...config,
-            createPackage: false,
-            copyToStaging: false
-        };
-        await this.builder.run(options);
-        return this.builder.getDiagnostics();
+        try {
+            const options: BsConfig = {
+                ...config,
+                createPackage: false,
+                copyToStaging: false
+            };
+            await this.builder.run(options);
+            return this.builder.getDiagnostics();
+        } catch (err) {
+            console.log(err);
+            throw err;
+        }
     }
 }

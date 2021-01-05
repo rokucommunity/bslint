@@ -62,6 +62,32 @@ sub error6()
     print "b"; b ' error
 end sub
 
+sub error7()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if a > 10
+        print "b"; b ' error
+    else if b <> invalid
+        print "b"; b ' ok
+    end if
+end sub
+
+sub error8()
+    a = Rnd(10)
+    if a > 5
+        b = a
+    end if
+    if a > 10
+        print "b"; b ' error
+    else if a > 20
+        print "b"; b ' error
+    else if b <> invalid
+        print "b"; b ' ok
+    end if
+end sub
+
 sub ok1()
     a = Rnd(10)
     if a > 0
@@ -209,4 +235,14 @@ sub ok12()
         return
     end if
     print "b"; b
+end sub
+
+sub ok13()
+    a = Rnd(10)
+    if a > 5
+        b = { x: a }
+    end if
+    if b <> invalid and b.x <> invalid
+        print "b.x"; b.x
+    end if
 end sub

@@ -71,6 +71,7 @@ Default rules:
         "unsafe-path-loop": "error",
         "unsafe-iterators": "error",
         "unreachable-code": "info",
+        "case-sensitivity": "warn",
         "consistent-return": "error"
     }
 }
@@ -102,6 +103,7 @@ Rules:
     end if
     print i ' value could be invalid
     ```
+- `case-sensitivity`: inform of inconsistent variable casing
 - `unreachable-code`: inform of unreachable code
     ```brightscript
     return
