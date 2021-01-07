@@ -6,7 +6,8 @@ enum VarLintError {
     UninitializedVar = 2001,
     UnsafeIteratorVar = 2002,
     UnsafeInitialization = 2003,
-    CaseMismatch = 2004
+    CaseMismatch = 2004,
+    UnusedVariable = 2005
 }
 
 enum ValidationKind {
@@ -46,9 +47,10 @@ export function createVarLinter(
     const deferred = getDeferred(file);
 
     const args: Map<string, VarInfo> = new Map();
+    args.set('m', { name: 'm', range: Range.create(0, 0, 0, 0), isParam: true, isUnsafe: false, isUsed: true });
     fun.parameters.forEach((p) => {
         const name = p.name.text;
-        args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false });
+        args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false, isUsed: false });
     });
 
     function verifyVarCasing(curr: VarInfo, name: { text: string; range: Range }) {
@@ -72,7 +74,8 @@ export function createVarLinter(
             parent: parent,
             isIterator: isIterator,
             metBranches: 1,
-            isUnsafe: false
+            isUnsafe: false,
+            isUsed: false
         };
         if (arg) {
             verifyVarCasing(arg, name);
@@ -103,27 +106,36 @@ export function createVarLinter(
             return arg;
         }
         const { parent, blocks, stack } = state;
-        let found: VarInfo | undefined;
 
         if (parent?.locals?.has(key)) {
-            found = parent.locals.get(key);
-            if (!found?.isUnsafe) {
-                return found;
-            }
+            return parent.locals.get(key);
         }
-
         for (let i = stack.length - 2; i >= 0; i--) {
             const block = blocks.get(stack[i]);
             const local = block?.locals?.get(key);
             if (local) {
-                // if partial, look up higher in the scope for a non-partial
-                if (!local.isUnsafe) {
-                    return local;
-                }
-                found = local;
+                return local;
             }
         }
-        return found;
+        return undefined;
+    }
+
+    // A local was found but it is considered unsafe (e.g. set in an if branch)
+    // Found out whether a parent has this variable set safely
+    function findSafeLocal(name: string): VarInfo | undefined {
+        const key = name.toLowerCase();
+        const { blocks, stack } = state;
+        if (stack.length < 2) {
+            return undefined;
+        }
+        for (let i = stack.length - 2; i >= 0; i--) {
+            const block = blocks.get(stack[i]);
+            const local = block?.locals?.get(key);
+            // if partial, look up higher in the scope for a non-partial
+            if (local && !local.isUnsafe) {
+                return local;
+            }
+        }
     }
 
     function openBlock(block: StatementInfo) {
@@ -172,6 +184,9 @@ export function createVarLinter(
         const { locals, branches, returns } = closed;
         const { parent } = state;
         if (!locals || !parent) {
+            if (locals) {
+                finalize(locals);
+            }
             return;
         }
         // when closing a branched statement, evaluate vars with partial branches covered
@@ -198,7 +213,7 @@ export function createVarLinter(
         } else {
             const isParentIf = isIfStatement(parent.stat);
             locals.forEach((local, name) => {
-                const parentLocal = parent.locals?.get(name);
+                const parentLocal = parent.locals.get(name);
                 // if var is an iterator var, flag as partial
                 if (local.isIterator) {
                     local.isUnsafe = true;
@@ -215,7 +230,7 @@ export function createVarLinter(
                 if (parentLocal?.isIterator) {
                     local.isIterator = parentLocal.isIterator;
                 }
-                parent.locals?.set(name, local);
+                parent.locals.set(name, local);
             });
         }
     }
@@ -236,10 +251,11 @@ export function createVarLinter(
                 });
                 return;
             } else {
+                local.isUsed = true;
                 verifyVarCasing(local, expr.name);
             }
 
-            if (local.isUnsafe) {
+            if (local.isUnsafe && !findSafeLocal(name)) {
                 if (local.isIterator) {
                     diagnostics.push({
                         severity: severity.unsafeIterators,
@@ -289,6 +305,20 @@ export function createVarLinter(
         }
         curr.narrows.push(narrow);
         return true;
+    }
+
+    function finalize(locals: Map<string, VarInfo>) {
+        locals.forEach(local => {
+            if (!local.isUsed && !local.isIterator) {
+                diagnostics.push({
+                    severity: severity.unusedVariable,
+                    code: VarLintError.UnusedVariable,
+                    message: `Variable '${local.name}' is set but value is never used`,
+                    range: local.range,
+                    file: file
+                });
+            }
+        });
     }
 
     return {

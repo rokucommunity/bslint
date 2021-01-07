@@ -30,7 +30,8 @@ describe('lintCodeFlow', () => {
             ...project1,
             files: ['source/uninitialized-vars.brs'],
             rules: {
-                'consistent-return': 'off'
+                'consistent-return': 'off',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -49,7 +50,8 @@ describe('lintCodeFlow', () => {
             files: ['source/assign-all-paths.brs'],
             rules: {
                 'assign-all-paths': 'error',
-                'consistent-return': 'off'
+                'consistent-return': 'off',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -73,7 +75,8 @@ describe('lintCodeFlow', () => {
             files: ['source/class-methods.bs'],
             rules: {
                 'assign-all-paths': 'error',
-                'consistent-return': 'off'
+                'consistent-return': 'off',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -90,7 +93,8 @@ describe('lintCodeFlow', () => {
             files: ['source/unsafe-path-loop.brs'],
             rules: {
                 'unsafe-path-loop': 'error',
-                'consistent-return': 'off'
+                'consistent-return': 'off',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -104,7 +108,8 @@ describe('lintCodeFlow', () => {
             files: ['source/unsafe-iterators.brs'],
             rules: {
                 'unsafe-iterators': 'error',
-                'consistent-return': 'off'
+                'consistent-return': 'off',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -121,7 +126,8 @@ describe('lintCodeFlow', () => {
             files: ['source/unreachable-code.brs'],
             rules: {
                 'unreachable-code': 'error',
-                'consistent-return': 'off'
+                'consistent-return': 'off',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -140,7 +146,8 @@ describe('lintCodeFlow', () => {
             ...project1,
             files: ['source/case-sensitivity.brs'],
             rules: {
-                'case-sensitivity': 'error'
+                'case-sensitivity': 'error',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -160,7 +167,8 @@ describe('lintCodeFlow', () => {
             ...project1,
             files: ['source/consistent-return.brs'],
             rules: {
-                'consistent-return': 'error'
+                'consistent-return': 'error',
+                'unused-variable': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -174,6 +182,22 @@ describe('lintCodeFlow', () => {
             `32:2014:Not all code paths return a value`,
             `39:2014:Not all code paths return a value`,
             `45:2014:Not all code paths return a value`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('implements unused-variable', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/unused-variable.brs'],
+            rules: {
+                'unused-variable': 'error'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `02:2005:Variable 'a' is set but value is never used`,
+            `08:2005:Variable 'a' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
     });
