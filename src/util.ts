@@ -12,6 +12,7 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'unsafe-iterators': 'error',
         'unreachable-code': 'info',
         'case-sensitivity': 'warn',
+        'unused-variable': 'warn',
         // 'no-stop': 'off',
         'consistent-return': 'error'
         // 'only-function': 'off',
@@ -111,6 +112,7 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         unsafePathLoop: ruleToSeverity(rules['unsafe-path-loop']),
         unsafeIterators: ruleToSeverity(rules['unsafe-iterators']),
         caseSensitivity: ruleToSeverity(rules['case-sensitivity']),
+        unusedVariable: ruleToSeverity(rules['unused-variable']),
         consistentReturn: ruleToSeverity(rules['consistent-return'])
     };
 }

@@ -13,6 +13,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'unsafe-iterators'?: RuleSeverity;
         'unreachable-code'?: RuleSeverity;
         'case-sensitivity'?: RuleSeverity;
+        'unused-variable'?: RuleSeverity;
         'consistent-return'?: RuleSeverity;
         // 'no-stop'?: RuleSeverity,
         // 'only-function'?: RuleSeverity,
@@ -30,6 +31,7 @@ export interface BsLintRules {
     unsafeIterators: BsLintSeverity;
     unreachableCode: BsLintSeverity;
     caseSensitivity: BsLintSeverity;
+    unusedVariable: BsLintSeverity;
     consistentReturn: BsLintSeverity;
 }
 

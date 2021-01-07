@@ -72,6 +72,7 @@ Default rules:
         "unsafe-iterators": "error",
         "unreachable-code": "info",
         "case-sensitivity": "warn",
+        "unused-variable": "warn",
         "consistent-return": "error"
     }
 }
@@ -104,6 +105,7 @@ Rules:
     print i ' value could be invalid
     ```
 - `case-sensitivity`: inform of inconsistent variable casing
+- `unused-variable`: inform of variable being set but never used
 - `unreachable-code`: inform of unreachable code
     ```brightscript
     return
@@ -111,4 +113,3 @@ Rules:
     ```
 - `consistent-return`: verifies consistency of `sub`/`function` returned values
   (missing return, missing value, returned value while function is `as void`,...)
-

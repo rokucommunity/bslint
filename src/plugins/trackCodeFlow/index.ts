@@ -31,6 +31,7 @@ export interface VarInfo {
     parent?: StatementInfo;
     metBranches?: number;
     narrowed?: NarrowingInfo;
+    isUsed: boolean;
 }
 
 let lintContext: PluginContext = { severity: getDefaultSeverity() };
