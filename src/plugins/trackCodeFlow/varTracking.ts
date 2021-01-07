@@ -1,5 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, IfStatement, Block, LiteralExpression, isLiteralExpression, isInvalidType } from 'brighterscript';
-import { InvalidType } from 'brighterscript/dist/types/InvalidType';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
 import { BsLintRules } from '../..';
 
@@ -352,8 +351,4 @@ function deferredVarLinter(
                 break;
         }
     });
-}
-
-function isLiteralInvalid(e: any): e is LiteralExpression & { type: InvalidType } {
-    return isLiteralExpression(e) && isInvalidType(e.type);
 }
