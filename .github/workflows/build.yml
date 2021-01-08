@@ -59,4 +59,4 @@ jobs:
           asset_paths: '["./*.tgz"]'
 
       #upload to npm
-      - run: npm publish
+      - run: npm publish --access=public
