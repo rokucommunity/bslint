@@ -3,11 +3,11 @@ import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
 import { BsLintRules } from '../..';
 
 enum VarLintError {
-    UninitializedVar = 2001,
-    UnsafeIteratorVar = 2002,
-    UnsafeInitialization = 2003,
-    CaseMismatch = 2004,
-    UnusedVariable = 2005
+    UninitializedVar = 'LINT1001',
+    UnsafeIteratorVar = 'LINT1002',
+    UnsafeInitialization = 'LINT1003',
+    CaseMismatch = 'LINT1004',
+    UnusedVariable = 'LINT1005'
 }
 
 enum ValidationKind {
@@ -27,14 +27,11 @@ interface ValidationInfo {
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
 function getDeferred(file: BscFile) {
-    if (!deferredValidation.has(file.pathAbsolute)) {
-        deferredValidation.set(file.pathAbsolute, []);
-    }
     return deferredValidation.get(file.pathAbsolute);
 }
 
-export function resetVarContext() {
-    deferredValidation.clear();
+export function resetVarContext(file: BscFile) {
+    deferredValidation.set(file.pathAbsolute, []);
 }
 
 export function createVarLinter(

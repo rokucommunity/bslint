@@ -8,13 +8,13 @@ interface ReturnInfo {
 }
 
 enum ReturnLintError {
-    UnreachableCode = 2011,
-    ReturnValueUnexpected = 2012,
-    ReturnValueExpected = 2013,
-    UnsafeReturnValue = 2014,
-    ReturnValueRequired = 2015,
-    ReturnValueMissing = 2016,
-    LastReturnValueMissing = 2017
+    UnreachableCode = 'LINT2001',
+    ReturnValueUnexpected = 'LINT2002',
+    ReturnValueExpected = 'LINT2003',
+    UnsafeReturnValue = 'LINT2004',
+    ReturnValueRequired = 'LINT2005',
+    ReturnValueMissing = 'LINT2006',
+    LastReturnValueMissing = 'LINT2007'
 }
 
 export function createReturnLinter(

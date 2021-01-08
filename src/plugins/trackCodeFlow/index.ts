@@ -57,7 +57,6 @@ export default pluginInterface;
 function afterProgramCreate(program: Program) {
     program.plugins.add(pluginInterface);
     lintContext = resolveContext(program);
-    resetVarContext();
 }
 
 function afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
@@ -70,6 +69,8 @@ function afterFileValidate(file: BscFile) {
         return;
     }
     const diagnostics: BsDiagnostic[] = [];
+
+    resetVarContext(file);
 
     file.parser.references.functionExpressions.forEach((fun) => {
         const state: LintState = {
