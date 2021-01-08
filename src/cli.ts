@@ -29,7 +29,7 @@ async function run(options: BsLintConfig) {
     const diagnostics = await linter.run(config);
     // if this is a single run (i.e. not watch mode) and there are error diagnostics, return an error code
     const hasError = !!diagnostics.find((x) => x.severity === DiagnosticSeverity.Error);
-    if (config.watch === false && hasError) {
+    if (!config.watch && hasError) {
         process.exit(1);
     }
 }
