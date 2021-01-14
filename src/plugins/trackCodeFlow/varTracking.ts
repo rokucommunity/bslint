@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
 import { BsLintRules } from '../..';
 
@@ -209,6 +209,7 @@ export function createVarLinter(
             parent.locals = locals;
         } else {
             const isParentIf = isIfStatement(parent.stat);
+            const isLoop = isForStatement(closed.stat) || isForEachStatement(closed.stat) || isWhileStatement(closed.stat);
             locals.forEach((local, name) => {
                 const parentLocal = parent.locals.get(name);
                 // if var is an iterator var, flag as partial
@@ -226,6 +227,13 @@ export function createVarLinter(
                 }
                 if (parentLocal?.isIterator) {
                     local.isIterator = parentLocal.isIterator;
+                }
+                if (!local.isUsed && isLoop) {
+                    // avoid false positive if a local set in a loop isn't used
+                    const someParentLocal = findLocal(local.name);
+                    if (someParentLocal?.isUsed) {
+                        local.isUsed = true;
+                    }
                 }
                 parent.locals.set(name, local);
             });
