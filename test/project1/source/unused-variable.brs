@@ -29,3 +29,22 @@ sub ok3()
         print a
     end if
 end sub
+
+sub ok4()
+    a = false
+    b = false
+    list = ["A", "B"]
+    for i = 0 to list.count() - 1
+        if list[i] = "A"
+            a = true
+            if b
+                exit for
+            end if
+        else if list[i] = "B"
+            b = true 'assume used because `b` could have been used in another branch of the loop
+            if a
+                exit for
+            end if
+        end if
+    end for
+end sub
