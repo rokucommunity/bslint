@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { BsDiagnostic } from 'brighterscript';
+import { BsDiagnostic, Program } from 'brighterscript';
 import Linter from '../../Linter';
-import trackCodeFlow from '.';
+import TrackCodeFlow from '.';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
@@ -22,7 +22,13 @@ describe('lintCodeFlow', () => {
 
     beforeEach(() => {
         linter = new Linter();
-        linter.builder.plugins.add(trackCodeFlow);
+        linter.builder.plugins.add({
+            name: 'test',
+            afterProgramCreate: (program: Program) => {
+                const trackCodeFlow = new TrackCodeFlow(program);
+                program.plugins.add(trackCodeFlow);
+            }
+        });
     });
 
     it('detects use of uninitialized vars', async () => {

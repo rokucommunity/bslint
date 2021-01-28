@@ -1,7 +1,7 @@
 import { BsConfig, Program } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 import Linter from './Linter';
-import trackCodeFlow from './plugins/trackCodeFlow';
+import TrackCodeFlow from './plugins/trackCodeFlow';
 
 export type RuleSeverity = 'error' | 'warn' | 'info' | 'off';
 
@@ -37,6 +37,11 @@ export interface BsLintRules {
 
 export { Linter };
 
-export function afterProgramCreate(program: Program) {
-    trackCodeFlow.afterProgramCreate?.(program);
+export default function factory() {
+    return {
+        afterProgramCreate: (program: Program) => {
+            const trackCodeFlow = new TrackCodeFlow(program);
+            program.plugins.add(trackCodeFlow);
+        }
+    };
 }
