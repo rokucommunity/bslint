@@ -81,43 +81,79 @@ Default rules:
         "unreachable-code": "info",
         "case-sensitivity": "warn",
         "unused-variable": "warn",
-        "consistent-return": "error"
+        "consistent-return": "error",
+        "inline-if-style": "then",
+        "block-if-style": "no-then",
+        "condition-style": "no-group"
     }
 }
 ```
 
+### Code flow tracking rules
+
 Valid values for the rules severity are: `error | warn | info | off`.
 
-Rules:
-
 - `assign-all-paths`: a variable is not assigned in all the possible code paths,
-    ```brightscript
+
+    ```vb
     if a then
         b = "something"
     end if
     print b ' error
     ```
+
 - `unsafe-path-loop`: loops are considered as unsafe code paths: assignment in a
+
   loop may not happen.
-    ```brightscript
+
+    ```vb
     for i = 0 to n
         b = "something"
     end if
     print b ' b may not have been assigned
     ```
+
 - `unsafe-iterators`: loop iterator variable should not be used outside a loop
-    ```brightscript
+
+    ```vb
     for i = 0 to n
         b = "something"
     end if
     print i ' value could be invalid
     ```
+
 - `case-sensitivity`: inform of inconsistent variable casing
+
 - `unused-variable`: inform of variable being set but never used
+
 - `unreachable-code`: inform of unreachable code
-    ```brightscript
+    ```vb
     return
     print "is unreachable"
     ```
+
 - `consistent-return`: verifies consistency of `sub`/`function` returned values
   (missing return, missing value, returned value while function is `as void`,...)
+
+### Code style rules
+
+- `inline-if-style`: validation of inline `if/then` statements.
+
+    - `never`: do not allow,
+    - `no-then`: do not use `then` keyword
+    - `then`: always use `then` keyword (**default**)
+    - `off`: do not validate
+
+- `block-if-style`: validation of regular block `if/then` statements.
+
+    - `no-then`: do not use `then` keyword (**default**)
+    - `then`: always use `then` keyword
+    - `off`: do not validate
+
+- `condition-style`: validation of `if` statements conditions:
+  should the condition be wrapped around parenthesis?
+
+    - `no-group`: do not wrap with parenthesis (**default**)
+    - `then`: always wrap with parentheses
+    - `off`: do not validate
+
