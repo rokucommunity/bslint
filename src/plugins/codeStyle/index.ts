@@ -1,15 +1,6 @@
-import { BscFile, BsDiagnostic, createVisitor, DiagnosticSeverity, isBrsFile, isGroupingExpression, Program, WalkMode } from 'brighterscript';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, Program, TokenKind, WalkMode, CancellationTokenSource } from 'brighterscript';
 import { PluginContext, resolveContext } from '../../util';
-
-enum CodeStyleError {
-    InlineIfFound = 'LINT3001',
-    InlineIfThenMissing = 'LINT3002',
-    InlineIfThenFound = 'LINT3003',
-    BlockIfThenMissing = 'LINT3004',
-    BlockIfThenFound = 'LINT3005',
-    ConditionGroupMissing = 'LINT3006',
-    ConditionGroupFound = 'LINT3007',
-}
+import messages from './diagnosticMessages';
 
 export default class CodeStyle {
 
@@ -26,7 +17,7 @@ export default class CodeStyle {
             return;
         }
 
-        const diagnostics: BsDiagnostic[] = [];
+        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { inlineIfStyle, blockIfStyle, conditionStyle } = this.lintContext.severity;
         const validateInlineIf = inlineIfStyle !== 'off';
         const disallowInlineIf = inlineIfStyle === 'never';
@@ -37,53 +28,110 @@ export default class CodeStyle {
         const requireConditionGroup = conditionStyle === 'group';
 
         file.ast.walk(createVisitor({
-            IfStatement: e => {
-                const hasThenToken = !!e.tokens.then;
-                if (!e.isInline && validateBlockIf) {
+            IfStatement: s => {
+                const hasThenToken = !!s.tokens.then;
+                if (!s.isInline && validateBlockIf) {
                     if (hasThenToken !== requireBlockIfThen) {
-                        diagnostics.push({
-                            severity: DiagnosticSeverity.Error,
-                            code: requireBlockIfThen ? CodeStyleError.BlockIfThenMissing : CodeStyleError.BlockIfThenFound,
-                            message: requireBlockIfThen ? `add 'then' keyword` : `remove 'then' keyword`,
-                            range: e.tokens.then?.range ?? e.tokens.if.range,
-                            file: file
-                        });
+                        diagnostics.push(requireBlockIfThen
+                            ? messages.addBlockIfThenKeyword(s.tokens.if.range)
+                            : messages.removeBlockIfThenKeyword(s.tokens.then.range)
+                        );
                     }
-                } else if (e.isInline && validateInlineIf) {
+                } else if (s.isInline && validateInlineIf) {
                     if (disallowInlineIf) {
-                        diagnostics.push({
-                            severity: DiagnosticSeverity.Error,
-                            code: CodeStyleError.InlineIfFound,
-                            message: 'no inline if statement allowed',
-                            range: e.range,
-                            file: file
-                        });
+                        diagnostics.push(messages.inlineIfNotAllowed(s.range));
                     } else if (hasThenToken !== requireInlineIfThen) {
-                        diagnostics.push({
-                            severity: DiagnosticSeverity.Error,
-                            code: requireInlineIfThen ? CodeStyleError.InlineIfThenMissing : CodeStyleError.InlineIfThenFound,
-                            message: requireInlineIfThen ? `add 'then' keyword` : `remove 'then' keyword`,
-                            range: e.tokens.then?.range ?? e.tokens.if.range,
-                            file: file
-                        });
+                        diagnostics.push(requireInlineIfThen
+                            ? messages.addInlineIfThenKeyword(s.tokens.if.range)
+                            : messages.removeInlineIfThenKeyword(s.tokens.then.range)
+                        );
                     }
                 }
 
                 if (validateCondition) {
-                    if (isGroupingExpression(e.condition) !== requireConditionGroup) {
-                        diagnostics.push({
-                            severity: DiagnosticSeverity.Error,
-                            code: requireConditionGroup ? CodeStyleError.ConditionGroupMissing : CodeStyleError.ConditionGroupFound,
-                            message: requireConditionGroup ? 'add parenthesis around condition' : 'remove parenthesis around condition',
-                            range: e.condition.range,
-                            file: file
-                        });
+                    if (isGroupingExpression(s.condition) !== requireConditionGroup) {
+                        diagnostics.push(requireConditionGroup
+                            ? messages.addParenthesisAroundCondition(s.condition.range)
+                            : messages.removeParenthesisAroundCondition(s.condition.range)
+                        );
                     }
                 }
             }
         }), { walkMode: WalkMode.visitStatementsRecursive });
 
-        diagnostics.forEach(diagnostic => (diagnostic.message = `Code style: ${diagnostic.message}`));
-        file.addDiagnostics(diagnostics);
+        // validate function style (`function` or `sub`)
+        for (const fun of file.parser.references.functionExpressions) {
+            this.validateFunctionStyle(file, fun);
+        }
+
+        // append diagnostics
+        file.addDiagnostics(
+            diagnostics.map(diagnostic => ({
+                ...diagnostic,
+                file
+            }))
+        );
+    }
+
+    validateFunctionStyle(file: BscFile, fun: FunctionExpression) {
+        const { namedFunctionStyle, anonFunctionStyle } = this.lintContext.severity;
+        const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
+
+        if (style === 'off') {
+            return;
+        }
+        const kind = fun.functionType.kind;
+
+        if (style === 'no-function') {
+            if (kind === TokenKind.Function) {
+                file.addDiagnostics([{
+                    ...messages.expectedKeyword(fun.functionType.range, 'sub', `(always use 'sub')`),
+                    file
+                }]);
+            }
+            return;
+        }
+
+        if (style === 'no-sub') {
+            if (kind === TokenKind.Sub) {
+                file.addDiagnostics([{
+                    ...messages.expectedKeyword(fun.functionType.range, 'function', `(always use 'function')`),
+                    file
+                }]);
+            }
+            return;
+        }
+
+        // auto
+        const hasReturnedValue = this.getFunctionReturns(fun);
+        if (hasReturnedValue) {
+            if (kind !== TokenKind.Function) {
+                file.addDiagnostics([{
+                    ...messages.expectedKeyword(fun.functionType.range, 'function', `(use 'function' when a value is returned)`),
+                    file
+                }]);
+            }
+        } else if (kind !== TokenKind.Sub) {
+            file.addDiagnostics([{
+                ...messages.expectedKeyword(fun.functionType.range, 'sub', `(use 'sub' when no value is returned)`),
+                file
+            }]);
+        }
+    }
+
+    getFunctionReturns(fun: FunctionExpression) {
+        let hasReturnedValue = false;
+        if (fun.returnTypeToken) {
+            hasReturnedValue = fun.returnTypeToken.kind !== TokenKind.Void;
+        } else {
+            const cancel = new CancellationTokenSource();
+            fun.body.walk(createVisitor({
+                ReturnStatement: s => {
+                    hasReturnedValue = !!s.value;
+                    cancel.cancel();
+                }
+            }), { walkMode: WalkMode.visitStatements, cancel: cancel.token });
+        }
+        return hasReturnedValue;
     }
 }

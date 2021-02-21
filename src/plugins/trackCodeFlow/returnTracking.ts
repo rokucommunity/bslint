@@ -1,6 +1,6 @@
 import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, TokenKind, util, ReturnStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
-import { BsLintRules } from '../..';
+import { PluginContext } from '../../util';
 
 interface ReturnInfo {
     stat: ReturnStatement;
@@ -18,12 +18,13 @@ enum ReturnLintError {
 }
 
 export function createReturnLinter(
-    severity: BsLintRules,
+    lintContext: PluginContext,
     file: BscFile,
     fun: FunctionExpression,
     state: LintState,
     diagnostics: BsDiagnostic[]
 ) {
+    const { severity } = lintContext;
     const returns: ReturnInfo[] = [];
 
     function visitStatement(curr: StatementInfo) {

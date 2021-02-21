@@ -19,7 +19,9 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         // 'only-sub': 'off',
         'inline-if-style': 'then',
         'block-if-style': 'no-then',
-        'condition-style': 'no-group'
+        'condition-style': 'no-group',
+        'named-function-style': 'auto',
+        'anon-function-style': 'auto'
     };
 }
 
@@ -117,7 +119,9 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         consistentReturn: ruleToSeverity(rules['consistent-return']),
         inlineIfStyle: rules['inline-if-style'],
         blockIfStyle: rules['block-if-style'],
-        conditionStyle: rules['condition-style']
+        conditionStyle: rules['condition-style'],
+        namedFunctionStyle: rules['named-function-style'],
+        anonFunctionStyle: rules['anon-function-style']
     };
 }
 

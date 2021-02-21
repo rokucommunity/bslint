@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { BsDiagnostic, Program } from 'brighterscript';
+import { BrsFile, BsDiagnostic, Program } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle from './index';
 
@@ -204,6 +204,144 @@ describe('codeStyle', () => {
             const expected = [
                 `12:LINT3007:Code style: remove parenthesis around condition`,
                 `14:LINT3007:Code style: remove parenthesis around condition`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+    });
+
+    describe('validate function style', () => {
+        it('enforce no-function style', () => {
+            const file = new BrsFile('/path/to/source/temp.brs', 'pkg://source/temp.brs', new Program({}));
+            file.parse(`
+                sub ok()
+                    print "ok"
+                    exec(sub()
+                        print "ok"
+                    end sub)
+                end sub
+                function error()
+                    print "ko"
+                    exec(function()
+                        print "ko"
+                    end function)
+                end function
+                sub exec(x)
+                end sub
+            `);
+            const codeStyle = new CodeStyle(new Program({
+                rules: {
+                    'named-function-style': 'no-function',
+                    'anon-function-style': 'no-function'
+                }
+            } as any));
+
+            for (const fun of file.parser.references.functionExpressions) {
+                codeStyle.validateFunctionStyle(file, fun);
+            }
+            const actual = fmtDiagnostics(file.getDiagnostics());
+            const expected = [
+                `08:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`,
+                `10:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('enforce no-sub style', () => {
+            const file = new BrsFile('/path/to/source/temp.brs', 'pkg://source/temp.brs', new Program({}));
+            file.parse(`
+                function ok()
+                    print "ok"
+                    exec(function()
+                        print "ok"
+                    end function)
+                end function
+                sub error()
+                    print "ko"
+                    exec(sub()
+                        print "ko"
+                    end sub)
+                end sub
+                function exec(x)
+                end function
+            `);
+            const codeStyle = new CodeStyle(new Program({
+                rules: {
+                    'named-function-style': 'no-sub',
+                    'anon-function-style': 'no-sub'
+                }
+            } as any));
+
+            for (const fun of file.parser.references.functionExpressions) {
+                codeStyle.validateFunctionStyle(file, fun);
+            }
+            const actual = fmtDiagnostics(file.getDiagnostics());
+            const expected = [
+                `08:LINT3008:Code style: expected 'function' keyword (always use 'function')`,
+                `10:LINT3008:Code style: expected 'function' keyword (always use 'function')`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('enforce auto style', () => {
+            const file = new BrsFile('/path/to/source/temp.brs', 'pkg://source/temp.brs', new Program({}));
+            file.parse(`
+                sub ok1()
+                    print "ok"
+                    exec(sub()
+                        print "ok"
+                    end sub)
+                end sub
+                function ok2()
+                    exec(function()
+                        return "ok"
+                    end function)
+                    return "ok"
+                end function
+                function ok3() as String
+                    exec(function() as String
+                        return "ok"
+                    end function)
+                    return "ok"
+                end function
+                sub error1() '20
+                    exec(sub()
+                        return "ko"
+                    end sub)
+                    return "ko"
+                end sub
+                function error2()
+                    print "ko"
+                    exec(function()
+                        print "ko"
+                    end function)
+                end function
+                function error3() as void
+                    print "ko"
+                    exec(function() as void
+                        print "ko"
+                    end function)
+                end function
+                sub exec(x)
+                end sub
+            `);
+            const codeStyle = new CodeStyle(new Program({
+                rules: {
+                    'named-function-style': 'auto',
+                    'anon-function-style': 'auto'
+                }
+            } as any));
+
+            for (const fun of file.parser.references.functionExpressions) {
+                codeStyle.validateFunctionStyle(file, fun);
+            }
+            const actual = fmtDiagnostics(file.getDiagnostics());
+            const expected = [
+                `20:LINT3008:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
+                `21:LINT3008:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
+                `26:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
+                `28:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
+                `32:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
+                `34:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`
             ];
             expect(actual).deep.equal(expected);
         });
