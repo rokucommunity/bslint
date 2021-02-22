@@ -74,14 +74,37 @@ export default class CodeStyle {
     }
 
     validateFunctionStyle(file: BscFile, fun: FunctionExpression) {
-        const { namedFunctionStyle, anonFunctionStyle } = this.lintContext.severity;
+        const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = this.lintContext.severity;
         const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
+        const kind = fun.functionType.kind;
+        const hasReturnedValue = style === 'auto' || typeAnnotations !== 'off' ? this.getFunctionReturns(fun) : false;
 
+        // type annotations
+        if (typeAnnotations !== 'off') {
+            if (typeAnnotations !== 'args') {
+                if (hasReturnedValue && !fun.returnTypeToken) {
+                    file.addDiagnostics([{
+                        ...messages.expectedReturnTypeAnnotation(fun.range),
+                        file
+                    }]);
+                }
+            }
+            if (typeAnnotations !== 'return') {
+                const missingAnnotation = fun.parameters.find(arg => !arg.typeToken);
+                if (missingAnnotation) {
+                    // only report 1st missing arg annotation to avoid error overload
+                    file.addDiagnostics([{
+                        ...messages.expectedTypeAnnotation(missingAnnotation.range),
+                        file
+                    }]);
+                }
+            }
+        }
+
+        // keyword style
         if (style === 'off') {
             return;
         }
-        const kind = fun.functionType.kind;
-
         if (style === 'no-function') {
             if (kind === TokenKind.Function) {
                 file.addDiagnostics([{
@@ -103,7 +126,6 @@ export default class CodeStyle {
         }
 
         // auto
-        const hasReturnedValue = this.getFunctionReturns(fun);
         if (hasReturnedValue) {
             if (kind !== TokenKind.Function) {
                 file.addDiagnostics([{

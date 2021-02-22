@@ -9,10 +9,13 @@ enum CodeStyleError {
     ConditionGroupMissing = 'LINT3006',
     ConditionGroupFound = 'LINT3007',
     SubKeywordExpected = 'LINT3008',
-    FunctionKeywordExpected = 'LINT3009'
+    FunctionKeywordExpected = 'LINT3009',
+    ReturnTypeAnnotation = 'LINT3010',
+    TypeAnnotation = 'LINT3011',
 }
 
 const CS = 'Code style:';
+const ST = 'Strictness:';
 
 const messages = {
     addBlockIfThenKeyword: (range: Range) => ({
@@ -61,6 +64,18 @@ const messages = {
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.SubKeywordExpected,
         message: `${CS} expected '${keyword}' keyword ${reason}`,
+        range
+    }),
+    expectedReturnTypeAnnotation: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.ReturnTypeAnnotation,
+        message: `${ST} function should declare the return type`,
+        range
+    }),
+    expectedTypeAnnotation: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.TypeAnnotation,
+        message: `${ST} type annotation required`,
         range
     })
 };

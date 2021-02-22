@@ -9,6 +9,7 @@ export type RuleInlineIf = 'never' | 'no-then' | 'then' | 'off';
 export type RuleBlockIf = 'no-then' | 'then' | 'off';
 export type RuleCondition = 'no-group' | 'group' | 'off';
 export type RuleFunction = 'no-function' | 'no-sub' | 'auto' | 'off';
+export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off';
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
     lintConfig?: string;
@@ -28,6 +29,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'condition-style'?: RuleCondition;
         'named-function-style'?: RuleFunction;
         'anon-function-style'?: RuleFunction;
+        'type-annotations'?: RuleTypeAnnotations;
     };
 };
 
@@ -46,6 +48,7 @@ export interface BsLintRules {
     conditionStyle: RuleCondition;
     namedFunctionStyle: RuleFunction;
     anonFunctionStyle: RuleFunction;
+    typeAnnotations: RuleTypeAnnotations;
 }
 
 export { Linter };
