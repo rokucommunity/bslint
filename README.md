@@ -115,7 +115,7 @@ Default rules:
   should the condition be wrapped around parenthesis?
 
     - `no-group`: do not wrap with parenthesis (**default**)
-    - `then`: always wrap with parentheses
+    - `group`: always wrap with parentheses
     - `off`: do not validate
 
 - `named-function-style`, `anon-function-style`: validation of function style (`function/sub`)
@@ -127,7 +127,8 @@ Default rules:
 
 ### Strictness rules
 
-- `type-annotations`: validation of presence of `as` type annotations, for function arguments and return values.
+- `type-annotations`: validation of presence of `as` type annotations, for function
+  arguments and return values.
 
     - `all`: enforce both arguments and return type annotations
     - `return`: enforce return type annotations
@@ -148,7 +149,6 @@ Valid values for the rules severity are: `error | warn | info | off`.
     ```
 
 - `unsafe-path-loop`: loops are considered as unsafe code paths: assignment in a
-
   loop may not happen.
 
     ```vb
