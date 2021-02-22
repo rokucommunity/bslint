@@ -80,8 +80,8 @@ export default class TrackCodeFlow {
             let curr: StatementInfo = {
                 stat: new EmptyStatement()
             };
-            const returnLinter = createReturnLinter(this.lintContext.severity, file, fun, state, diagnostics);
-            const varLinter = createVarLinter(this.lintContext.severity, file, fun, state, diagnostics);
+            const returnLinter = createReturnLinter(this.lintContext, file, fun, state, diagnostics);
+            const varLinter = createVarLinter(this.lintContext, file, fun, state, diagnostics);
 
             // 1. close
             // 2. visit -> curr

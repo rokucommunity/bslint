@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { BsDiagnostic, Program } from 'brighterscript';
 import Linter from '../../Linter';
-import TrackCodeFlow from '.';
+import TrackCodeFlow from './index';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
@@ -14,7 +14,7 @@ function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
         .map((d) => `${pad(d.range.start.line + 1)}:${d.code}:${d.message}`);
 }
 
-describe('lintCodeFlow', () => {
+describe('trackCodeFlow', () => {
     let linter: Linter;
     const project1 = {
         rootDir: 'test/project1'

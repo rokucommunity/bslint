@@ -1,9 +1,15 @@
 import { BsConfig, Program } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 import Linter from './Linter';
+import CodeStyle from './plugins/codeStyle';
 import TrackCodeFlow from './plugins/trackCodeFlow';
 
 export type RuleSeverity = 'error' | 'warn' | 'info' | 'off';
+export type RuleInlineIf = 'never' | 'no-then' | 'then' | 'off';
+export type RuleBlockIf = 'no-then' | 'then' | 'off';
+export type RuleCondition = 'no-group' | 'group' | 'off';
+export type RuleFunction = 'no-function' | 'no-sub' | 'auto' | 'off';
+export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off';
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
     lintConfig?: string;
@@ -18,8 +24,12 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         // 'no-stop'?: RuleSeverity,
         // 'only-function'?: RuleSeverity,
         // 'only-sub'?: RuleSeverity,
-        // 'no-single-line-if'?: RuleSeverity,
-        // 'no-optional-then'?: RuleSeverity,
+        'inline-if-style'?: RuleInlineIf;
+        'block-if-style'?: RuleBlockIf;
+        'condition-style'?: RuleCondition;
+        'named-function-style'?: RuleFunction;
+        'anon-function-style'?: RuleFunction;
+        'type-annotations'?: RuleTypeAnnotations;
     };
 };
 
@@ -33,6 +43,12 @@ export interface BsLintRules {
     caseSensitivity: BsLintSeverity;
     unusedVariable: BsLintSeverity;
     consistentReturn: BsLintSeverity;
+    inlineIfStyle: RuleInlineIf;
+    blockIfStyle: RuleBlockIf;
+    conditionStyle: RuleCondition;
+    namedFunctionStyle: RuleFunction;
+    anonFunctionStyle: RuleFunction;
+    typeAnnotations: RuleTypeAnnotations;
 }
 
 export { Linter };
@@ -42,6 +58,9 @@ export default function factory() {
         afterProgramCreate: (program: Program) => {
             const trackCodeFlow = new TrackCodeFlow(program);
             program.plugins.add(trackCodeFlow);
+
+            const codeStyle = new CodeStyle(program);
+            program.plugins.add(codeStyle);
         }
     };
 }

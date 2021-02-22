@@ -14,11 +14,15 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'case-sensitivity': 'warn',
         'unused-variable': 'warn',
         // 'no-stop': 'off',
-        'consistent-return': 'error'
+        'consistent-return': 'error',
         // 'only-function': 'off',
         // 'only-sub': 'off',
-        // 'no-single-line-if': 'off',
-        // 'no-optional-then': 'off'
+        'inline-if-style': 'then',
+        'block-if-style': 'no-then',
+        'condition-style': 'no-group',
+        'named-function-style': 'auto',
+        'anon-function-style': 'auto',
+        'type-annotations': 'off'
     };
 }
 
@@ -113,7 +117,13 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         unsafeIterators: ruleToSeverity(rules['unsafe-iterators']),
         caseSensitivity: ruleToSeverity(rules['case-sensitivity']),
         unusedVariable: ruleToSeverity(rules['unused-variable']),
-        consistentReturn: ruleToSeverity(rules['consistent-return'])
+        consistentReturn: ruleToSeverity(rules['consistent-return']),
+        inlineIfStyle: rules['inline-if-style'],
+        blockIfStyle: rules['block-if-style'],
+        conditionStyle: rules['condition-style'],
+        namedFunctionStyle: rules['named-function-style'],
+        anonFunctionStyle: rules['anon-function-style'],
+        typeAnnotations: rules['type-annotations']
     };
 }
 

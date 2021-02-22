@@ -1,6 +1,6 @@
 import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
-import { BsLintRules } from '../..';
+import { PluginContext } from '../../util';
 
 enum VarLintError {
     UninitializedVar = 'LINT1001',
@@ -35,12 +35,13 @@ export function resetVarContext(file: BscFile) {
 }
 
 export function createVarLinter(
-    severity: BsLintRules,
+    lintContext: PluginContext,
     file: BscFile,
     fun: FunctionExpression,
     state: LintState,
     diagnostics: BsDiagnostic[]
 ) {
+    const { severity } = lintContext;
     const deferred = getDeferred(file);
 
     const args: Map<string, VarInfo> = new Map();
