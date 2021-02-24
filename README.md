@@ -2,7 +2,7 @@
 
 [![build](https://img.shields.io/github/workflow/status/rokucommunity/bslint/build.svg?logo=github)](https://github.com/rokucommunity/bslint/actions?query=workflow%3Abuild)
 [![Coverage Status](https://coveralls.io/repos/github/rokucommunity/bslint/badge.svg?branch=master)](https://coveralls.io/github/rokucommunity/bslint?branch=master)
-[![NPM Version](https://img.shields.io/npm/v/@rokucommunity/bslint.svg)](https://npmjs.org/package/bslint)
+[![NPM Version](https://img.shields.io/npm/v/@rokucommunity/bslint.svg)](https://www.npmjs.com/package/@rokucommunity/bslint)
 
 [brighterscript](https://github.com/rokucommunity/brighterscript) is a Roku
 BrightScript compiler featuring many diagnostics out of the box: syntax check,
