@@ -40,7 +40,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'off',
                     'block-if-style': 'off',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -55,7 +56,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'never',
                     'block-if-style': 'off',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -73,7 +75,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'then',
                     'block-if-style': 'off',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -90,7 +93,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'no-then',
                     'block-if-style': 'off',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -110,7 +114,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'off',
                     'block-if-style': 'off',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -125,7 +130,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'off',
                     'block-if-style': 'then',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -143,7 +149,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'off',
                     'block-if-style': 'no-then',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -164,7 +171,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'off',
                     'block-if-style': 'off',
-                    'condition-style': 'off'
+                    'condition-style': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -179,7 +187,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'off',
                     'block-if-style': 'off',
-                    'condition-style': 'group'
+                    'condition-style': 'group',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -197,7 +206,8 @@ describe('codeStyle', () => {
                 rules: {
                     'inline-if-style': 'off',
                     'block-if-style': 'off',
-                    'condition-style': 'no-group'
+                    'condition-style': 'no-group',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -216,7 +226,8 @@ describe('codeStyle', () => {
                 files: ['source/no-function-style.brs'],
                 rules: {
                     'named-function-style': 'no-function',
-                    'anon-function-style': 'no-function'
+                    'anon-function-style': 'no-function',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -233,7 +244,8 @@ describe('codeStyle', () => {
                 files: ['source/no-sub-style.brs'],
                 rules: {
                     'named-function-style': 'no-sub',
-                    'anon-function-style': 'no-sub'
+                    'anon-function-style': 'no-sub',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -250,7 +262,8 @@ describe('codeStyle', () => {
                 files: ['source/auto-function-style.brs'],
                 rules: {
                     'named-function-style': 'auto',
-                    'anon-function-style': 'auto'
+                    'anon-function-style': 'auto',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -274,7 +287,8 @@ describe('codeStyle', () => {
                 rules: {
                     'named-function-style': 'off',
                     'anon-function-style': 'off',
-                    'type-annotations': 'off'
+                    'type-annotations': 'off',
+                    'no-print': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -290,7 +304,8 @@ describe('codeStyle', () => {
             rules: {
                 'named-function-style': 'off',
                 'anon-function-style': 'off',
-                'type-annotations': 'return'
+                'type-annotations': 'return',
+                'no-print': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -307,7 +322,8 @@ describe('codeStyle', () => {
             rules: {
                 'named-function-style': 'off',
                 'anon-function-style': 'off',
-                'type-annotations': 'args'
+                'type-annotations': 'args',
+                'no-print': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -325,7 +341,8 @@ describe('codeStyle', () => {
             rules: {
                 'named-function-style': 'off',
                 'anon-function-style': 'off',
-                'type-annotations': 'all'
+                'type-annotations': 'all',
+                'no-print': 'off'
             }
         });
         const actual = fmtDiagnostics(diagnostics);
@@ -333,6 +350,23 @@ describe('codeStyle', () => {
             `01:LINT3011:Strictness: type annotation required`,
             `05:LINT3010:Strictness: function should declare the return type`,
             `05:LINT3011:Strictness: type annotation required`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
+
+    it('enforce no print', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/no-print.brs'],
+            rules: {
+                'no-print': 'error'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `02:LINT3012:Code style: Avoid using direct Print statements`,
+            `03:LINT3012:Code style: Avoid using direct Print statements`
         ];
         expect(actual).deep.equal(expected);
     });

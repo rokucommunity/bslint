@@ -18,7 +18,7 @@ export default class CodeStyle {
         }
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
-        const { inlineIfStyle, blockIfStyle, conditionStyle } = this.lintContext.severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint } = this.lintContext.severity;
         const validateInlineIf = inlineIfStyle !== 'off';
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
@@ -56,6 +56,9 @@ export default class CodeStyle {
                         );
                     }
                 }
+            },
+            PrintStatement: s => {
+                diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
             }
         }), { walkMode: WalkMode.visitStatementsRecursive });
 
