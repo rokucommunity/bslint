@@ -12,6 +12,7 @@ enum CodeStyleError {
     FunctionKeywordExpected = 'LINT3009',
     ReturnTypeAnnotation = 'LINT3010',
     TypeAnnotation = 'LINT3011',
+    NoPrint = 'LINT3012'
 }
 
 const CS = 'Code style:';
@@ -76,6 +77,12 @@ const messages = {
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.TypeAnnotation,
         message: `${ST} type annotation required`,
+        range
+    }),
+    noPrint: (range: Range, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.NoPrint,
+        message: `${CS} Avoid using direct Print statements`,
         range
     })
 };

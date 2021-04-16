@@ -30,6 +30,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'named-function-style'?: RuleFunction;
         'anon-function-style'?: RuleFunction;
         'type-annotations'?: RuleTypeAnnotations;
+        'no-print'?: RuleSeverity;
     };
 };
 
@@ -49,6 +50,7 @@ export interface BsLintRules {
     namedFunctionStyle: RuleFunction;
     anonFunctionStyle: RuleFunction;
     typeAnnotations: RuleTypeAnnotations;
+    noPrint: BsLintSeverity;
 }
 
 export { Linter };

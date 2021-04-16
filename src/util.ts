@@ -22,7 +22,8 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'condition-style': 'no-group',
         'named-function-style': 'auto',
         'anon-function-style': 'auto',
-        'type-annotations': 'off'
+        'type-annotations': 'off',
+        'no-print': 'warn'
     };
 }
 
@@ -123,7 +124,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         conditionStyle: rules['condition-style'],
         namedFunctionStyle: rules['named-function-style'],
         anonFunctionStyle: rules['anon-function-style'],
-        typeAnnotations: rules['type-annotations']
+        typeAnnotations: rules['type-annotations'],
+        noPrint: ruleToSeverity(rules['no-print'])
     };
 }
 
