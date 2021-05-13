@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -50,6 +50,10 @@ export function createVarLinter(
         const name = p.name.text;
         args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false, isUsed: false });
     });
+
+    if (isClassMethodStatement(fun.functionStatement)) {
+        args.set('super', { name: 'super', range: null, isParam: true, isUnsafe: false, isUsed: true });
+    }
 
     function verifyVarCasing(curr: VarInfo, name: { text: string; range: Range }) {
         if (curr && curr.name !== name.text) {
@@ -353,9 +357,12 @@ function deferredVarLinter(
     deferred: ValidationInfo[],
     diagnostics: BsDiagnostic[]
 ) {
+    const namespaces = new Set<string>();
+    scope.getAllNamespaceStatements().forEach(ns => namespaces.add(ns.name.toLowerCase()));
+
     deferred.forEach(({ kind, name, local, range }) => {
         const key = name?.toLowerCase();
-        const hasCallable = key ? !!callables.has(key) : false;
+        const hasCallable = key ? callables.has(key) || namespaces.has(key) : false;
         switch (kind) {
             case ValidationKind.UninitializedVar:
                 if (!hasCallable) {
