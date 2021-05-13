@@ -82,6 +82,7 @@ Default rules:
         "condition-style": "no-group",
         "named-function-style": "auto",
         "anon-function-style": "auto",
+        "no-print": "off",
 
         "type-annotations": "off",
 
@@ -124,6 +125,8 @@ Default rules:
     - `no-sub`: always use `function`
     - `auto`: use `sub` for `Void` functions, otherwise use `function` (**default**)
     - `off`: no not validate
+
+- `no-print`: prevent usage of `print` statements in code (`error | warn | info | off`)
 
 ### Strictness rules
 

@@ -23,7 +23,7 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'named-function-style': 'auto',
         'anon-function-style': 'auto',
         'type-annotations': 'off',
-        'no-print': 'warn'
+        'no-print': 'off'
     };
 }
 
