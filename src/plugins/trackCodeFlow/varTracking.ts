@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -357,12 +357,26 @@ function deferredVarLinter(
     deferred: ValidationInfo[],
     diagnostics: BsDiagnostic[]
 ) {
-    const namespaces = new Set<string>();
-    scope.getAllNamespaceStatements().forEach(ns => namespaces.add(ns.name.toLowerCase()));
+    // lookups for namespaces and classes
+    const toplevel = new Set<string>();
+    scope.getAllNamespaceStatements().forEach(ns => {
+        toplevel.add(ns.name.toLowerCase());
+    });
+    scope.getClassMap().forEach(cls => {
+        const name = cls.item.name.text.toLowerCase();
+        if (!cls.item.namespaceName) {
+            toplevel.add(name);
+        }
+    });
+    if (isBrsFile(file)) {
+        file.parser.references.classStatements.forEach(cls => {
+            toplevel.add(cls.name.text.toLowerCase());
+        });
+    }
 
     deferred.forEach(({ kind, name, local, range }) => {
         const key = name?.toLowerCase();
-        const hasCallable = key ? callables.has(key) || namespaces.has(key) : false;
+        const hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
         switch (kind) {
             case ValidationKind.UninitializedVar:
                 if (!hasCallable) {

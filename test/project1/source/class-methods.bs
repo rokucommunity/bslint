@@ -47,4 +47,19 @@ function ping()
     return "pong"
 end function
 
+function ok2()
+    a = new Bar()
+    b = new foo.Baz()
+    c = new Glob()
+end function
+
 end namespace
+
+function error3()
+    a = new Bar() 'error
+    b = new foo.Baz()
+    c = new Glob()
+end function
+
+class Glob
+end class
