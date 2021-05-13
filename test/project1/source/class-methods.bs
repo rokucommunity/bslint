@@ -32,4 +32,19 @@ class Bar
 
 end class
 
+class Baz extends Bar
+    sub new()
+        super()
+        print foo.ping()
+    end sub
+
+    override sub ok1(x)
+        super.ok1(x)
+    end sub
+end class
+
+function ping()
+    return "pong"
+end function
+
 end namespace
