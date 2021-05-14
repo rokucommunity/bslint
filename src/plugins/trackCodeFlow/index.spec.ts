@@ -89,7 +89,7 @@ describe('trackCodeFlow', () => {
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
             `27:LINT1003:Not all the code paths assign 'b'`,
-            `63:1029:Class 'Bar' could not be found when this file is included in scope 'source'`
+            `64:1029:Class 'Bar' could not be found when this file is included in scope 'source'`
         ];
         expect(actual).deep.equal(expected);
     });

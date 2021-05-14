@@ -55,6 +55,7 @@ namespace test.foo
         a = new Bar()
         b = new test.foo.Baz()
         c = new Glob(test.ping())
+        test.foo.ping()
     end function
 
 end namespace
@@ -63,6 +64,7 @@ function error3()
     a = new Bar() 'error
     b = new test.foo.Baz()
     c = new Glob(test.foo.ping())
+    test.foo.ping()
 end function
 
 class Glob
