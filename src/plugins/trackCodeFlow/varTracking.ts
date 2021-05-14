@@ -360,7 +360,7 @@ function deferredVarLinter(
     // lookups for namespaces and classes
     const toplevel = new Set<string>();
     scope.getAllNamespaceStatements().forEach(ns => {
-        toplevel.add(ns.name.toLowerCase());
+        toplevel.add(ns.name.toLowerCase().split('.')[0]); // keep root of namespace
     });
     scope.getClassMap().forEach(cls => {
         const name = cls.item.name.text.toLowerCase();

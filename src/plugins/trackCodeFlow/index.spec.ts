@@ -87,9 +87,9 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `10:LINT1003:Not all the code paths assign 'b'`,
-            `19:LINT1003:Not all the code paths assign 'b'`,
-            `59:1029:Class 'Bar' could not be found when this file is included in scope 'source'`
+            `18:LINT1003:Not all the code paths assign 'b'`,
+            `27:LINT1003:Not all the code paths assign 'b'`,
+            `63:1029:Class 'Bar' could not be found when this file is included in scope 'source'`
         ];
         expect(actual).deep.equal(expected);
     });

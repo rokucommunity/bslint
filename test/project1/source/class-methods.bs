@@ -1,65 +1,72 @@
-namespace foo
+namespace test
 
-class Bar
+    function ping()
+        return "pong"
+    end function
 
-    sub error1()
-        a = Rnd(10)
-        if a > 0
-            b = 0
-        end if
-        print "b"; b 'error
-    end sub
+end namespace
 
-    sub error2()
-        m.ok1(sub()
+namespace test.foo
+
+    class Bar
+
+        sub error1()
             a = Rnd(10)
             if a > 0
                 b = 0
             end if
             print "b"; b 'error
-        end sub)
-    end sub
+        end sub
 
-    sub ok1(_)
-        a = Rnd(10)
-        if a > 0
-            b = 0
-        else
-            b = 1
-        end if
-        print "b"; b
-    end sub
+        sub error2()
+            m.ok1(sub()
+                a = Rnd(10)
+                if a > 0
+                    b = 0
+                end if
+                print "b"; b 'error
+            end sub)
+        end sub
 
-end class
+        sub ok1(_)
+            a = Rnd(10)
+            if a > 0
+                b = 0
+            else
+                b = 1
+            end if
+            print "b"; b
+        end sub
 
-class Baz extends Bar
-    sub new()
-        super()
-        print foo.ping()
-    end sub
+    end class
 
-    override sub ok1(x)
-        super.ok1(x)
-    end sub
-end class
+    class Baz extends Bar
+        sub new()
+            super()
+            print test.ping()
+        end sub
 
-function ping()
-    return "pong"
-end function
+        override sub ok1(x)
+            super.ok1(x)
+        end sub
+    end class
 
-function ok2()
-    a = new Bar()
-    b = new foo.Baz()
-    c = new Glob()
-end function
+    function ok2()
+        a = new Bar()
+        b = new test.foo.Baz()
+        c = new Glob(test.ping())
+    end function
 
 end namespace
 
 function error3()
     a = new Bar() 'error
-    b = new foo.Baz()
-    c = new Glob()
+    b = new test.foo.Baz()
+    c = new Glob(test.foo.ping())
 end function
 
 class Glob
+    function new(x)
+        print x
+    end function
 end class
