@@ -55,12 +55,12 @@ export default class TrackCodeFlow {
     }
 
     afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
-        const diagnostics = runDeferredValidation(scope, files, callables);
+        const diagnostics = runDeferredValidation(this.lintContext, scope, files, callables);
         scope.addDiagnostics(diagnostics);
     }
 
     afterFileValidate(file: BscFile) {
-        if (!isBrsFile(file)) {
+        if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
         const diagnostics: BsDiagnostic[] = [];

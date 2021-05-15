@@ -31,10 +31,12 @@
   "dependencies": {
     "brighterscript": "^0.38.0",
     "jsonc-parser": "^2.3.0",
+    "minimatch": "^3.0.4",
     "yargs": "^15.4.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",
+    "@types/minimatch": "^3.0.4",
     "@types/mocha": "^8.0.3",
     "@types/mock-fs": "^4.10.0",
     "@types/node": "^14.6.0",

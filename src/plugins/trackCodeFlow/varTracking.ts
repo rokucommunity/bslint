@@ -339,12 +339,19 @@ export function createVarLinter(
     };
 }
 
-export function runDeferredValidation(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
+export function runDeferredValidation(
+    lintContext: PluginContext,
+    scope: Scope,
+    files: BscFile[],
+    callables: CallableContainerMap
+) {
+    const globals = lintContext.globals;
+
     const diagnostics: BsDiagnostic[] = [];
     files.forEach((file) => {
         const deferred = deferredValidation.get(file.pathAbsolute);
         if (deferred) {
-            deferredVarLinter(scope, file, callables, deferred, diagnostics);
+            deferredVarLinter(scope, file, callables, globals, deferred, diagnostics);
         }
     });
     return diagnostics;
@@ -354,11 +361,12 @@ function deferredVarLinter(
     scope: Scope,
     file: BscFile,
     callables: CallableContainerMap,
+    globals: string[],
     deferred: ValidationInfo[],
     diagnostics: BsDiagnostic[]
 ) {
     // lookups for namespaces and classes
-    const toplevel = new Set<string>();
+    const toplevel = new Set<string>(globals);
     scope.getAllNamespaceStatements().forEach(ns => {
         toplevel.add(ns.name.toLowerCase().split('.')[0]); // keep root of namespace
     });

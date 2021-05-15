@@ -1,8 +1,9 @@
-import { normalizeConfig, getDefaultRules, mergeConfigs } from './util';
+import { normalizeConfig, getDefaultRules, mergeConfigs, resolveContext } from './util';
 import { parse } from 'jsonc-parser';
 import { readFileSync } from 'fs';
 import { expect } from 'chai';
 import { BsLintConfig } from './index';
+import { BrsFile, Program } from 'brighterscript';
 
 describe('normalizeConfig', () => {
     const cwd = process.cwd();
@@ -66,5 +67,42 @@ describe('normalizeConfig', () => {
         const actual = normalizeConfig(options);
         expect(actual.rules['unreachable-code']).equals('error');
         expect(actual.rules['consistent-return']).equals('off');
+    });
+});
+
+describe('resolveContext', () => {
+    it('should support no ignores', () => {
+        const program = new Program({});
+        const context = resolveContext(program);
+        const file = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
+
+        expect(context.ignores(null)).equals(true);
+        expect(context.ignores(file)).equals(false);
+    });
+
+    it('should allow ignoring specific files', () => {
+        const program = new Program({
+            ignores: ['unused-variable.brs']
+        } as any);
+        const context = resolveContext(program);
+        const file1 = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
+        const file2 = new BrsFile('test/project1/source/block-if.brs', 'pkg://block-if.brs', program);
+
+        expect(context.ignores(null)).equals(true);
+        expect(context.ignores(file1)).equals(true);
+        expect(context.ignores(file2)).equals(false);
+    });
+
+    it('should allow ignoring globbed files', () => {
+        const program = new Program({
+            ignores: ['source/**/unused*']
+        } as any);
+        const context = resolveContext(program);
+        const file1 = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
+        const file2 = new BrsFile('test/project1/source/block-if.brs', 'pkg://block-if.brs', program);
+
+        expect(context.ignores(null)).equals(true);
+        expect(context.ignores(file1)).equals(true);
+        expect(context.ignores(file2)).equals(false);
     });
 });

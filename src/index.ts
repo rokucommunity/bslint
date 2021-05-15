@@ -32,6 +32,8 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'type-annotations'?: RuleTypeAnnotations;
         'no-print'?: RuleSeverity;
     };
+    globals?: string[];
+    ignores?: string[];
 };
 
 export type BsLintSeverity = DiagnosticSeverity;
