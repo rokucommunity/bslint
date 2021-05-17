@@ -406,7 +406,10 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
 
+            expect(lintContext.pendingFixes.size).equals(1);
             await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-nofun.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
@@ -427,7 +430,10 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
 
+            expect(lintContext.pendingFixes.size).equals(1);
             await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-nosub.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
@@ -450,7 +456,10 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
 
+            expect(lintContext.pendingFixes.size).equals(1);
             await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-nothen.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
@@ -473,7 +482,10 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
 
+            expect(lintContext.pendingFixes.size).equals(1);
             await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-then.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
@@ -496,7 +508,10 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
 
+            expect(lintContext.pendingFixes.size).equals(1);
             await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-nogroup.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
@@ -519,7 +534,10 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
 
+            expect(lintContext.pendingFixes.size).equals(1);
             await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-group.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
