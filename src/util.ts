@@ -5,6 +5,7 @@ import { readFileSync, existsSync } from 'fs';
 import * as path from 'path';
 import { Program, BscFile } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
+import { applyFixes, TextEdit } from './textEdit';
 
 export function getDefaultRules(): BsLintConfig['rules'] {
     return {
@@ -93,32 +94,43 @@ function tryLoadConfig(filename: string): BsLintConfig | undefined {
 }
 
 export interface PluginContext {
-    program?: Program;
-    severity: BsLintRules;
+    program: Readonly<Program>;
+    severity: Readonly<BsLintRules>;
     globals: string[];
     ignores: (file: BscFile) => boolean;
+    fix: Readonly<boolean>;
+    addFixes: (file: BscFile, changes: TextEdit[]) => void;
 }
 
-let context: PluginContext;
+export interface PluginWrapperContext extends PluginContext {
+    pendingFixes: Map<string, TextEdit[]>;
+    applyFixes: () => Promise<void>;
+}
 
-export function resolveContext(program: Program) {
-    if (context?.program === program) {
-        return context;
-    }
-    const { rules, globals, ignores } = normalizeConfig(program.options);
+export function createContext(program: Program): PluginWrapperContext {
+    const { rules, fix, globals, ignores } = normalizeConfig(program.options);
     const ignorePatterns = (ignores || []).map(pattern => {
         return pattern.startsWith('**/') ? pattern : '**/' + pattern;
     });
-
-    context = {
+    const pendingFixes = new Map<string, TextEdit[]>();
+    return {
         program: program,
         severity: rulesToSeverity(rules),
-        globals: globals || [],
+        globals,
         ignores: (file: BscFile) => {
             return !file || ignorePatterns.some(pattern => minimatch(file.pathAbsolute, pattern));
-        }
+        },
+        fix,
+        addFixes: (file: BscFile, changes: TextEdit[]) => {
+            if (!pendingFixes.has(file.pathAbsolute)) {
+                pendingFixes.set(file.pathAbsolute, changes);
+            } else {
+                pendingFixes.get(file.pathAbsolute).push(...changes);
+            }
+        },
+        applyFixes: () => fix && applyFixes(pendingFixes),
+        pendingFixes
     };
-    return context;
 }
 
 function rulesToSeverity(rules: BsLintConfig['rules']) {

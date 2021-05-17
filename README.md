@@ -153,7 +153,7 @@ Default rules:
 
     - `all`: enforce both arguments and return type annotations
     - `return`: enforce return type annotations
-    - `args`: engorce arguments type annotations
+    - `args`: enforce arguments type annotations
     - `off`: do not validate (**default**)
 
 ### Code flow rules

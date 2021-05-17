@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { BsDiagnostic, Program } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
+import { createContext } from '../../util';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
@@ -25,7 +26,8 @@ describe('trackCodeFlow', () => {
         linter.builder.plugins.add({
             name: 'test',
             afterProgramCreate: (program: Program) => {
-                const trackCodeFlow = new TrackCodeFlow(program);
+                const context = createContext(program);
+                const trackCodeFlow = new TrackCodeFlow(context);
                 program.plugins.add(trackCodeFlow);
             }
         });

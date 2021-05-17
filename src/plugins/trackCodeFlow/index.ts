@@ -1,7 +1,7 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, Program, BrsFile } from 'brighterscript';
+import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile } from 'brighterscript';
 import { Statement, EmptyStatement, FunctionExpression } from 'brighterscript/dist/parser';
 import { isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode } from 'brighterscript/dist/astUtils';
-import { PluginContext, resolveContext } from '../../util';
+import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
 
@@ -48,10 +48,7 @@ export default class TrackCodeFlow {
 
     name: 'trackCodeFlow';
 
-    lintContext: PluginContext;
-
-    constructor(program: Program) {
-        this.lintContext = resolveContext(program);
+    constructor(private lintContext: PluginContext) {
     }
 
     afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {

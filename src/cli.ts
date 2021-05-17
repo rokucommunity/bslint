@@ -18,6 +18,7 @@ const options = yargs
         description: 'Path to the root of your project files (where the manifest lives). Defaults to current directory.'
     })
     .option('lintConfig', { type: 'string', description: 'Path to a bslint.json configuration file.' })
+    .option('fix', { type: 'boolean', description: 'Fix automatically minor issues' })
     .option('watch', { type: 'boolean', defaultDescription: 'false', description: 'Watch input files.' }).argv;
 
 async function run(options: BsLintConfig) {
