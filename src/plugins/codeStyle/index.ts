@@ -57,6 +57,16 @@ export default class CodeStyle {
                     }
                 }
             },
+            WhileStatement: s => {
+                if (validateCondition) {
+                    if (isGroupingExpression(s.condition) !== requireConditionGroup) {
+                        diagnostics.push(requireConditionGroup
+                            ? messages.addParenthesisAroundCondition(s)
+                            : messages.removeParenthesisAroundCondition(s)
+                        );
+                    }
+                }
+            },
             PrintStatement: s => {
                 if (validatePrint) {
                     diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));

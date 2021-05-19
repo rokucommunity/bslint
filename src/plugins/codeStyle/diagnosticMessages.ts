@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, FunctionExpression, IfStatement, Range } from 'brighterscript';
+import { DiagnosticSeverity, FunctionExpression, IfStatement, Range, WhileStatement } from 'brighterscript';
 
 export enum CodeStyleError {
     InlineIfFound = 'LINT3001',
@@ -53,14 +53,14 @@ export const messages = {
         range: stat.tokens.then.range,
         data: stat
     }),
-    addParenthesisAroundCondition: (stat: IfStatement) => ({
+    addParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupMissing,
         message: `${CS} add parenthesis around condition`,
         range: stat.condition.range,
         data: stat
     }),
-    removeParenthesisAroundCondition: (stat: IfStatement) => ({
+    removeParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupFound,
         message: `${CS} remove parenthesis around condition`,

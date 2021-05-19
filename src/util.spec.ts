@@ -1,4 +1,4 @@
-import { normalizeConfig, getDefaultRules, mergeConfigs, resolveContext } from './util';
+import { normalizeConfig, getDefaultRules, mergeConfigs, createContext } from './util';
 import { parse } from 'jsonc-parser';
 import { readFileSync } from 'fs';
 import { expect } from 'chai';
@@ -73,7 +73,7 @@ describe('normalizeConfig', () => {
 describe('resolveContext', () => {
     it('should support no ignores', () => {
         const program = new Program({});
-        const context = resolveContext(program);
+        const context = createContext(program);
         const file = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
 
         expect(context.ignores(null)).equals(true);
@@ -84,7 +84,7 @@ describe('resolveContext', () => {
         const program = new Program({
             ignores: ['unused-variable.brs']
         } as any);
-        const context = resolveContext(program);
+        const context = createContext(program);
         const file1 = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
         const file2 = new BrsFile('test/project1/source/block-if.brs', 'pkg://block-if.brs', program);
 
@@ -97,7 +97,7 @@ describe('resolveContext', () => {
         const program = new Program({
             ignores: ['source/**/unused*', '**/*.spec.brs']
         } as any);
-        const context = resolveContext(program);
+        const context = createContext(program);
         const file1 = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
         const file2 = new BrsFile('test/project1/source/block-if.brs', 'pkg://block-if.brs', program);
         const file3 = new BrsFile('test/project1/source/block-if.spec.brs', 'pkg://block-if.spec.brs', program);

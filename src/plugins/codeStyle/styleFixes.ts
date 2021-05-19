@@ -1,4 +1,4 @@
-import { BrsFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, Range } from 'brighterscript';
+import { BrsFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Range, WhileStatement } from 'brighterscript';
 import { replaceText } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { CodeStyleError } from './diagnosticMessages';
@@ -32,7 +32,7 @@ export function extractFixes(lintContext: PluginContext, file: BrsFile, diagnost
     });
 }
 
-function addConditionGroup(stat: IfStatement) {
+function addConditionGroup(stat: IfStatement | WhileStatement) {
     const { start, end } = stat.condition.range;
     return [
         replaceText(Range.create(start.line, start.character, start.line, start.character), '('),
@@ -40,12 +40,15 @@ function addConditionGroup(stat: IfStatement) {
     ];
 }
 
-function removeConditionGroup(stat: IfStatement & { condition: GroupingExpression}) {
+function removeConditionGroup(stat: (IfStatement | WhileStatement) & { condition: GroupingExpression}) {
     const { left, right } = stat.condition.tokens;
     const spaceBefore = left.leadingWhitespace?.length > 0 ? '' : ' ';
-    let spaceAfter = stat.isInline ? ' ' : '';
-    if (stat.tokens.then) {
-        spaceAfter = stat.tokens.then.leadingWhitespace?.length > 0 ? '' : ' ';
+    let spaceAfter = '';
+    if (isIfStatement(stat)) {
+        spaceAfter = stat.isInline ? ' ' : '';
+        if (stat.tokens.then) {
+            spaceAfter = stat.tokens.then.leadingWhitespace?.length > 0 ? '' : ' ';
+        }
     }
     return [
         replaceText(left.range, spaceBefore),

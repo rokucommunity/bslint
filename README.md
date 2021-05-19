@@ -47,6 +47,9 @@ npx bslint --help
 
 # lint with default options
 npx bslint
+
+# lint and fix basic code-style issues (see below)
+npx bslint --fix
 ```
 
 or add a `npm` script in `package.json`, e.g.:
@@ -130,7 +133,7 @@ Default rules:
     - `then`: always use `then` keyword
     - `off`: do not validate
 
-- `condition-style`: validation of `if` statements conditions:
+- `condition-style`: validation of `if/while` statements conditions:
   should the condition be wrapped around parenthesis?
 
     - `no-group`: do not wrap with parenthesis (**default**)
@@ -200,3 +203,11 @@ Valid values for the rules severity are: `error | warn | info | off`.
 
 - `consistent-return`: verifies consistency of `sub`/`function` returned values
   (missing return, missing value, returned value while function is `as void`,...)
+
+## Automatic fixing (experimental)
+
+Running `bslint` with `--fix` parameter will attempt to fix common code-style issues:
+
+- Using wrong `sub` or `function` keyword,
+- Using/missing the optional `then` keyword,
+- Using/missing parenthesis around `if/while` conditions.
