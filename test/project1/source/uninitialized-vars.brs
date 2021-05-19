@@ -12,7 +12,7 @@ end sub
 
 sub error4()
     a = 1
-    Rnd(sub ()
+    Rnd(function ()
         return a 'error
-    end sub)
+    end function)
 end sub

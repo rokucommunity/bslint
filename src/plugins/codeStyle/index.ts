@@ -13,7 +13,7 @@ export default class CodeStyle {
     }
 
     afterFileValidate(file: BscFile) {
-        if (!isBrsFile(file)) {
+        if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
 

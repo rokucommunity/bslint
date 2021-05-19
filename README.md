@@ -62,6 +62,24 @@ or add a `npm` script in `package.json`, e.g.:
 ```
 and call `npm run lint`.
 
+## Plugin configuration
+
+`bslint` can be configured using a `bslint.json` file in the root of your project.
+
+```json
+{
+    "rules": {},
+    "globals": [],
+    "ignores": []
+}
+```
+
+Where each value is optional:
+
+- `rules`: see below
+- `globals`: a list of tokens which should be considered valid (ex. `_brs_`)
+- `ignores`: a list of files or globs of files to omit from linting
+
 ## Rules
 
 Linting rules can be set in a `bslint.json` file in the root of your project.

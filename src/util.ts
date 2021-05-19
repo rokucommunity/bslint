@@ -1,8 +1,9 @@
 import { parse } from 'jsonc-parser';
+import * as minimatch from 'minimatch';
 import { BsLintConfig, BsLintRules, RuleSeverity, BsLintSeverity } from './index';
 import { readFileSync, existsSync } from 'fs';
 import * as path from 'path';
-import { Program } from 'brighterscript';
+import { Program, BscFile } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 
 export function getDefaultRules(): BsLintConfig['rules'] {
@@ -94,6 +95,8 @@ function tryLoadConfig(filename: string): BsLintConfig | undefined {
 export interface PluginContext {
     program?: Program;
     severity: BsLintRules;
+    globals: string[];
+    ignores: (file: BscFile) => boolean;
 }
 
 let context: PluginContext;
@@ -102,10 +105,18 @@ export function resolveContext(program: Program) {
     if (context?.program === program) {
         return context;
     }
-    const rules = normalizeConfig(program.options).rules;
+    const { rules, globals, ignores } = normalizeConfig(program.options);
+    const ignorePatterns = (ignores || []).map(pattern => {
+        return pattern.startsWith('**/') ? pattern : '**/' + pattern;
+    });
+
     context = {
         program: program,
-        severity: rulesToSeverity(rules)
+        severity: rulesToSeverity(rules),
+        globals: globals || [],
+        ignores: (file: BscFile) => {
+            return !file || ignorePatterns.some(pattern => minimatch(file.pathAbsolute, pattern));
+        }
     };
     return context;
 }

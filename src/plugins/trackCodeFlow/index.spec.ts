@@ -211,4 +211,20 @@ describe('trackCodeFlow', () => {
         ];
         expect(actual).deep.equal(expected);
     });
+
+    it('implements globals', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/uninitialized-vars.brs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            globals: ['a']
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `14:LINT1005:Variable 'a' is set but value is never used`
+        ];
+        expect(actual).deep.equal(expected);
+    });
 });
