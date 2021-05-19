@@ -106,7 +106,9 @@ export function resolveContext(program: Program) {
         return context;
     }
     const { rules, globals, ignores } = normalizeConfig(program.options);
-    const ignorePatterns = (ignores || []).map(pattern => '**/' + pattern);
+    const ignorePatterns = (ignores || []).map(pattern => {
+        return pattern.startsWith('**/') ? pattern : '**/' + pattern;
+    });
 
     context = {
         program: program,

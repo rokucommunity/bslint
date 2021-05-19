@@ -95,14 +95,16 @@ describe('resolveContext', () => {
 
     it('should allow ignoring globbed files', () => {
         const program = new Program({
-            ignores: ['source/**/unused*']
+            ignores: ['source/**/unused*', '**/*.spec.brs']
         } as any);
         const context = resolveContext(program);
         const file1 = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
         const file2 = new BrsFile('test/project1/source/block-if.brs', 'pkg://block-if.brs', program);
+        const file3 = new BrsFile('test/project1/source/block-if.spec.brs', 'pkg://block-if.spec.brs', program);
 
         expect(context.ignores(null)).equals(true);
         expect(context.ignores(file1)).equals(true);
         expect(context.ignores(file2)).equals(false);
+        expect(context.ignores(file3)).equals(true);
     });
 });
