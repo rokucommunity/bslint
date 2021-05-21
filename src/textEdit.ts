@@ -1,6 +1,6 @@
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs-extra';
-import { Range } from 'brighterscript/dist/astUtils';
+import { Position, Range } from 'brighterscript/dist/astUtils';
 
 export interface TextEdit {
     range: Range;
@@ -18,24 +18,27 @@ export function compareRanges(a: { range: Range }, b: { range: Range }): number 
     if (!a || !b || !a.range || !b.range) {
         return 0;
     }
-    const sa = a.range.start;
-    const sb = b.range.start;
-    if (isNaN(sa.line) || isNaN(sb.line)) {
+    const result = comparePos(a.range.start, b.range.start);
+    return result === 0 ? comparePos(a.range.end, b.range.end) : result;
+}
+
+function comparePos(a: Position, b: Position) {
+    if (isNaN(a.line) || isNaN(b.line)) {
         return 0;
     }
-    if (sa.line < sb.line) {
+    if (a.line < b.line) {
         return -1;
     }
-    if (sa.line > sb.line) {
+    if (a.line > b.line) {
         return 1;
     }
-    if (isNaN(sa.character) || isNaN(sb.character)) {
+    if (isNaN(a.character) || isNaN(b.character)) {
         return 0;
     }
-    if (sa.character < sb.character) {
+    if (a.character < b.character) {
         return -1;
     }
-    if (sa.character > sb.character) {
+    if (a.character > b.character) {
         return 1;
     }
     return 0;
@@ -82,8 +85,8 @@ export function applyEdits(src: string, changes: TextEdit[]) {
     return newSrc;
 }
 
-export async function applyFixes(pendingFixes: Map<string, TextEdit[]>) {
-    if (!pendingFixes || pendingFixes.size === 0) {
+export async function applyFixes(fix: boolean, pendingFixes: Map<string, TextEdit[]>) {
+    if (!fix || !pendingFixes || pendingFixes.size === 0) {
         return;
     }
     for (const file of pendingFixes.keys()) {

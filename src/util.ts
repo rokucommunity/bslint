@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Program, BscFile } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 import { applyFixes, TextEdit } from './textEdit';
+import { addJob } from './Linter';
 
 export function getDefaultRules(): BsLintConfig['rules'] {
     return {
@@ -128,7 +129,7 @@ export function createContext(program: Program): PluginWrapperContext {
                 pendingFixes.get(file.pathAbsolute).push(...changes);
             }
         },
-        applyFixes: () => fix && applyFixes(pendingFixes),
+        applyFixes: () => addJob(applyFixes(fix, pendingFixes)),
         pendingFixes
     };
 }

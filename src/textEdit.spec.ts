@@ -41,6 +41,13 @@ describe('sortByRange', () => {
         expect(compareRanges(a, b)).equals(-1);
         expect(compareRanges(b, a)).equals(1);
     });
+
+    it('Sort by length', () => {
+        const a = { range: Range.create(0, 0, 1, 0) };
+        const b = { range: Range.create(0, 0, 1, 1) };
+        expect(compareRanges(a, b)).equals(-1);
+        expect(compareRanges(b, a)).equals(1);
+    });
 });
 
 describe('getLineOffsets', () => {
