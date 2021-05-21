@@ -1,46 +1,56 @@
-import { BrsFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Range, WhileStatement } from 'brighterscript';
-import { replaceText } from '../../textEdit';
-import { PluginContext } from '../../util';
+import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, WhileStatement } from 'brighterscript';
+import { ChangeEntry, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 
-export function extractFixes(lintContext: PluginContext, file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[]): (Omit<BsDiagnostic, 'file'>)[] {
+export function extractFixes(
+    addFixes: (file: BscFile, changes: ChangeEntry) => void,
+    diagnostics: BsDiagnostic[]
+): BsDiagnostic[] {
     return diagnostics.filter(diagnostic => {
-        switch (diagnostic.code) {
-            case CodeStyleError.FunctionKeywordExpected:
-                lintContext.addFixes(file, replaceFunctionTokens(diagnostic.data, 'function'));
-                return false;
-            case CodeStyleError.SubKeywordExpected:
-                lintContext.addFixes(file, replaceFunctionTokens(diagnostic.data, 'sub'));
-                return false;
-            case CodeStyleError.InlineIfThenFound:
-            case CodeStyleError.BlockIfThenFound:
-                lintContext.addFixes(file, removeThenToken(diagnostic.data));
-                return false;
-            case CodeStyleError.InlineIfThenMissing:
-            case CodeStyleError.BlockIfThenMissing:
-                lintContext.addFixes(file, addThenToken(diagnostic.data));
-                return false;
-            case CodeStyleError.ConditionGroupFound:
-                lintContext.addFixes(file, removeConditionGroup(diagnostic.data));
-                return false;
-            case CodeStyleError.ConditionGroupMissing:
-                lintContext.addFixes(file, addConditionGroup(diagnostic.data));
-                return false;
-            default:
-                return true;
+        const fix = getFixes(diagnostic);
+        if (fix) {
+            addFixes(diagnostic.file, fix);
+            return false;
         }
+        return true;
     });
 }
 
-function addConditionGroup(stat: IfStatement | WhileStatement) {
-    const { start, end } = stat.condition.range;
-    return [
-        replaceText(Range.create(start.line, start.character, start.line, start.character), '('),
-        replaceText(Range.create(end.line, end.character, end.line, end.character), ')')
-    ];
+export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
+    switch (diagnostic.code) {
+        case CodeStyleError.FunctionKeywordExpected:
+            return replaceFunctionTokens(diagnostic, 'function');
+        case CodeStyleError.SubKeywordExpected:
+            return replaceFunctionTokens(diagnostic, 'sub');
+        case CodeStyleError.InlineIfThenFound:
+        case CodeStyleError.BlockIfThenFound:
+            return removeThenToken(diagnostic);
+        case CodeStyleError.InlineIfThenMissing:
+        case CodeStyleError.BlockIfThenMissing:
+            return addThenToken(diagnostic);
+        case CodeStyleError.ConditionGroupFound:
+            return removeConditionGroup(diagnostic);
+        case CodeStyleError.ConditionGroupMissing:
+            return addConditionGroup(diagnostic);
+        default:
+            return null;
+    }
 }
 
-function removeConditionGroup(stat: (IfStatement | WhileStatement) & { condition: GroupingExpression}) {
+function addConditionGroup(diagnostic: BsDiagnostic) {
+    const stat: IfStatement | WhileStatement = diagnostic.data;
+    const { start, end } = stat.condition.range;
+    return {
+        diagnostic,
+        changes: [
+            insertText(Position.create(start.line, start.character), '('),
+            insertText(Position.create(end.line, end.character), ')')
+        ]
+    };
+}
+
+function removeConditionGroup(diagnostic: BsDiagnostic) {
+    const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression} = diagnostic.data;
     const { left, right } = stat.condition.tokens;
     const spaceBefore = left.leadingWhitespace?.length > 0 ? '' : ' ';
     let spaceAfter = '';
@@ -50,38 +60,50 @@ function removeConditionGroup(stat: (IfStatement | WhileStatement) & { condition
             spaceAfter = stat.tokens.then.leadingWhitespace?.length > 0 ? '' : ' ';
         }
     }
-    return [
-        replaceText(left.range, spaceBefore),
-        replaceText(right.range, spaceAfter)
-    ];
+    return {
+        diagnostic,
+        changes: [
+            replaceText(left.range, spaceBefore),
+            replaceText(right.range, spaceAfter)
+        ]
+    };
 }
 
-function addThenToken(stat: IfStatement) {
+function addThenToken(diagnostic: BsDiagnostic) {
+    const stat: IfStatement = diagnostic.data;
     const { line, character } = stat.condition.range.end;
-    const range = Range.create(
-        line, character, line, character
-    );
     const space = stat.isInline ? ' ' : '';
-    return [
-        replaceText(range, ` then${space}`)
-    ];
+    return {
+        diagnostic,
+        changes: [
+            insertText(Position.create(line, character), ` then${space}`)
+        ]
+    };
 }
 
-function removeThenToken(stat: IfStatement) {
+function removeThenToken(diagnostic: BsDiagnostic) {
+    const stat: IfStatement = diagnostic.data;
     const { then } = stat.tokens;
     const { line, character } = then.range.start;
     const range = Range.create(
         line, character - (then.leadingWhitespace?.length || 0), line, character + then.text.length
     );
-    return [
-        replaceText(range, '')
-    ];
+    return {
+        diagnostic,
+        changes: [
+            replaceText(range, '')
+        ]
+    };
 }
 
-function replaceFunctionTokens(fun: FunctionExpression, token: string) {
+function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
+    const fun: FunctionExpression = diagnostic.data;
     const space = fun.end?.text.indexOf(' ') > 0 ? ' ' : '';
-    return [
-        replaceText(fun.functionType.range, token),
-        replaceText(fun.end?.range, `end${space}${token}`)
-    ];
+    return {
+        diagnostic,
+        changes: [
+            replaceText(fun.functionType.range, token),
+            replaceText(fun.end?.range, `end${space}${token}`)
+        ]
+    };
 }

@@ -22,6 +22,7 @@ export const messages = {
     addBlockIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.BlockIfThenMissing,
+        source: 'bslint',
         message: `${CS} add 'then' keyword`,
         range: stat.tokens.if.range,
         data: stat
@@ -29,6 +30,7 @@ export const messages = {
     removeBlockIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.BlockIfThenFound,
+        source: 'bslint',
         message: `${CS} remove 'then' keyword`,
         range: stat.tokens.then.range,
         data: stat
@@ -36,12 +38,14 @@ export const messages = {
     inlineIfNotAllowed: (range: Range) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfFound,
+        source: 'bslint',
         message: `${CS} no inline if statement allowed`,
         range
     }),
     addInlineIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfThenMissing,
+        source: 'bslint',
         message: `${CS} add 'then' keyword`,
         range: stat.tokens.if.range,
         data: stat
@@ -49,6 +53,7 @@ export const messages = {
     removeInlineIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfThenFound,
+        source: 'bslint',
         message: `${CS} remove 'then' keyword`,
         range: stat.tokens.then.range,
         data: stat
@@ -56,6 +61,7 @@ export const messages = {
     addParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupMissing,
+        source: 'bslint',
         message: `${CS} add parenthesis around condition`,
         range: stat.condition.range,
         data: stat
@@ -63,6 +69,7 @@ export const messages = {
     removeParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupFound,
+        source: 'bslint',
         message: `${CS} remove parenthesis around condition`,
         range: stat.condition.range,
         data: stat
@@ -70,6 +77,7 @@ export const messages = {
     expectedSubKeyword: (fun: FunctionExpression, reason: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.SubKeywordExpected,
+        source: 'bslint',
         message: `${CS} expected 'sub' keyword ${reason}`,
         range: fun.functionType.range,
         data: fun
@@ -77,6 +85,7 @@ export const messages = {
     expectedFunctionKeyword: (fun: FunctionExpression, reason: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.FunctionKeywordExpected,
+        source: 'bslint',
         message: `${CS} expected 'function' keyword ${reason}`,
         range: fun.functionType.range,
         data: fun
@@ -84,18 +93,21 @@ export const messages = {
     expectedReturnTypeAnnotation: (range: Range) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ReturnTypeAnnotation,
+        source: 'bslint',
         message: `${ST} function should declare the return type`,
         range
     }),
     expectedTypeAnnotation: (range: Range) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.TypeAnnotation,
+        source: 'bslint',
         message: `${ST} type annotation required`,
         range
     }),
     noPrint: (range: Range, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoPrint,
+        source: 'bslint',
         message: `${CS} Avoid using direct Print statements`,
         range
     })

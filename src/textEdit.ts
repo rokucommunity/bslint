@@ -1,15 +1,38 @@
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs-extra';
 import { Position, Range } from 'brighterscript/dist/astUtils';
+import { BscFile, BsDiagnostic, OnGetCodeActionsEvent } from 'brighterscript';
+import { CodeActionKind, codeActionUtil } from 'brighterscript/dist/CodeActionUtil';
+
+interface LintCodeAction {
+    type: 'replace';
+    filePath: string;
+    range: Range;
+    newText: string;
+}
 
 export interface TextEdit {
     range: Range;
     text: string;
 }
 
+export interface ChangeEntry {
+    diagnostic: BsDiagnostic;
+    changes: TextEdit[];
+}
+
 export function replaceText(range: Range, text: string) {
     return {
+        type: 'replace',
         range,
+        text
+    };
+}
+
+export function insertText(pos: Position, text: string) {
+    return {
+        type: 'insert',
+        range: Range.create(pos, pos),
         text
     };
 }
@@ -100,4 +123,22 @@ export async function applyFixes(fix: boolean, pendingFixes: Map<string, TextEdi
         }
         pendingFixes.delete(file);
     }
+}
+
+export function addFixesToEvent(event: OnGetCodeActionsEvent) {
+    return (file: BscFile, entry: ChangeEntry) => {
+        const changes: LintCodeAction[] = entry.changes.map(change => ({
+            type: 'replace',
+            filePath: file.pathAbsolute,
+            range: change.range,
+            newText: change.text
+        }));
+        const action = {
+            title: entry.diagnostic.message,
+            diagnostics: [entry.diagnostic],
+            kind: CodeActionKind.QuickFix,
+            changes
+        };
+        event.codeActions.push(codeActionUtil.createCodeAction(action));
+    };
 }

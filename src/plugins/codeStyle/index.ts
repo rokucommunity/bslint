@@ -1,4 +1,5 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity } from 'brighterscript';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent } from 'brighterscript';
+import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
@@ -10,12 +11,17 @@ export default class CodeStyle {
     constructor(private lintContext: PluginContext) {
     }
 
+    onGetCodeActions(event: OnGetCodeActionsEvent) {
+        const addFixes = addFixesToEvent(event);
+        extractFixes(addFixes, event.diagnostics);
+    }
+
     afterFileValidate(file: BscFile) {
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
 
-        let diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
@@ -79,18 +85,19 @@ export default class CodeStyle {
             this.validateFunctionStyle(fun, diagnostics);
         }
 
+        // add file reference
+        let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
+            ...diagnostic,
+            file
+        }));
+
         // apply fix
         if (fix) {
-            diagnostics = extractFixes(this.lintContext, file, diagnostics);
+            bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
         }
 
         // append diagnostics
-        file.addDiagnostics(
-            diagnostics.map(diagnostic => ({
-                ...diagnostic,
-                file
-            }))
-        );
+        file.addDiagnostics(bsDiagnostics);
     }
 
     validateFunctionStyle(fun: FunctionExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {

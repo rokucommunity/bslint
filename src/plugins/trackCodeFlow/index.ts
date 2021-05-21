@@ -1,10 +1,11 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile } from 'brighterscript';
+import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent } from 'brighterscript';
 import { Statement, EmptyStatement, FunctionExpression } from 'brighterscript/dist/parser';
 import { isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode } from 'brighterscript/dist/astUtils';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
 import { extractFixes } from './trackFixes';
+import { addFixesToEvent } from '../../textEdit';
 
 export interface NarrowingInfo {
     text: string;
@@ -50,6 +51,11 @@ export default class TrackCodeFlow {
     name: 'trackCodeFlow';
 
     constructor(private lintContext: PluginContext) {
+    }
+
+    onGetCodeActions(event: OnGetCodeActionsEvent) {
+        const addFixes = addFixesToEvent(event);
+        extractFixes(addFixes, event.diagnostics);
     }
 
     afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
@@ -154,7 +160,7 @@ export default class TrackCodeFlow {
         });
 
         if (this.lintContext.fix) {
-            diagnostics = extractFixes(this.lintContext, file, diagnostics);
+            diagnostics = extractFixes(this.lintContext.addFixes, diagnostics);
         }
 
         file.addDiagnostics(diagnostics);

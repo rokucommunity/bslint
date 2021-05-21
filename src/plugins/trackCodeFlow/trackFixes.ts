@@ -1,22 +1,36 @@
-import { BrsFile, BsDiagnostic, Range } from 'brighterscript';
-import { replaceText } from '../../textEdit';
-import { PluginContext } from '../../util';
+import { BscFile, BsDiagnostic, Range } from 'brighterscript';
+import { ChangeEntry, replaceText } from '../../textEdit';
 import { VarLintError } from './varTracking';
 
-export function extractFixes(lintContext: PluginContext, file: BrsFile, diagnostics: BsDiagnostic[]): BsDiagnostic[] {
+export function extractFixes(
+    addFixes: (file: BscFile, changes: ChangeEntry) => void,
+    diagnostics: BsDiagnostic[]
+): BsDiagnostic[] {
     return diagnostics.filter(diagnostic => {
-        switch (diagnostic.code) {
-            case VarLintError.CaseMismatch:
-                lintContext.addFixes(file, fixCasing(diagnostic.data));
-                return false;
-            default:
-                return true;
+        const fix = getFixes(diagnostic);
+        if (fix) {
+            addFixes(diagnostic.file, fix);
+            return false;
         }
+        return true;
     });
 }
 
-function fixCasing(data: { name: string; range: Range }) {
-    return [
-        replaceText(data.range, data.name)
-    ];
+export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
+    switch (diagnostic.code) {
+        case VarLintError.CaseMismatch:
+            return fixCasing(diagnostic);
+        default:
+            return null;
+    }
+}
+
+function fixCasing(diagnostic: BsDiagnostic) {
+    const data: { name: string; range: Range } = diagnostic.data;
+    return {
+        diagnostic,
+        changes: [
+            replaceText(data.range, data.name)
+        ]
+    };
 }

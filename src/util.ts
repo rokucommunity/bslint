@@ -5,7 +5,7 @@ import { readFileSync, existsSync } from 'fs';
 import * as path from 'path';
 import { Program, BscFile } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
-import { applyFixes, TextEdit } from './textEdit';
+import { applyFixes, ChangeEntry, TextEdit } from './textEdit';
 import { addJob } from './Linter';
 
 export function getDefaultRules(): BsLintConfig['rules'] {
@@ -100,7 +100,7 @@ export interface PluginContext {
     globals: string[];
     ignores: (file: BscFile) => boolean;
     fix: Readonly<boolean>;
-    addFixes: (file: BscFile, changes: TextEdit[]) => void;
+    addFixes: (file: BscFile, entry: ChangeEntry) => void;
 }
 
 export interface PluginWrapperContext extends PluginContext {
@@ -122,11 +122,11 @@ export function createContext(program: Program): PluginWrapperContext {
             return !file || ignorePatterns.some(pattern => minimatch(file.pathAbsolute, pattern));
         },
         fix,
-        addFixes: (file: BscFile, changes: TextEdit[]) => {
+        addFixes: (file: BscFile, entry: ChangeEntry) => {
             if (!pendingFixes.has(file.pathAbsolute)) {
-                pendingFixes.set(file.pathAbsolute, changes);
+                pendingFixes.set(file.pathAbsolute, entry.changes);
             } else {
-                pendingFixes.get(file.pathAbsolute).push(...changes);
+                pendingFixes.get(file.pathAbsolute).push(...entry.changes);
             }
         },
         applyFixes: () => addJob(applyFixes(fix, pendingFixes)),
