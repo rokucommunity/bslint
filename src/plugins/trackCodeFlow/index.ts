@@ -4,6 +4,7 @@ import { isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Ra
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
+import { extractFixes } from './trackFixes';
 
 export interface NarrowingInfo {
     text: string;
@@ -60,7 +61,7 @@ export default class TrackCodeFlow {
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
-        const diagnostics: BsDiagnostic[] = [];
+        let diagnostics: BsDiagnostic[] = [];
 
         resetVarContext(file);
 
@@ -151,6 +152,10 @@ export default class TrackCodeFlow {
                 }
             }
         });
+
+        if (this.lintContext.fix) {
+            diagnostics = extractFixes(this.lintContext, file, diagnostics);
+        }
 
         file.addDiagnostics(diagnostics);
     }

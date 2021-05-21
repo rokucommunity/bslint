@@ -211,3 +211,4 @@ Running `bslint` with `--fix` parameter will attempt to fix common code-style is
 - Using wrong `sub` or `function` keyword,
 - Using/missing the optional `then` keyword,
 - Using/missing parenthesis around `if/while` conditions.
+- Case sensitivity (align with first occurence)

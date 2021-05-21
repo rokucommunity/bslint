@@ -2,7 +2,7 @@ import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isFor
 import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
 import { PluginContext } from '../../util';
 
-enum VarLintError {
+export enum VarLintError {
     UninitializedVar = 'LINT1001',
     UnsafeIteratorVar = 'LINT1002',
     UnsafeInitialization = 'LINT1003',
@@ -62,7 +62,11 @@ export function createVarLinter(
                 code: VarLintError.CaseMismatch,
                 message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
                 range: name.range,
-                file: file
+                file: file,
+                data: {
+                    name: curr.name,
+                    range: name.range
+                }
             });
         }
     }
