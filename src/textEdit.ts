@@ -137,6 +137,7 @@ export function addFixesToEvent(event: OnGetCodeActionsEvent) {
             title: entry.diagnostic.message,
             diagnostics: [entry.diagnostic],
             kind: CodeActionKind.QuickFix,
+            isPreferred: true,
             changes
         };
         event.codeActions.push(codeActionUtil.createCodeAction(action));
