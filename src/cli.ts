@@ -25,6 +25,9 @@ async function run(options: BsLintConfig) {
     if (options.cwd) {
         process.chdir(options.cwd);
     }
+    if (options.watch) {
+        options.fix = false;
+    }
     const config = normalizeConfig(options);
     const linter = new Linter();
     const diagnostics = await linter.run(config);
