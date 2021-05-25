@@ -1,6 +1,14 @@
 import { BsLintConfig } from './index';
 import { ProgramBuilder, BsConfig } from 'brighterscript';
 
+const pendingJobs: Promise<void>[] = [];
+
+// allow some asynchronous jobs to run after the compiler has finished its work
+export function addJob(job: Promise<void>) {
+    pendingJobs.push(job);
+    return job;
+}
+
 export default class Linter {
     builder: ProgramBuilder;
 
@@ -16,6 +24,7 @@ export default class Linter {
                 copyToStaging: false
             };
             await this.builder.run(options);
+            await Promise.all(pendingJobs);
             return this.builder.getDiagnostics();
         } catch (err) {
             console.log(err);

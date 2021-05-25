@@ -1,7 +1,9 @@
+import * as fs from 'fs';
 import { expect } from 'chai';
 import { BsDiagnostic, Program } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
+import { createContext, PluginWrapperContext } from '../../util';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
@@ -16,6 +18,7 @@ function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
 
 describe('trackCodeFlow', () => {
     let linter: Linter;
+    let lintContext: PluginWrapperContext;
     const project1 = {
         rootDir: 'test/project1'
     };
@@ -25,7 +28,8 @@ describe('trackCodeFlow', () => {
         linter.builder.plugins.add({
             name: 'test',
             afterProgramCreate: (program: Program) => {
-                const trackCodeFlow = new TrackCodeFlow(program);
+                lintContext = createContext(program);
+                const trackCodeFlow = new TrackCodeFlow(lintContext);
                 program.plugins.add(trackCodeFlow);
             }
         });
@@ -226,5 +230,42 @@ describe('trackCodeFlow', () => {
             `14:LINT1005:Variable 'a' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
+    });
+
+    describe('fix', () => {
+        beforeEach(() => {
+            fs.copyFileSync(
+                `${project1.rootDir}/source/case-sensitivity.brs`,
+                `${project1.rootDir}/source/case-sensitivity-temp.brs`
+            );
+        });
+
+        afterEach(() => {
+            fs.unlinkSync(`${project1.rootDir}/source/case-sensitivity-temp.brs`);
+        });
+
+        it('fixes inconsistent case', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/case-sensitivity-temp.brs'],
+                rules: {
+                    'case-sensitivity': 'error'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `11:LINT1005:Variable 'A' is set but value is never used`
+            ];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/case-sensitivity-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/case-sensitivity-fixed.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
     });
 });

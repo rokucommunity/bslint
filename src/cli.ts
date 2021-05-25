@@ -18,11 +18,15 @@ const options = yargs
         description: 'Path to the root of your project files (where the manifest lives). Defaults to current directory.'
     })
     .option('lintConfig', { type: 'string', description: 'Path to a bslint.json configuration file.' })
+    .option('fix', { type: 'boolean', description: 'Fix automatically minor issues (experimental)' })
     .option('watch', { type: 'boolean', defaultDescription: 'false', description: 'Watch input files.' }).argv;
 
 async function run(options: BsLintConfig) {
     if (options.cwd) {
         process.chdir(options.cwd);
+    }
+    if (options.watch) {
+        options.fix = false;
     }
     const config = normalizeConfig(options);
     const linter = new Linter();

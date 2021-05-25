@@ -5,12 +5,15 @@ sub ok()
     end sub)
 end sub
 
-function error()
+sub error()
     print "ko"
-    exec(function()
+    exec(sub()
         print "ko"
-    end function)
-end function
+    end sub)
+    return "ko"
+end sub
 
 sub exec(x)
+    return
+    print "unreachable"
 end sub

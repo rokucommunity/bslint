@@ -3,6 +3,7 @@ import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 import Linter from './Linter';
 import CodeStyle from './plugins/codeStyle';
 import TrackCodeFlow from './plugins/trackCodeFlow';
+import { PluginWrapperContext, createContext } from './util';
 
 export type RuleSeverity = 'error' | 'warn' | 'info' | 'off';
 export type RuleInlineIf = 'never' | 'no-then' | 'then' | 'off';
@@ -34,6 +35,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
     };
     globals?: string[];
     ignores?: string[];
+    fix?: boolean;
 };
 
 export type BsLintSeverity = DiagnosticSeverity;
@@ -58,13 +60,21 @@ export interface BsLintRules {
 export { Linter };
 
 export default function factory() {
+    const contextMap = new WeakMap<Program, PluginWrapperContext>();
     return {
         afterProgramCreate: (program: Program) => {
-            const trackCodeFlow = new TrackCodeFlow(program);
+            const context = createContext(program);
+            contextMap.set(program, context);
+
+            const trackCodeFlow = new TrackCodeFlow(context);
             program.plugins.add(trackCodeFlow);
 
-            const codeStyle = new CodeStyle(program);
+            const codeStyle = new CodeStyle(context);
             program.plugins.add(codeStyle);
+        },
+        afterProgramValidate: async (program: Program) => {
+            const context = contextMap.get(program);
+            await context.applyFixes();
         }
     };
 }

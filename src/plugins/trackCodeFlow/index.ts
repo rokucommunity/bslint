@@ -1,9 +1,11 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, Program, BrsFile } from 'brighterscript';
+import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent } from 'brighterscript';
 import { Statement, EmptyStatement, FunctionExpression } from 'brighterscript/dist/parser';
 import { isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode } from 'brighterscript/dist/astUtils';
-import { PluginContext, resolveContext } from '../../util';
+import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
+import { extractFixes } from './trackFixes';
+import { addFixesToEvent } from '../../textEdit';
 
 export interface NarrowingInfo {
     text: string;
@@ -48,10 +50,12 @@ export default class TrackCodeFlow {
 
     name: 'trackCodeFlow';
 
-    lintContext: PluginContext;
+    constructor(private lintContext: PluginContext) {
+    }
 
-    constructor(program: Program) {
-        this.lintContext = resolveContext(program);
+    onGetCodeActions(event: OnGetCodeActionsEvent) {
+        const addFixes = addFixesToEvent(event);
+        extractFixes(addFixes, event.diagnostics);
     }
 
     afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
@@ -63,7 +67,7 @@ export default class TrackCodeFlow {
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
-        const diagnostics: BsDiagnostic[] = [];
+        let diagnostics: BsDiagnostic[] = [];
 
         resetVarContext(file);
 
@@ -154,6 +158,10 @@ export default class TrackCodeFlow {
                 }
             }
         });
+
+        if (this.lintContext.fix) {
+            diagnostics = extractFixes(this.lintContext.addFixes, diagnostics);
+        }
 
         file.addDiagnostics(diagnostics);
     }

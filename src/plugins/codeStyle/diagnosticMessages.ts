@@ -1,6 +1,6 @@
-import { DiagnosticSeverity, Range } from 'brighterscript';
+import { DiagnosticSeverity, FunctionExpression, IfStatement, Range, WhileStatement } from 'brighterscript';
 
-enum CodeStyleError {
+export enum CodeStyleError {
     InlineIfFound = 'LINT3001',
     InlineIfThenMissing = 'LINT3002',
     InlineIfThenFound = 'LINT3003',
@@ -18,73 +18,97 @@ enum CodeStyleError {
 const CS = 'Code style:';
 const ST = 'Strictness:';
 
-const messages = {
-    addBlockIfThenKeyword: (range: Range) => ({
+export const messages = {
+    addBlockIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.BlockIfThenMissing,
+        source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        range
+        range: stat.tokens.if.range,
+        data: stat
     }),
-    removeBlockIfThenKeyword: (range: Range) => ({
+    removeBlockIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.BlockIfThenFound,
+        source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        range
+        range: stat.tokens.then.range,
+        data: stat
     }),
     inlineIfNotAllowed: (range: Range) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfFound,
+        source: 'bslint',
         message: `${CS} no inline if statement allowed`,
         range
     }),
-    addInlineIfThenKeyword: (range: Range) => ({
+    addInlineIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfThenMissing,
+        source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        range
+        range: stat.tokens.if.range,
+        data: stat
     }),
-    removeInlineIfThenKeyword: (range: Range) => ({
+    removeInlineIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfThenFound,
+        source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        range
+        range: stat.tokens.then.range,
+        data: stat
     }),
-    addParenthesisAroundCondition: (range: Range) => ({
+    addParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupMissing,
+        source: 'bslint',
         message: `${CS} add parenthesis around condition`,
-        range
+        range: stat.condition.range,
+        data: stat
     }),
-    removeParenthesisAroundCondition: (range: Range) => ({
+    removeParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupFound,
+        source: 'bslint',
         message: `${CS} remove parenthesis around condition`,
-        range
+        range: stat.condition.range,
+        data: stat
     }),
-    expectedKeyword: (range: Range, keyword: string, reason: string) => ({
+    expectedSubKeyword: (fun: FunctionExpression, reason: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.SubKeywordExpected,
-        message: `${CS} expected '${keyword}' keyword ${reason}`,
-        range
+        source: 'bslint',
+        message: `${CS} expected 'sub' keyword ${reason}`,
+        range: fun.functionType.range,
+        data: fun
+    }),
+    expectedFunctionKeyword: (fun: FunctionExpression, reason: string) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.FunctionKeywordExpected,
+        source: 'bslint',
+        message: `${CS} expected 'function' keyword ${reason}`,
+        range: fun.functionType.range,
+        data: fun
     }),
     expectedReturnTypeAnnotation: (range: Range) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ReturnTypeAnnotation,
+        source: 'bslint',
         message: `${ST} function should declare the return type`,
         range
     }),
     expectedTypeAnnotation: (range: Range) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.TypeAnnotation,
+        source: 'bslint',
         message: `${ST} type annotation required`,
         range
     }),
     noPrint: (range: Range, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoPrint,
+        source: 'bslint',
         message: `${CS} Avoid using direct Print statements`,
         range
     })
 };
-
-export default messages;

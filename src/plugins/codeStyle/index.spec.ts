@@ -1,7 +1,9 @@
+import * as fs from 'fs';
 import { expect } from 'chai';
 import { BsDiagnostic, Program } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle from './index';
+import { createContext, PluginWrapperContext } from '../../util';
 
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
@@ -16,6 +18,7 @@ function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
 
 describe('codeStyle', () => {
     let linter: Linter;
+    let lintContext: PluginWrapperContext;
 
     const project1 = {
         rootDir: 'test/project1'
@@ -26,7 +29,8 @@ describe('codeStyle', () => {
         linter.builder.plugins.add({
             name: 'test',
             afterProgramCreate: (program: Program) => {
-                const codeStyle = new CodeStyle(program);
+                lintContext = createContext(program);
+                const codeStyle = new CodeStyle(lintContext);
                 program.plugins.add(codeStyle);
             }
         });
@@ -223,7 +227,7 @@ describe('codeStyle', () => {
         it('enforce no-function style', async () => {
             const diagnostics = await linter.run({
                 ...project1,
-                files: ['source/no-function-style.brs'],
+                files: ['source/function-style.brs'],
                 rules: {
                     'named-function-style': 'no-function',
                     'anon-function-style': 'no-function',
@@ -250,8 +254,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `08:LINT3008:Code style: expected 'function' keyword (always use 'function')`,
-                `10:LINT3008:Code style: expected 'function' keyword (always use 'function')`
+                `08:LINT3009:Code style: expected 'function' keyword (always use 'function')`,
+                `10:LINT3009:Code style: expected 'function' keyword (always use 'function')`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -268,8 +272,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `22:LINT3008:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
-                `23:LINT3008:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
+                `22:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
+                `23:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
                 `29:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
                 `31:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
                 `36:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
@@ -354,7 +358,6 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
-
     it('enforce no print', async () => {
         const diagnostics = await linter.run({
             ...project1,
@@ -369,5 +372,175 @@ describe('codeStyle', () => {
             `03:LINT3012:Code style: Avoid using direct Print statements`
         ];
         expect(actual).deep.equal(expected);
+    });
+
+    describe('fix', () => {
+        beforeEach(() => {
+            fs.copyFileSync(
+                `${project1.rootDir}/source/function-style.brs`,
+                `${project1.rootDir}/source/function-style-temp.brs`
+            );
+            fs.copyFileSync(
+                `${project1.rootDir}/source/if-style.brs`,
+                `${project1.rootDir}/source/if-style-temp.brs`
+            );
+        });
+
+        afterEach(() => {
+            fs.unlinkSync(`${project1.rootDir}/source/function-style-temp.brs`);
+            fs.unlinkSync(`${project1.rootDir}/source/if-style-temp.brs`);
+        });
+
+        it('replaces `sub` with `function`', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/function-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'no-function',
+                    'anon-function-style': 'no-function',
+                    'no-print': 'off'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-nofun.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('replaces `function` with `sub`', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/function-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'no-sub',
+                    'anon-function-style': 'no-sub',
+                    'no-print': 'off'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/function-style-nosub.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('removes optional `then`', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/if-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'block-if-style': 'no-then',
+                    'inline-if-style': 'no-then',
+                    'condition-style': 'off',
+                    'no-print': 'off'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-nothen.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('adds optional `then`', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/if-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'block-if-style': 'then',
+                    'inline-if-style': 'then',
+                    'condition-style': 'off',
+                    'no-print': 'off'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-then.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('remove optional condition group', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/if-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'block-if-style': 'off',
+                    'inline-if-style': 'off',
+                    'condition-style': 'no-group',
+                    'no-print': 'off'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-nogroup.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('add optional condition group', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/if-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'block-if-style': 'off',
+                    'inline-if-style': 'off',
+                    'condition-style': 'group',
+                    'no-print': 'off'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-group.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
     });
 });

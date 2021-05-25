@@ -1,15 +1,19 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, Program, TokenKind, WalkMode, CancellationTokenSource } from 'brighterscript';
-import { PluginContext, resolveContext } from '../../util';
-import messages from './diagnosticMessages';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent } from 'brighterscript';
+import { addFixesToEvent } from '../../textEdit';
+import { PluginContext } from '../../util';
+import { messages } from './diagnosticMessages';
+import { extractFixes } from './styleFixes';
 
 export default class CodeStyle {
 
     name: 'codeStyle';
 
-    lintContext: PluginContext;
+    constructor(private lintContext: PluginContext) {
+    }
 
-    constructor(program: Program) {
-        this.lintContext = resolveContext(program);
+    onGetCodeActions(event: OnGetCodeActionsEvent) {
+        const addFixes = addFixesToEvent(event);
+        extractFixes(addFixes, event.diagnostics);
     }
 
     afterFileValidate(file: BscFile) {
@@ -18,7 +22,9 @@ export default class CodeStyle {
         }
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint } = this.lintContext.severity;
+        const { severity, fix } = this.lintContext;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint } = severity;
+        const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
@@ -33,8 +39,8 @@ export default class CodeStyle {
                 if (!s.isInline && validateBlockIf) {
                     if (hasThenToken !== requireBlockIfThen) {
                         diagnostics.push(requireBlockIfThen
-                            ? messages.addBlockIfThenKeyword(s.tokens.if.range)
-                            : messages.removeBlockIfThenKeyword(s.tokens.then.range)
+                            ? messages.addBlockIfThenKeyword(s)
+                            : messages.removeBlockIfThenKeyword(s)
                         );
                     }
                 } else if (s.isInline && validateInlineIf) {
@@ -42,8 +48,8 @@ export default class CodeStyle {
                         diagnostics.push(messages.inlineIfNotAllowed(s.range));
                     } else if (hasThenToken !== requireInlineIfThen) {
                         diagnostics.push(requireInlineIfThen
-                            ? messages.addInlineIfThenKeyword(s.tokens.if.range)
-                            : messages.removeInlineIfThenKeyword(s.tokens.then.range)
+                            ? messages.addInlineIfThenKeyword(s)
+                            : messages.removeInlineIfThenKeyword(s)
                         );
                     }
                 }
@@ -51,33 +57,52 @@ export default class CodeStyle {
                 if (validateCondition) {
                     if (isGroupingExpression(s.condition) !== requireConditionGroup) {
                         diagnostics.push(requireConditionGroup
-                            ? messages.addParenthesisAroundCondition(s.condition.range)
-                            : messages.removeParenthesisAroundCondition(s.condition.range)
+                            ? messages.addParenthesisAroundCondition(s)
+                            : messages.removeParenthesisAroundCondition(s)
+                        );
+                    }
+                }
+            },
+            WhileStatement: s => {
+                if (validateCondition) {
+                    if (isGroupingExpression(s.condition) !== requireConditionGroup) {
+                        diagnostics.push(requireConditionGroup
+                            ? messages.addParenthesisAroundCondition(s)
+                            : messages.removeParenthesisAroundCondition(s)
                         );
                     }
                 }
             },
             PrintStatement: s => {
-                diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
+                if (validatePrint) {
+                    diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
+                }
             }
         }), { walkMode: WalkMode.visitStatementsRecursive });
 
         // validate function style (`function` or `sub`)
         for (const fun of file.parser.references.functionExpressions) {
-            this.validateFunctionStyle(file, fun);
+            this.validateFunctionStyle(fun, diagnostics);
+        }
+
+        // add file reference
+        let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
+            ...diagnostic,
+            file
+        }));
+
+        // apply fix
+        if (fix) {
+            bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
         }
 
         // append diagnostics
-        file.addDiagnostics(
-            diagnostics.map(diagnostic => ({
-                ...diagnostic,
-                file
-            }))
-        );
+        file.addDiagnostics(bsDiagnostics);
     }
 
-    validateFunctionStyle(file: BscFile, fun: FunctionExpression) {
-        const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = this.lintContext.severity;
+    validateFunctionStyle(fun: FunctionExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+        const { severity } = this.lintContext;
+        const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = severity;
         const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
         const kind = fun.functionType.kind;
         const hasReturnedValue = style === 'auto' || typeAnnotations !== 'off' ? this.getFunctionReturns(fun) : false;
@@ -86,20 +111,14 @@ export default class CodeStyle {
         if (typeAnnotations !== 'off') {
             if (typeAnnotations !== 'args') {
                 if (hasReturnedValue && !fun.returnTypeToken) {
-                    file.addDiagnostics([{
-                        ...messages.expectedReturnTypeAnnotation(fun.range),
-                        file
-                    }]);
+                    diagnostics.push(messages.expectedReturnTypeAnnotation(fun.range));
                 }
             }
             if (typeAnnotations !== 'return') {
                 const missingAnnotation = fun.parameters.find(arg => !arg.typeToken);
                 if (missingAnnotation) {
                     // only report 1st missing arg annotation to avoid error overload
-                    file.addDiagnostics([{
-                        ...messages.expectedTypeAnnotation(missingAnnotation.range),
-                        file
-                    }]);
+                    diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.range));
                 }
             }
         }
@@ -110,20 +129,14 @@ export default class CodeStyle {
         }
         if (style === 'no-function') {
             if (kind === TokenKind.Function) {
-                file.addDiagnostics([{
-                    ...messages.expectedKeyword(fun.functionType.range, 'sub', `(always use 'sub')`),
-                    file
-                }]);
+                diagnostics.push(messages.expectedSubKeyword(fun, `(always use 'sub')`));
             }
             return;
         }
 
         if (style === 'no-sub') {
             if (kind === TokenKind.Sub) {
-                file.addDiagnostics([{
-                    ...messages.expectedKeyword(fun.functionType.range, 'function', `(always use 'function')`),
-                    file
-                }]);
+                diagnostics.push(messages.expectedFunctionKeyword(fun, `(always use 'function')`));
             }
             return;
         }
@@ -131,16 +144,10 @@ export default class CodeStyle {
         // auto
         if (hasReturnedValue) {
             if (kind !== TokenKind.Function) {
-                file.addDiagnostics([{
-                    ...messages.expectedKeyword(fun.functionType.range, 'function', `(use 'function' when a value is returned)`),
-                    file
-                }]);
+                diagnostics.push(messages.expectedFunctionKeyword(fun, `(use 'function' when a value is returned)`));
             }
         } else if (kind !== TokenKind.Sub) {
-            file.addDiagnostics([{
-                ...messages.expectedKeyword(fun.functionType.range, 'sub', `(use 'sub' when no value is returned)`),
-                file
-            }]);
+            diagnostics.push(messages.expectedSubKeyword(fun, `(use 'sub' when no value is returned)`));
         }
     }
 
