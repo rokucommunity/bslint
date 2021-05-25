@@ -45,8 +45,8 @@ export function compareRanges(a: { range: Range }, b: { range: Range }): number 
     return result === 0 ? comparePos(a.range.end, b.range.end) : result;
 }
 
-function comparePos(a: Position, b: Position) {
-    if (isNaN(a.line) || isNaN(b.line)) {
+export function comparePos(a: Position, b: Position) {
+    if (!a || !b || isNaN(a.line) || isNaN(b.line)) {
         return 0;
     }
     if (a.line < b.line) {

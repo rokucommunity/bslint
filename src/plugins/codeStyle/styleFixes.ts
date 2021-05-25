@@ -1,5 +1,5 @@
 import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, WhileStatement } from 'brighterscript';
-import { ChangeEntry, insertText, replaceText } from '../../textEdit';
+import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 
 export function extractFixes(
@@ -71,12 +71,14 @@ function removeConditionGroup(diagnostic: BsDiagnostic) {
 
 function addThenToken(diagnostic: BsDiagnostic) {
     const stat: IfStatement = diagnostic.data;
-    const { line, character } = stat.condition.range.end;
-    const space = stat.isInline ? ' ' : '';
+    const { end } = stat.condition.range;
+    // const { start } = stat.thenBranch.range; // TODO: use when Block range bug is fixed
+    const start = stat.thenBranch.statements[0]?.range.start;
+    const space = stat.isInline && comparePos(end, start) === 0 ? ' ' : '';
     return {
         diagnostic,
         changes: [
-            insertText(Position.create(line, character), ` then${space}`)
+            insertText(end, ` then${space}`)
         ]
     };
 }
