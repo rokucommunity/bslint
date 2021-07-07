@@ -2,6 +2,8 @@ import { BscFile, CallableContainerMap, createVisitor, DiagnosticSeverity, isBrs
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 
+const isWin = process.platform === 'win32';
+
 export enum UnusedCode {
     UnusedComponent = 'LINT4001',
     UnusedScript = 'LINT4002'
@@ -133,7 +135,7 @@ export default class CheckUsage {
             if (!isBrsFile(file)) {
                 return;
             }
-            const pkgPath = file.pkgPath.toLowerCase();
+            const pkgPath = normalizePath(file.pkgPath);
             v.edges.push({
                 name: pkgPath,
                 range: null,
@@ -205,6 +207,14 @@ export default class CheckUsage {
             }
         });
     }
+}
+
+function normalizePath(s: string) {
+    let p = s.toLowerCase();
+    if (isWin) {
+        p = p.replace('\\', '/');
+    }
+    return p;
 }
 
 function createComponentEdge(name: string, range: Range = null, file: BscFile = null) {
