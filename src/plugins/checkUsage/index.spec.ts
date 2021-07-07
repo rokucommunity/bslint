@@ -12,7 +12,7 @@ function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
     return diagnostics
         .filter((d) => d.severity && d.severity < 4)
         .sort((a, b) => a.range.start.line - b.range.start.line)
-        .map((d) => `${pad(d.range.start.line + 1)}:${d.code}:${d.message}`);
+        .map((d) => `${pad(d.range.start.line + 1)}:${d.code}:${d.message}`.replace('\\', '/')); // Win to nix path
 }
 
 describe('checkUsage', () => {
