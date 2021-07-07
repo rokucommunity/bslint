@@ -51,7 +51,7 @@ npx bslint
 # lint and fix basic code-style issues (see below)
 npx bslint --fix
 
-# lint and attempt to identify unused components and scripts
+# lint and attempt to identify unused components and scripts (see below)
 npx bslint --checkUsage
 ```
 
@@ -215,3 +215,13 @@ Running `bslint` with `--fix` parameter will attempt to fix common code-style is
 - Using/missing the optional `then` keyword,
 - Using/missing parenthesis around `if/while` conditions.
 - Case sensitivity (align with first occurence)
+
+## Usage checking (approximative)
+
+Running `bslint` with `--checkUsage` parameter will attempt to identify unused components and scripts:
+
+- Starting from `main.brs` the scripts and components are "walked",
+- All the literal strings are matched (case insensitive) with XML component names,
+- All the component included scripts are walked,
+- All the component's explicit children (under `<children>` tag) are walked,
+- Any script/component not walked will produce a warning.
