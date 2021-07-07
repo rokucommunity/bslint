@@ -1,6 +1,7 @@
 import { BsConfig, Program } from 'brighterscript';
 import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
 import Linter from './Linter';
+import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
 import TrackCodeFlow from './plugins/trackCodeFlow';
 import { PluginWrapperContext, createContext } from './util';
@@ -36,6 +37,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
     globals?: string[];
     ignores?: string[];
     fix?: boolean;
+    checkUsage?: boolean;
 };
 
 export type BsLintSeverity = DiagnosticSeverity;
@@ -71,6 +73,11 @@ export default function factory() {
 
             const codeStyle = new CodeStyle(context);
             program.plugins.add(codeStyle);
+
+            if (context.checkUsage) {
+                const checkUsage = new CheckUsage(context);
+                program.plugins.add(checkUsage);
+            }
         },
         afterProgramValidate: async (program: Program) => {
             const context = contextMap.get(program);

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Child2" extends="Group">
+    <script type="text/brightscript" uri="./child2.brs" />
+</component>

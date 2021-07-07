@@ -19,6 +19,7 @@ const options = yargs
     })
     .option('lintConfig', { type: 'string', description: 'Path to a bslint.json configuration file.' })
     .option('fix', { type: 'boolean', description: 'Fix automatically minor issues (experimental)' })
+    .option('checkUsage', { type: 'boolean', description: 'Look for potentially unused components and scripts' })
     .option('watch', { type: 'boolean', defaultDescription: 'false', description: 'Watch input files.' }).argv;
 
 async function run(options: BsLintConfig) {

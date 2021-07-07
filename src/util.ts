@@ -100,6 +100,7 @@ export interface PluginContext {
     globals: string[];
     ignores: (file: BscFile) => boolean;
     fix: Readonly<boolean>;
+    checkUsage: Readonly<boolean>;
     addFixes: (file: BscFile, entry: ChangeEntry) => void;
 }
 
@@ -109,7 +110,7 @@ export interface PluginWrapperContext extends PluginContext {
 }
 
 export function createContext(program: Program): PluginWrapperContext {
-    const { rules, fix, globals, ignores } = normalizeConfig(program.options);
+    const { rules, fix, checkUsage, globals, ignores } = normalizeConfig(program.options);
     const ignorePatterns = (ignores || []).map(pattern => {
         return pattern.startsWith('**/') ? pattern : '**/' + pattern;
     });
@@ -122,6 +123,7 @@ export function createContext(program: Program): PluginWrapperContext {
             return !file || ignorePatterns.some(pattern => minimatch(file.pathAbsolute, pattern));
         },
         fix,
+        checkUsage,
         addFixes: (file: BscFile, entry: ChangeEntry) => {
             if (!pendingFixes.has(file.pathAbsolute)) {
                 pendingFixes.set(file.pathAbsolute, entry.changes);

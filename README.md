@@ -50,6 +50,9 @@ npx bslint
 
 # lint and fix basic code-style issues (see below)
 npx bslint --fix
+
+# lint and attempt to identify unused components and scripts
+npx bslint --checkUsage
 ```
 
 or add a `npm` script in `package.json`, e.g.:
