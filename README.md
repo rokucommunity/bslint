@@ -25,14 +25,17 @@ npm init -y
 npm install brighterscript @rokucommunity/bslint
 ```
 
-Add the plugin to your `bsconfig.json` file in the root of your project,
-or create a minimal file like that:
+**Important**: add the plugin to your `bsconfig.json` file in the root of your project,
+or create a minimal `bsconfig.json` like that:
 
 ```json
 {
     "plugins": [ "@rokucommunity/bslint" ]
 }
 ```
+
+Otherwise, you will only see issues coming from the 
+[brighterscript](https://github.com/rokucommunity/brighterscript) compiler.
 
 ### Command line interface (CLI)
 
@@ -72,6 +75,8 @@ and call `npm run lint`.
 
 `bslint` can be configured using a `bslint.json` file in the root of your project.
 
+Note: `bslint.json` is not the same file as `bsconfig.json`!
+
 ```json
 {
     "rules": {},
@@ -83,8 +88,25 @@ and call `npm run lint`.
 Where each value is optional:
 
 - `rules`: see below
-- `globals`: a list of tokens which should be considered valid (ex. `_brs_`)
+- `globals`: a list of tokens which should always be considered as safe (ex. `_brs_`)
 - `ignores`: a list of files or globs of files to omit from linting
+
+### Ignores
+
+Unlike `brighterscripts`'s `diagnosticFilter` which hides issues, `bslint` will completely
+skip ignored files when running the extra linting rules.
+
+*Note: it won't remove issues reported by the compiler itself!*
+
+Format should follow "glob search" rules, as implemented in 
+[minimatch](https://www.npmjs.com/package/minimatch) module.
+
+Examples:
+
+- `"lib/**/*"`: ignore everything under any `lib` folder,
+- `"**/lib/**/*"`: same with explicit initial wildcard (added automatically if missing)
+- `"specific-script.brs"`: ignore specific file name
+- `"*.test.brs"`: partial match of file name
 
 ## Rules
 
