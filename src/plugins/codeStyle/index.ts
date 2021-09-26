@@ -1,4 +1,5 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent } from 'brighterscript';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
+import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { messages } from './diagnosticMessages';
@@ -23,7 +24,7 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, aaCommaStyle } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
         const disallowInlineIf = inlineIfStyle === 'never';
@@ -32,6 +33,8 @@ export default class CodeStyle {
         const requireBlockIfThen = blockIfStyle === 'then';
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
+        const validateAAStyle = aaCommaStyle !== 'off';
+        const walkExpressions = validateAAStyle;
 
         file.ast.walk(createVisitor({
             IfStatement: s => {
@@ -77,8 +80,13 @@ export default class CodeStyle {
                 if (validatePrint) {
                     diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
                 }
+            },
+            AALiteralExpression: e => {
+                if (validateAAStyle) {
+                    this.validateAAStyle(e, aaCommaStyle, diagnostics);
+                }
             }
-        }), { walkMode: WalkMode.visitStatementsRecursive });
+        }), { walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive });
 
         // validate function style (`function` or `sub`)
         for (const fun of file.parser.references.functionExpressions) {
@@ -98,6 +106,22 @@ export default class CodeStyle {
 
         // append diagnostics
         file.addDiagnostics(bsDiagnostics);
+    }
+
+    validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+        const indexes = collectWrappingAAMembersIndexes(aa);
+        const last = indexes.length - 1;
+        indexes.forEach((index, i) => {
+            const member = aa.elements[index] as AAMemberExpression;
+            const hasComma = !!member.commaToken;
+            if (aaCommaStyle === 'never' || (i === last && aaCommaStyle === 'no-dangling')) {
+                if (hasComma) {
+                    diagnostics.push(messages.removeAAComma(member.commaToken.range));
+                }
+            } else if (!hasComma) {
+                diagnostics.push(messages.addAAComma(member.value.range));
+            }
+        });
     }
 
     validateFunctionStyle(fun: FunctionExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
@@ -166,4 +190,29 @@ export default class CodeStyle {
         }
         return hasReturnedValue;
     }
+}
+
+/**
+ * Collect indexes of non-inline AA members
+ */
+export function collectWrappingAAMembersIndexes(aa: AALiteralExpression): number[] {
+    const indexes: number[] = [];
+    const { elements } = aa;
+    const lastIndex = elements.length - 1;
+    for (let i = 0; i < lastIndex; i++) {
+        const e = elements[i];
+        if (isCommentStatement(e)) {
+            continue;
+        }
+        const ne = elements[i + 1];
+        const hasNL = isCommentStatement(ne) || ne.range.start.line > e.range.end.line;
+        if (hasNL) {
+            indexes.push(i);
+        }
+    }
+    const last = elements[lastIndex];
+    if (last && !isCommentStatement(last)) {
+        indexes.push(lastIndex);
+    }
+    return indexes;
 }

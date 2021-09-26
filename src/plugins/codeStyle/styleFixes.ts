@@ -32,9 +32,33 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return removeConditionGroup(diagnostic);
         case CodeStyleError.ConditionGroupMissing:
             return addConditionGroup(diagnostic);
+        case CodeStyleError.AACommaFound:
+            return removeAAComma(diagnostic);
+        case CodeStyleError.AACommaMissing:
+            return addAAComma(diagnostic);
         default:
             return null;
     }
+}
+
+function addAAComma(diagnostic: BsDiagnostic) {
+    const { range } = diagnostic;
+    return {
+        diagnostic,
+        changes: [
+            insertText(range.end, ',')
+        ]
+    };
+}
+
+function removeAAComma(diagnostic: BsDiagnostic) {
+    const { range } = diagnostic;
+    return {
+        diagnostic,
+        changes: [
+            replaceText(range, '')
+        ]
+    };
 }
 
 function addConditionGroup(diagnostic: BsDiagnostic) {
