@@ -237,7 +237,8 @@ describe('codeStyle', () => {
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
                 `08:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`,
-                `10:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`
+                `10:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`,
+                `16:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`
             ];
             expect(actual).deep.equal(expected);
         });
