@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, WhileStatement } from 'brighterscript';
+import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 
@@ -125,11 +125,20 @@ function removeThenToken(diagnostic: BsDiagnostic) {
 function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
     const fun: FunctionExpression = diagnostic.data;
     const space = fun.end?.text.indexOf(' ') > 0 ? ' ' : '';
+    // sub/function keyword
+    const keywordChanges = [
+        replaceText(fun.functionType.range, token),
+        replaceText(fun.end?.range, `end${space}${token}`)
+    ];
+    // remove `as void` in case of `sub`
+    const returnChanges = token === 'sub' && fun.returnTypeToken?.kind === TokenKind.Void ? [
+        replaceText(Range.create(fun.rightParen.range.end, fun.returnTypeToken.range.end), '')
+    ] : [];
     return {
         diagnostic,
         changes: [
-            replaceText(fun.functionType.range, token),
-            replaceText(fun.end?.range, `end${space}${token}`)
+            ...keywordChanges,
+            ...returnChanges
         ]
     };
 }
