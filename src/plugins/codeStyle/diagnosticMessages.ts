@@ -12,7 +12,9 @@ export enum CodeStyleError {
     FunctionKeywordExpected = 'LINT3009',
     ReturnTypeAnnotation = 'LINT3010',
     TypeAnnotation = 'LINT3011',
-    NoPrint = 'LINT3012'
+    NoPrint = 'LINT3012',
+    AACommaFound = 'LINT3013',
+    AACommaMissing = 'LINT3014'
 }
 
 const CS = 'Code style:';
@@ -109,6 +111,20 @@ export const messages = {
         code: CodeStyleError.NoPrint,
         source: 'bslint',
         message: `${CS} Avoid using direct Print statements`,
+        range
+    }),
+    removeAAComma: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.AACommaFound,
+        source: 'bslint',
+        message: `Remove optional comma`,
+        range
+    }),
+    addAAComma: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.AACommaMissing,
+        source: 'bslint',
+        message: `Add comma after the expression`,
         range
     })
 };

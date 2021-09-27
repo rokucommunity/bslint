@@ -25,6 +25,7 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'condition-style': 'no-group',
         'named-function-style': 'auto',
         'anon-function-style': 'auto',
+        'aa-comma-style': 'no-dangling',
         'type-annotations': 'off',
         'no-print': 'off'
     };
@@ -150,6 +151,7 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         conditionStyle: rules['condition-style'],
         namedFunctionStyle: rules['named-function-style'],
         anonFunctionStyle: rules['anon-function-style'],
+        aaCommaStyle: rules['aa-comma-style'],
         typeAnnotations: rules['type-annotations'],
         noPrint: ruleToSeverity(rules['no-print'])
     };

@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { BsDiagnostic, Program } from 'brighterscript';
+import { AALiteralExpression, AssignmentStatement, BsDiagnostic, ParseMode, Parser, Program } from 'brighterscript';
 import Linter from '../../Linter';
-import CodeStyle from './index';
+import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import { createContext, PluginWrapperContext } from '../../util';
 
 function pad(n: number) {
@@ -374,6 +374,106 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+    describe('AA style', () => {
+        it('collects wrapping AA members indexes', () => {
+            const { statements } = Parser.parse(`
+                aa = {}
+                aa = {
+                    p1: 1
+                }
+                aa = {
+                    p1: 1,
+                    p2: 2
+                }
+                aa = { 'comment
+                    p1: 1,
+                    'comment
+                    p2: 2
+                    'comment
+                }
+                aa = {
+                    p1: 1, 'comment
+                    p2: 2 'comment
+                }
+                aa = { p1: 1 }
+                aa = { p1: 1, p2: 2 }
+                aa = { p1: 1, p2: 2, }
+            `, { mode: ParseMode.BrightScript }).ast;
+            const indexes = statements.map(s => {
+                const assign = s as AssignmentStatement;
+                const value: AALiteralExpression = assign.value as AALiteralExpression;
+                return collectWrappingAAMembersIndexes(value);
+            });
+            expect(indexes).to.deep.equal([
+                [],
+                [0],
+                [0, 1],
+                [1, 3],
+                [0, 2],
+                [0],
+                [1],
+                [1]
+            ]);
+        });
+
+        it('enforce aa comma, never', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/aa-style.brs'],
+                rules: {
+                    'aa-comma-style': 'never'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `03:LINT3013:Remove optional comma`,
+                `04:LINT3013:Remove optional comma`,
+                `11:LINT3013:Remove optional comma`,
+                `12:LINT3013:Remove optional comma`,
+                `13:LINT3013:Remove optional comma`,
+                `31:LINT3013:Remove optional comma`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('enforce aa comma, no dangling', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/aa-style.brs'],
+                rules: {
+                    'aa-comma-style': 'no-dangling'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `13:LINT3013:Remove optional comma`,
+                `19:LINT3014:Add comma after the expression`,
+                `20:LINT3014:Add comma after the expression`,
+                `31:LINT3013:Remove optional comma`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('enforce aa comma, always', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/aa-style.brs'],
+                rules: {
+                    'aa-comma-style': 'always'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `05:LINT3014:Add comma after the expression`,
+                `19:LINT3014:Add comma after the expression`,
+                `20:LINT3014:Add comma after the expression`,
+                `21:LINT3014:Add comma after the expression`,
+                `27:LINT3014:Add comma after the expression`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+    });
+
     describe('fix', () => {
         beforeEach(() => {
             fs.copyFileSync(
@@ -384,11 +484,16 @@ describe('codeStyle', () => {
                 `${project1.rootDir}/source/if-style.brs`,
                 `${project1.rootDir}/source/if-style-temp.brs`
             );
+            fs.copyFileSync(
+                `${project1.rootDir}/source/aa-style.brs`,
+                `${project1.rootDir}/source/aa-style-temp.brs`
+            );
         });
 
         afterEach(() => {
             fs.unlinkSync(`${project1.rootDir}/source/function-style-temp.brs`);
             fs.unlinkSync(`${project1.rootDir}/source/if-style-temp.brs`);
+            fs.unlinkSync(`${project1.rootDir}/source/aa-style-temp.brs`);
         });
 
         it('replaces `sub` with `function`', async () => {
@@ -540,6 +645,81 @@ describe('codeStyle', () => {
 
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/if-style-group.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('remove optional aa comma', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/aa-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'no-print': 'off',
+                    'aa-comma-style': 'never'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-nocomma.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('add missing aa comma, always', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/aa-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'no-print': 'off',
+                    'aa-comma-style': 'always'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-always.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('add missing aa comma, no dangling', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/aa-style-temp.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'no-print': 'off',
+                    'aa-comma-style': 'no-dangling'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-nodangling.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
         });
     });

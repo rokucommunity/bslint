@@ -11,6 +11,7 @@ export type RuleInlineIf = 'never' | 'no-then' | 'then' | 'off';
 export type RuleBlockIf = 'no-then' | 'then' | 'off';
 export type RuleCondition = 'no-group' | 'group' | 'off';
 export type RuleFunction = 'no-function' | 'no-sub' | 'auto' | 'off';
+export type RuleAAComma = 'always' | 'no-dangling' | 'never' | 'off';
 export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off';
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
@@ -31,6 +32,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'condition-style'?: RuleCondition;
         'named-function-style'?: RuleFunction;
         'anon-function-style'?: RuleFunction;
+        'aa-comma-style'?: RuleAAComma;
         'type-annotations'?: RuleTypeAnnotations;
         'no-print'?: RuleSeverity;
     };
@@ -55,6 +57,7 @@ export interface BsLintRules {
     conditionStyle: RuleCondition;
     namedFunctionStyle: RuleFunction;
     anonFunctionStyle: RuleFunction;
+    aaCommaStyle: RuleAAComma;
     typeAnnotations: RuleTypeAnnotations;
     noPrint: BsLintSeverity;
 }

@@ -34,7 +34,7 @@ or create a minimal `bsconfig.json` like that:
 }
 ```
 
-Otherwise, you will only see issues coming from the 
+Otherwise, you will only see issues coming from the
 [brighterscript](https://github.com/rokucommunity/brighterscript) compiler.
 
 ### Command line interface (CLI)
@@ -98,7 +98,7 @@ skip ignored files when running the extra linting rules.
 
 *Note: it won't remove issues reported by the compiler itself!*
 
-Format should follow "glob search" rules, as implemented in 
+Format should follow "glob search" rules, as implemented in
 [minimatch](https://www.npmjs.com/package/minimatch) module.
 
 Examples:
@@ -128,6 +128,7 @@ Default rules:
         "condition-style": "no-group",
         "named-function-style": "auto",
         "anon-function-style": "auto",
+        "aa-comma-style": "no-dangling",
         "no-print": "off",
 
         "type-annotations": "off",
@@ -171,6 +172,13 @@ Default rules:
     - `no-sub`: always use `function`
     - `auto`: use `sub` for `Void` functions, otherwise use `function` (**default**)
     - `off`: no not validate
+
+- `aa-comma-style`: validation of commas in Associative Array (AA) literals
+
+    - `always`: enforce the presence of commas, always
+    - `no-dangling`: enforce the presence of commas but don't leave one dangling (**default**)
+    - `never`: enforce that optional commas aren't used
+    - `off`: do not validate
 
 - `no-print`: prevent usage of `print` statements in code (`error | warn | info | off`)
 
@@ -236,6 +244,7 @@ Running `bslint` with `--fix` parameter will attempt to fix common code-style is
 - Using wrong `sub` or `function` keyword,
 - Using/missing the optional `then` keyword,
 - Using/missing parenthesis around `if/while` conditions.
+- Adding/removing Associative Array (AA) literals' commas where needed.
 - Case sensitivity (align with first occurence)
 
 ## Usage checking (approximative)
