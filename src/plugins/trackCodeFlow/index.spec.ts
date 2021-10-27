@@ -265,7 +265,11 @@ describe('trackCodeFlow', () => {
 
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/case-sensitivity-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/case-sensitivity-fixed.brs`).toString();
-            expect(actualSrc).to.equal(expectedSrc);
+            expect(
+                actualSrc.replace(/\r?\n/g, '\n')
+            ).to.equal(
+                expectedSrc.replace(/\r?\n/g, '\n')
+            );
         });
     });
 });
