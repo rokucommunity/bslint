@@ -256,3 +256,6 @@ Running `bslint` with `--checkUsage` parameter will attempt to identify unused c
 - All the component included scripts are walked,
 - All the component's explicit children (under `<children>` tag) are walked,
 - Any script/component not walked will produce a warning.
+
+## Changelog
+Click [here](CHANGELOG.md) to view the changelog
