@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "preversion": "npm run build && npm run lint && npm run test",
     "lint": "eslint \"src/**\"",
     "test": "nyc mocha",
     "test:nocover": "mocha",
