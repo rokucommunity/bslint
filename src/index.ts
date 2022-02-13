@@ -1,5 +1,4 @@
-import { BsConfig, Program } from 'brighterscript';
-import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
+import { BsConfig, Program, DiagnosticSeverity } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
