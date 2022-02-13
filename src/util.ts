@@ -3,8 +3,7 @@ import * as minimatch from 'minimatch';
 import { BsLintConfig, BsLintRules, RuleSeverity, BsLintSeverity } from './index';
 import { readFileSync, existsSync } from 'fs';
 import * as path from 'path';
-import { Program, BscFile } from 'brighterscript';
-import { DiagnosticSeverity } from 'brighterscript/dist/astUtils';
+import { Program, BscFile, DiagnosticSeverity } from 'brighterscript';
 import { applyFixes, ChangeEntry, TextEdit } from './textEdit';
 import { addJob } from './Linter';
 

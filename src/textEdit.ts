@@ -1,7 +1,6 @@
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs-extra';
-import { Position, Range } from 'brighterscript/dist/astUtils';
-import { BscFile, BsDiagnostic, OnGetCodeActionsEvent } from 'brighterscript';
+import { BscFile, BsDiagnostic, OnGetCodeActionsEvent, Position, Range } from 'brighterscript';
 import { CodeActionKind, codeActionUtil } from 'brighterscript/dist/CodeActionUtil';
 
 interface LintCodeAction {
