@@ -1,8 +1,11 @@
 # bslint - BrighterScript Lint
 
-[![build](https://img.shields.io/github/workflow/status/rokucommunity/bslint/build.svg?logo=github)](https://github.com/rokucommunity/bslint/actions?query=workflow%3Abuild)
-[![Coverage Status](https://coveralls.io/repos/github/rokucommunity/bslint/badge.svg?branch=master)](https://coveralls.io/github/rokucommunity/bslint?branch=master)
-[![NPM Version](https://img.shields.io/npm/v/@rokucommunity/bslint.svg)](https://www.npmjs.com/package/@rokucommunity/bslint)
+[![build status](https://img.shields.io/github/workflow/status/rokucommunity/bslint/build.svg?logo=github)](https://github.com/rokucommunity/bslint/actions?query=workflow%3Abuild)
+[![coverage status](https://img.shields.io/coveralls/github/rokucommunity/bslint?logo=coveralls)](https://coveralls.io/github/rokucommunity/bslint?branch=master)
+[![monthly downloads](https://img.shields.io/npm/dm/@rokucommunity/bslint.svg?sanitize=true&logo=npm&logoColor=)](https://npmcharts.com/compare/bslint?minimal=true)
+[![npm version](https://img.shields.io/npm/v/@rokucommunity/bslint.svg?logo=npm)](https://www.npmjs.com/package/@rokucommunity/bslint)
+[![license](https://img.shields.io/github/license/rokucommunity/bslint.svg)](LICENSE)
+[![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
 
 [brighterscript](https://github.com/rokucommunity/brighterscript) is a Roku
 BrightScript compiler featuring many diagnostics out of the box: syntax check,
