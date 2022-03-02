@@ -27,7 +27,7 @@
     "brightscript"
   ],
   "author": "rokucommunity",
-  "license": "ISC",
+  "license": "MIT",
   "homepage": "https://github.com/rokucommunity/bslint",
   "repository": {
     "type": "git",
