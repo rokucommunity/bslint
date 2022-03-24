@@ -13,7 +13,6 @@ export enum VarLintError {
 enum ValidationKind {
     Assignment = 'Assignment',
     UninitializedVar = 'UninitializedVar',
-    UninitialisedFn = 'UninitialisedFn',
     Unsafe = 'Unsafe'
 }
 
@@ -259,7 +258,7 @@ export function createVarLinter(
             const local = findLocal(name);
             if (!local) {
                 deferred.push({
-                    kind: expr.isCalled ? ValidationKind.UninitialisedFn : ValidationKind.UninitializedVar,
+                    kind: ValidationKind.UninitializedVar,
                     name: name,
                     range: expr.range
                 });
@@ -391,18 +390,6 @@ function deferredVarLinter(
         const hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
         switch (kind) {
             case ValidationKind.UninitializedVar:
-                if (!hasCallable) {
-                    diagnostics.push({
-                        severity: DiagnosticSeverity.Error,
-                        code: VarLintError.UninitializedVar,
-                        message: `Using uninitialised variable '${name}' when this file is included in scope '${scope.name}'`,
-                        range: range,
-                        file: file
-                    });
-                }
-                // TODO else test case
-                break;
-            case ValidationKind.UninitialisedFn:
                 if (!hasCallable) {
                     diagnostics.push({
                         severity: DiagnosticSeverity.Error,
