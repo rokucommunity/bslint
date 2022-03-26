@@ -375,6 +375,42 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+    describe('enforce no todo', () => {
+        it('default todo pattern', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/no-todo.brs'],
+                rules: {
+                    'no-todo': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `02:LINT3015:Code style: Avoid using TODO comments`,
+                `04:LINT3015:Code style: Avoid using TODO comments`,
+                `06:LINT3015:Code style: Avoid using TODO comments`,
+                `08:LINT3015:Code style: Avoid using TODO comments`,
+                '10:LINT3015:Code style: Avoid using TODO comments',
+                '12:LINT3015:Code style: Avoid using TODO comments'
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('modified todo pattern', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/no-todo.brs'],
+                rules: {
+                    'no-todo': 'error',
+                    'todo-pattern': 'PLEASEFIX'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = ['19:LINT3015:Code style: Avoid using TODO comments'];
+            expect(actual).deep.equal(expected);
+        });
+    });
+
     describe('AA style', () => {
         it('collects wrapping AA members indexes', () => {
             const { statements } = Parser.parse(`

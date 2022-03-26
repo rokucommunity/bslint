@@ -97,6 +97,8 @@ function tryLoadConfig(filename: string): BsLintConfig | undefined {
 export interface PluginContext {
     program: Readonly<Program>;
     severity: Readonly<BsLintRules>;
+    // TODO: Is this the right place to put this?
+    todoPattern: Readonly<RegExp>;
     globals: string[];
     ignores: (file: BscFile) => boolean;
     fix: Readonly<boolean>;
@@ -118,6 +120,7 @@ export function createContext(program: Program): PluginWrapperContext {
     return {
         program: program,
         severity: rulesToSeverity(rules),
+        todoPattern: rules['todo-pattern'] ? new RegExp(rules['todo-pattern']) : /TODO|todo|FIXME/,
         globals,
         ignores: (file: BscFile) => {
             return !file || ignorePatterns.some(pattern => minimatch(file.pathAbsolute, pattern));
@@ -152,7 +155,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         anonFunctionStyle: rules['anon-function-style'],
         aaCommaStyle: rules['aa-comma-style'],
         typeAnnotations: rules['type-annotations'],
-        noPrint: ruleToSeverity(rules['no-print'])
+        noPrint: ruleToSeverity(rules['no-print']),
+        noTodo: ruleToSeverity(rules['no-todo'])
     };
 }
 
