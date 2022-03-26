@@ -410,6 +410,21 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
     });
+    it('enforce no stop', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/no-stop.brs'],
+            // Should be warn by default
+            rules: {
+                'no-stop': 'error'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `03:LINT3016:Code style: Avoid using STOP statements`
+        ];
+        expect(actual).deep.equal(expected);
+    });
 
     describe('AA style', () => {
         it('collects wrapping AA members indexes', () => {

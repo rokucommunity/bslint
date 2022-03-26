@@ -15,7 +15,8 @@ export enum CodeStyleError {
     NoPrint = 'LINT3012',
     AACommaFound = 'LINT3013',
     AACommaMissing = 'LINT3014',
-    NoTodo = 'LINT3015'
+    NoTodo = 'LINT3015',
+    NoStop = 'LINT3016'
 }
 
 const CS = 'Code style:';
@@ -119,6 +120,13 @@ export const messages = {
         code: CodeStyleError.NoTodo,
         source: 'bslint',
         message: `${CS} Avoid using TODO comments`,
+        range
+    }),
+    noStop: (range: Range, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.NoStop,
+        source: 'bslint',
+        message: `${CS} Avoid using STOP statements`,
         range
     }),
     removeAAComma: (range: Range) => ({

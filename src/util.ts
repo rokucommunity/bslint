@@ -155,7 +155,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         aaCommaStyle: rules['aa-comma-style'],
         typeAnnotations: rules['type-annotations'],
         noPrint: ruleToSeverity(rules['no-print']),
-        noTodo: ruleToSeverity(rules['no-todo'])
+        noTodo: ruleToSeverity(rules['no-todo']),
+        noStop: ruleToSeverity(rules['no-stop'])
     };
 }
 
