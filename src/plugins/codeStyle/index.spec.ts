@@ -426,6 +426,77 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+    describe('enforce newline at end of file', () => {
+        it('newline always', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/no-newline-last.brs'],
+                rules: {
+                    'newline-last': 'always'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `03:LINT3016:Code style: File should end with a newline`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('newline never', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/main.brs'],
+                rules: {
+                    'newline-last': 'never'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `03:LINT3017:Code style: File should not end with a newline`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('empty file', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/empty.brs'],
+                rules: {
+                    'newline-last': 'always'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('off without newline', async() => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/no-newline-last.brs'],
+                rules: {
+                    'newline-last': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('off with newline', async() => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/main.brs'],
+                rules: {
+                    'newline-last': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+    });
+
     describe('AA style', () => {
         it('collects wrapping AA members indexes', () => {
             const { statements } = Parser.parse(`

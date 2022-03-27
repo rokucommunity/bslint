@@ -156,7 +156,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         typeAnnotations: rules['type-annotations'],
         noPrint: ruleToSeverity(rules['no-print']),
         noTodo: ruleToSeverity(rules['no-todo']),
-        noStop: ruleToSeverity(rules['no-stop'])
+        noStop: ruleToSeverity(rules['no-stop']),
+        newlineLast: rules['newline-last']
     };
 }
 

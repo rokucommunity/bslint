@@ -24,7 +24,7 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, newlineLast } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
@@ -37,6 +37,21 @@ export default class CodeStyle {
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
         const walkExpressions = validateAAStyle;
+        const validateNewlineLast = newlineLast !== 'off';
+        const disallowNewlineLast = newlineLast === 'never';
+
+        if (validateNewlineLast &&
+            // Do not validate empty files
+            file.parser.tokens.filter(t => t.kind !== TokenKind.Newline && t.kind !== TokenKind.Eof).length > 0) {
+            const lastTokenBeforeEOF = file.parser.tokens[file.parser.tokens.length - 2];
+            if (disallowNewlineLast) {
+                if (lastTokenBeforeEOF && lastTokenBeforeEOF.kind === TokenKind.Newline) {
+                    diagnostics.push(messages.neverNewlineLast(lastTokenBeforeEOF.range));
+                }
+            } else if (lastTokenBeforeEOF && lastTokenBeforeEOF.kind !== TokenKind.Newline) {
+                diagnostics.push(messages.newlineLast(lastTokenBeforeEOF.range));
+            }
+        }
 
         file.ast.walk(createVisitor({
             IfStatement: s => {
