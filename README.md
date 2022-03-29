@@ -133,6 +133,8 @@ Default rules:
         "anon-function-style": "auto",
         "aa-comma-style": "no-dangling",
         "no-print": "off",
+        "no-todo": "off",
+        "todo-pattern": "TODO|todo|FIXME",
 
         "type-annotations": "off",
 
@@ -184,6 +186,10 @@ Default rules:
     - `off`: do not validate
 
 - `no-print`: prevent usage of `print` statements in code (`error | warn | info | off`)
+
+- `no-todo`: prevent usage of `todo` comments in code (`error | warn | info | off`)
+
+- `todo-pattern`: string regex pattern to determine what a TODO is. default is `TODO|todo|FIXME` (**do not** include surrounding `/` characters).
 
 ### Strictness rules
 

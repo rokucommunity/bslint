@@ -34,6 +34,9 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'aa-comma-style'?: RuleAAComma;
         'type-annotations'?: RuleTypeAnnotations;
         'no-print'?: RuleSeverity;
+        'no-todo'?: RuleSeverity;
+        // Will be transformed to RegExp type when program context is created.
+        'todo-pattern'?: string;
     };
     globals?: string[];
     ignores?: string[];
@@ -59,6 +62,7 @@ export interface BsLintRules {
     aaCommaStyle: RuleAAComma;
     typeAnnotations: RuleTypeAnnotations;
     noPrint: BsLintSeverity;
+    noTodo: BsLintSeverity;
 }
 
 export { Linter };
