@@ -97,7 +97,6 @@ function tryLoadConfig(filename: string): BsLintConfig | undefined {
 export interface PluginContext {
     program: Readonly<Program>;
     severity: Readonly<BsLintRules>;
-    // TODO: Is this the right place to put this?
     todoPattern: Readonly<RegExp>;
     globals: string[];
     ignores: (file: BscFile) => boolean;

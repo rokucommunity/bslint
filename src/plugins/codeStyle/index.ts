@@ -89,7 +89,6 @@ export default class CodeStyle {
             },
             CommentStatement: e => {
                 if (validateTodo) {
-                    console.log('this.lintContext', this.lintContext);
                     if (this.lintContext.todoPattern.test(e.text)) {
                         diagnostics.push(messages.noTodo(e.range, noTodo));
                     }
