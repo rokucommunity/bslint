@@ -24,7 +24,7 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, newlineLast } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
@@ -37,19 +37,28 @@ export default class CodeStyle {
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
         const walkExpressions = validateAAStyle;
-        const validateNewlineLast = newlineLast !== 'off';
-        const disallowNewlineLast = newlineLast === 'never';
+        const validateEolLast = eolLast !== 'off';
+        const disallowEolLast = eolLast === 'never';
 
-        if (validateNewlineLast &&
-            // Do not validate empty files
-            file.parser.tokens.filter(t => t.kind !== TokenKind.Newline && t.kind !== TokenKind.Eof).length > 0) {
+        // Check if the file is going backwards from the last token.
+        let isFileEmpty = true;
+        for (let i = file.parser.tokens.length - 1; i >= 0; i--) {
+            if (file.parser.tokens[i].kind !== TokenKind.Eof &&
+                file.parser.tokens[i].kind !== TokenKind.Newline) {
+                isFileEmpty = false;
+                break;
+            }
+        }
+
+        // Do not validate empty files
+        if (validateEolLast && !isFileEmpty) {
             const lastTokenBeforeEOF = file.parser.tokens[file.parser.tokens.length - 2];
-            if (disallowNewlineLast) {
+            if (disallowEolLast) {
                 if (lastTokenBeforeEOF && lastTokenBeforeEOF.kind === TokenKind.Newline) {
-                    diagnostics.push(messages.neverNewlineLast(lastTokenBeforeEOF.range));
+                    diagnostics.push(messages.removeEolLast(lastTokenBeforeEOF.range));
                 }
             } else if (lastTokenBeforeEOF && lastTokenBeforeEOF.kind !== TokenKind.Newline) {
-                diagnostics.push(messages.newlineLast(lastTokenBeforeEOF.range));
+                diagnostics.push(messages.addEolLast(lastTokenBeforeEOF.range));
             }
         }
 

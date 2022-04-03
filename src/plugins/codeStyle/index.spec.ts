@@ -430,9 +430,9 @@ describe('codeStyle', () => {
         it('newline always', async () => {
             const diagnostics = await linter.run({
                 ...project1,
-                files: ['source/no-newline-last.brs'],
+                files: ['source/no-eol-last.brs'],
                 rules: {
-                    'newline-last': 'always'
+                    'eol-last': 'always'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -447,7 +447,7 @@ describe('codeStyle', () => {
                 ...project1,
                 files: ['source/main.brs'],
                 rules: {
-                    'newline-last': 'never'
+                    'eol-last': 'never'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -462,7 +462,7 @@ describe('codeStyle', () => {
                 ...project1,
                 files: ['source/empty.brs'],
                 rules: {
-                    'newline-last': 'always'
+                    'eol-last': 'always'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -473,9 +473,9 @@ describe('codeStyle', () => {
         it('off without newline', async() => {
             const diagnostics = await linter.run({
                 ...project1,
-                files: ['source/no-newline-last.brs'],
+                files: ['source/no-eol-last.brs'],
                 rules: {
-                    'newline-last': 'off'
+                    'eol-last': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
@@ -488,7 +488,7 @@ describe('codeStyle', () => {
                 ...project1,
                 files: ['source/main.brs'],
                 rules: {
-                    'newline-last': 'off'
+                    'eol-last': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);

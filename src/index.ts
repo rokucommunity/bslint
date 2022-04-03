@@ -12,7 +12,7 @@ export type RuleCondition = 'no-group' | 'group' | 'off';
 export type RuleFunction = 'no-function' | 'no-sub' | 'auto' | 'off';
 export type RuleAAComma = 'always' | 'no-dangling' | 'never' | 'off';
 export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off';
-export type RuleNewlineLast = 'always' | 'never' | 'off';
+export type RuleEolLast = 'always' | 'never' | 'off';
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
     lintConfig?: string;
@@ -38,7 +38,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'no-todo'?: RuleSeverity;
         // Will be transformed to RegExp type when program context is created.
         'todo-pattern'?: string;
-        'newline-last'?: RuleNewlineLast;
+        'eol-last'?: RuleEolLast;
     };
     globals?: string[];
     ignores?: string[];
@@ -66,7 +66,7 @@ export interface BsLintRules {
     noPrint: BsLintSeverity;
     noTodo: BsLintSeverity;
     noStop: BsLintSeverity;
-    newlineLast: RuleNewlineLast;
+    eolLast: RuleEolLast;
 }
 
 export { Linter };

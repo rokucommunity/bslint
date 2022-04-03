@@ -191,8 +191,10 @@ Default rules:
 - `no-todo`: prevent usage of `todo` comments in code (`error | warn | info | off`)
 
 - `todo-pattern`: string regex pattern to determine what a TODO is. default is `TODO|todo|FIXME` (**do not** include surrounding `/` characters).
+
 - `no-stop`: prevent usage of `STOP` statements in the code (`error | warn | info | off`)
-- `newline-last`: enforces at least one newline (or absence thereof) at the end of non-empty files
+
+- `eol-last`: enforces at least one newline (or absence thereof) at the end of non-empty files
 
     - `always`: enforces that files end with a newline (**default**)
     - `never` enforces that files do not end with a newline

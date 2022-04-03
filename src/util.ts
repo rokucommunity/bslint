@@ -157,7 +157,7 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         noPrint: ruleToSeverity(rules['no-print']),
         noTodo: ruleToSeverity(rules['no-todo']),
         noStop: ruleToSeverity(rules['no-stop']),
-        newlineLast: rules['newline-last']
+        eolLast: rules['eol-last']
     };
 }
 
