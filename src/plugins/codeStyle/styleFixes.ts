@@ -36,6 +36,10 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return removeAAComma(diagnostic);
         case CodeStyleError.AACommaMissing:
             return addAAComma(diagnostic);
+        case CodeStyleError.EolLastMissing:
+            return addEolLast(diagnostic);
+        case CodeStyleError.EolLastFound:
+            return removeEolLast(diagnostic);
         default:
             return null;
     }
@@ -139,6 +143,24 @@ function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
         changes: [
             ...keywordChanges,
             ...returnChanges
+        ]
+    };
+}
+
+function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
+    return {
+        diagnostic,
+        changes: [
+            insertText(diagnostic.range.end, '\n')
+        ]
+    };
+}
+
+function removeEolLast(diagnostic: BsDiagnostic): ChangeEntry {
+    return {
+        diagnostic,
+        changes: [
+            replaceText(diagnostic.range, '')
         ]
     };
 }

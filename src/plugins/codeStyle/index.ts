@@ -52,13 +52,13 @@ export default class CodeStyle {
 
         // Do not validate empty files
         if (validateEolLast && !isFileEmpty) {
-            const lastTokenBeforeEOF = file.parser.tokens[file.parser.tokens.length - 2];
+            const penultimateToken = file.parser.tokens[file.parser.tokens.length - 2];
             if (disallowEolLast) {
-                if (lastTokenBeforeEOF && lastTokenBeforeEOF.kind === TokenKind.Newline) {
-                    diagnostics.push(messages.removeEolLast(lastTokenBeforeEOF.range));
+                if (penultimateToken?.kind === TokenKind.Newline) {
+                    diagnostics.push(messages.removeEolLast(penultimateToken.range));
                 }
-            } else if (lastTokenBeforeEOF && lastTokenBeforeEOF.kind !== TokenKind.Newline) {
-                diagnostics.push(messages.addEolLast(lastTokenBeforeEOF.range));
+            } else if (penultimateToken?.kind !== TokenKind.Newline) {
+                diagnostics.push(messages.addEolLast(penultimateToken.range));
             }
         }
 
