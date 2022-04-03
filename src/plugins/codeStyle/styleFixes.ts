@@ -1,6 +1,7 @@
 import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
+import { platform } from 'process';
 
 export function extractFixes(
     addFixes: (file: BscFile, changes: ChangeEntry) => void,
@@ -151,7 +152,7 @@ function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
     return {
         diagnostic,
         changes: [
-            insertText(diagnostic.range.end, '\n')
+            insertText(diagnostic.range.end, platform.toString() === 'win32' ? '\r\n' : '\n')
         ]
     };
 }
