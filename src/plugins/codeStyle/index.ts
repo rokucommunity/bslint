@@ -40,7 +40,8 @@ export default class CodeStyle {
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
 
-        // Check if the file is going backwards from the last token.
+        // Check if the file is empty by going backwards from the last token,
+        // meaning there are tokens other than `Eof` and `Newline`.
         let isFileEmpty = true;
         for (let i = file.parser.tokens.length - 1; i >= 0; i--) {
             if (file.parser.tokens[i].kind !== TokenKind.Eof &&
@@ -50,7 +51,7 @@ export default class CodeStyle {
             }
         }
 
-        // Do not validate empty files
+        // Validate `eol-last` on non-empty files
         if (validateEolLast && !isFileEmpty) {
             const penultimateToken = file.parser.tokens[file.parser.tokens.length - 2];
             if (disallowEolLast) {
@@ -58,7 +59,14 @@ export default class CodeStyle {
                     diagnostics.push(messages.removeEolLast(penultimateToken.range));
                 }
             } else if (penultimateToken?.kind !== TokenKind.Newline) {
-                diagnostics.push(messages.addEolLast(penultimateToken.range));
+                diagnostics.push(
+                    messages.addEolLast(
+                        penultimateToken.range,
+                        // We need the optional chaining because some valid files may not contain
+                        // newlines. e.g: `sub foo() end sub\EOF`
+                        file.parser.tokens.find(t => t.kind === TokenKind.Newline)?.text
+                    )
+                );
             }
         }
 

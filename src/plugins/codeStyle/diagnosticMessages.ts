@@ -145,12 +145,13 @@ export const messages = {
         message: `Add comma after the expression`,
         range
     }),
-    addEolLast: (range: Range) => ({
+    addEolLast: (range: Range, preferredEol: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.EolLastMissing,
         source: 'bslint',
         message: `${CS} File should end with a newline`,
-        range
+        range,
+        data: { preferredEol }
     }),
     removeEolLast: (range: Range) => ({
         severity: DiagnosticSeverity.Error,

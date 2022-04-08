@@ -598,35 +598,28 @@ describe('codeStyle', () => {
     });
 
     describe('fix', () => {
+        // Filenames (without the extension) that we want to copy with a "-temp" suffix
+        const tmpFileNames = [
+            'function-style',
+            'if-style',
+            'aa-style',
+            'eol-last',
+            'no-eol-last',
+            'single-line'
+        ];
+
         beforeEach(() => {
-            fs.copyFileSync(
-                `${project1.rootDir}/source/function-style.brs`,
-                `${project1.rootDir}/source/function-style-temp.brs`
-            );
-            fs.copyFileSync(
-                `${project1.rootDir}/source/if-style.brs`,
-                `${project1.rootDir}/source/if-style-temp.brs`
-            );
-            fs.copyFileSync(
-                `${project1.rootDir}/source/aa-style.brs`,
-                `${project1.rootDir}/source/aa-style-temp.brs`
-            );
-            fs.copyFileSync(
-                `${project1.rootDir}/source/eol-last.brs`,
-                `${project1.rootDir}/source/eol-last-temp.brs`
-            );
-            fs.copyFileSync(
-                `${project1.rootDir}/source/no-eol-last.brs`,
-                `${project1.rootDir}/source/no-eol-last-temp.brs`
-            );
+            tmpFileNames.forEach(filename => fs.copyFileSync(
+                `${project1.rootDir}/source/${filename}.brs`,
+                `${project1.rootDir}/source/${filename}-temp.brs`
+            ));
         });
 
         afterEach(() => {
-            fs.unlinkSync(`${project1.rootDir}/source/function-style-temp.brs`);
-            fs.unlinkSync(`${project1.rootDir}/source/if-style-temp.brs`);
-            fs.unlinkSync(`${project1.rootDir}/source/aa-style-temp.brs`);
-            fs.unlinkSync(`${project1.rootDir}/source/eol-last-temp.brs`);
-            fs.unlinkSync(`${project1.rootDir}/source/no-eol-last-temp.brs`);
+            // Clear temp files
+            tmpFileNames.forEach(filename => fs.unlinkSync(
+                `${project1.rootDir}/source/${filename}-temp.brs`
+            ));
         });
 
         it('replaces `sub` with `function`', async () => {
@@ -856,10 +849,40 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
 
-        it('adds eol last', async () => {
+        it.only('adds eol last', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/no-eol-last-temp.brs'],
+                rules: {
+                    'eol-last': 'always'
+                },
+                fix: true
+            });
+
+            const x = fs.readFileSync(`${project1.rootDir}/source/no-eol-last-temp.brs`).toString();
+            console.log(x);
+
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const original = fs.readFileSync(`${project1.rootDir}/source/no-eol-last.brs`).toString();
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/no-eol-last-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/eol-last.brs`).toString();
+
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('adds eol last to single line file', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/single-line-temp.brs'],
                 rules: {
                     'eol-last': 'always'
                 },
@@ -875,8 +898,8 @@ describe('codeStyle', () => {
             await lintContext.applyFixes();
             expect(lintContext.pendingFixes.size).equals(0);
 
-            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/no-eol-last-temp.brs`).toString();
-            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/eol-last.brs`).toString();
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/single-line-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/single-line-eol.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
         });
 
