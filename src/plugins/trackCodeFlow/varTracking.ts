@@ -368,16 +368,17 @@ function deferredVarLinter(
     deferred: ValidationInfo[],
     diagnostics: BsDiagnostic[]
 ) {
-    // lookups for namespaces and classes
+    // lookups for namespaces, classes, and enums
+    // to add them to the topLevel so that they don't get marked as unused.
     const toplevel = new Set<string>(globals);
     scope.getAllNamespaceStatements().forEach(ns => {
         toplevel.add(ns.name.toLowerCase().split('.')[0]); // keep root of namespace
     });
     scope.getClassMap().forEach(cls => {
-        const name = cls.item.name.text.toLowerCase();
-        if (!cls.item.namespaceName) {
-            toplevel.add(name);
-        }
+        toplevel.add(cls.item.name.text.toLowerCase());
+    });
+    scope.getEnumMap().forEach(enm => {
+        toplevel.add(enm.item.name.toLowerCase());
     });
     if (isBrsFile(file)) {
         file.parser.references.classStatements.forEach(cls => {

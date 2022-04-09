@@ -1,0 +1,10 @@
+class MyClass
+    public value
+    public sub new()
+        enum MyEnum
+            val1
+            val2
+        end enum
+        m.value = MyEnum.val1
+    end sub
+end class

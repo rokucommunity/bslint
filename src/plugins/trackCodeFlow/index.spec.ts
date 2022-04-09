@@ -54,6 +54,45 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    describe('does not mark enums as uninitialised vars', () => {
+        it('in a regular file', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/enums.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+        it('inside a class', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/enum-in-class.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+        it('inside a namespace', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/enum-in-namespace.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+    });
+
     it('implements assign-all-paths', async () => {
         const diagnostics = await linter.run({
             ...project1,

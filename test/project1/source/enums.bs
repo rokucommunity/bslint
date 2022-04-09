@@ -1,0 +1,13 @@
+enum Day
+    Monday
+    Tuesday
+    Wednesday
+    Thursday
+    Friday
+    Saturday
+    Sunday
+end enum
+
+sub main()
+    ? Day.Monday
+end sub
