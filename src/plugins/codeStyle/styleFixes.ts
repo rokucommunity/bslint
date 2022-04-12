@@ -149,7 +149,6 @@ function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
 }
 
 function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
-
     return {
         diagnostic,
         changes: [
@@ -157,7 +156,7 @@ function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
                 diagnostic.range.end,
                 // In single line files, the `preferredEol` cannot be determined
                 // e.g: `sub foo() end sub\EOF`
-                diagnostic.data.preferredEol ?? platform.toString() === 'win32' ? '\r\n' : '\n'
+                diagnostic.data.preferredEol ?? (platform.toString() === 'win32' ? '\r\n' : '\n')
             )
         ]
     };

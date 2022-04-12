@@ -849,7 +849,7 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
 
-        it.only('adds eol last', async () => {
+        it('adds eol last', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/no-eol-last-temp.brs'],
@@ -859,9 +859,6 @@ describe('codeStyle', () => {
                 fix: true
             });
 
-            const x = fs.readFileSync(`${project1.rootDir}/source/no-eol-last-temp.brs`).toString();
-            console.log(x);
-
             const actual = fmtDiagnostics(diagnostics);
             const expected = [];
 
@@ -870,8 +867,6 @@ describe('codeStyle', () => {
             expect(lintContext.pendingFixes.size).equals(1);
             await lintContext.applyFixes();
             expect(lintContext.pendingFixes.size).equals(0);
-
-            const original = fs.readFileSync(`${project1.rootDir}/source/no-eol-last.brs`).toString();
 
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/no-eol-last-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/eol-last.brs`).toString();

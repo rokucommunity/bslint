@@ -42,10 +42,11 @@ export default class CodeStyle {
 
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
+        const { tokens } = file.parser;
         let isFileEmpty = true;
-        for (let i = file.parser.tokens.length - 1; i >= 0; i--) {
-            if (file.parser.tokens[i].kind !== TokenKind.Eof &&
-                file.parser.tokens[i].kind !== TokenKind.Newline) {
+        for (let i = tokens.length - 1; i >= 0; i--) {
+            if (tokens[i].kind !== TokenKind.Eof &&
+                tokens[i].kind !== TokenKind.Newline) {
                 isFileEmpty = false;
                 break;
             }
@@ -53,18 +54,27 @@ export default class CodeStyle {
 
         // Validate `eol-last` on non-empty files
         if (validateEolLast && !isFileEmpty) {
-            const penultimateToken = file.parser.tokens[file.parser.tokens.length - 2];
+            const penultimateToken = tokens[tokens.length - 2];
             if (disallowEolLast) {
                 if (penultimateToken?.kind === TokenKind.Newline) {
                     diagnostics.push(messages.removeEolLast(penultimateToken.range));
                 }
             } else if (penultimateToken?.kind !== TokenKind.Newline) {
+                // Set the preferredEol as the last newline.
+                // The fix function will handle the case where preferredEol is undefined.
+                // This could happen in valid single line files, like:
+                // `sub foo() end sub\EOF`
+                let preferredEol;
+                for (let i = tokens.length - 1; i >= 0; i--) {
+                    if (tokens[i].kind === TokenKind.Newline) {
+                        preferredEol = tokens[i].text;
+                    }
+                }
+
                 diagnostics.push(
                     messages.addEolLast(
                         penultimateToken.range,
-                        // We need the optional chaining because some valid files may not contain
-                        // newlines. e.g: `sub foo() end sub\EOF`
-                        file.parser.tokens.find(t => t.kind === TokenKind.Newline)?.text
+                        preferredEol
                     )
                 );
             }
