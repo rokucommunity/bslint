@@ -421,7 +421,7 @@ describe('codeStyle', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `03:LINT3016:Code style: Avoid using STOP statements`
+            `03:LINT3016:Code style: STOP statements are not allowed in published applications`
         ];
         expect(actual).deep.equal(expected);
     });
