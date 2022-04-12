@@ -126,7 +126,7 @@ export const messages = {
         severity: severity,
         code: CodeStyleError.NoStop,
         source: 'bslint',
-        message: `${CS} Avoid using STOP statements`,
+        message: `${CS} STOP statements are not allowed in published applications`,
         range
     }),
     removeAAComma: (range: Range) => ({
