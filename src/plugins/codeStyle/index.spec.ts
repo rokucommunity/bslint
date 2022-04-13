@@ -437,7 +437,7 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `03:LINT3016:Code style: File should end with a newline`
+                `03:LINT3017:Code style: File should end with a newline`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -452,7 +452,7 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `03:LINT3017:Code style: File should not end with a newline`
+                `03:LINT3018:Code style: File should not end with a newline`
             ];
             expect(actual).deep.equal(expected);
         });
