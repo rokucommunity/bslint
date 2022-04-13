@@ -1,3 +1,3 @@
 sub main()
-    parent = CreateObject("Parent")
+    parent = CreateObject("roSGNode", "Parent")
 end sub
