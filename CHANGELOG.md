@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.0](https://github.com/rokucommunity/bslint/compare/v0.6.1...v0.7.0) - 2022-04-13
+### Added
+ - `no-todo` code style rule ([#56](https://github.com/rokucommunity/bslint/pull/56))
+ - `no-stop` rule ([#57](https://github.com/rokucommunity/bslint/pull/57))
+ - `newline-last` rule ([#58](https://github.com/rokucommunity/bslint/pull/58))
+### Changed
+ - upgrade to brighterscript@0.48.0
+### Fixed
+ - do not consider enums as unused variables ([#59](https://github.com/rokucommunity/bslint/pull/59))
+
+
+
+## [0.6.0](https://github.com/rokucommunity/bslint/compare/v0.6.0...v0.6.1) - 2022-03-24
+### Changed
+ - upgrade to brighterscript@0.45.3
+### Fixed
+ - npm audit issues
+
+
+
 ## [0.6.0](https://github.com/rokucommunity/bslint/compare/v0.5.0...v0.6.0) - 2021-10-27
 ### Added
  - associative array comma linting and fixing ([#40](https://github.com/rokucommunity/bslint/pull/40))
