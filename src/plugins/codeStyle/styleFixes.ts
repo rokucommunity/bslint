@@ -1,6 +1,7 @@
 import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
+import { platform } from 'process';
 
 export function extractFixes(
     addFixes: (file: BscFile, changes: ChangeEntry) => void,
@@ -36,6 +37,10 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return removeAAComma(diagnostic);
         case CodeStyleError.AACommaMissing:
             return addAAComma(diagnostic);
+        case CodeStyleError.EolLastMissing:
+            return addEolLast(diagnostic);
+        case CodeStyleError.EolLastFound:
+            return removeEolLast(diagnostic);
         default:
             return null;
     }
@@ -139,6 +144,29 @@ function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
         changes: [
             ...keywordChanges,
             ...returnChanges
+        ]
+    };
+}
+
+function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
+    return {
+        diagnostic,
+        changes: [
+            insertText(
+                diagnostic.range.end,
+                // In single line files, the `preferredEol` cannot be determined
+                // e.g: `sub foo() end sub\EOF`
+                diagnostic.data.preferredEol ?? (platform.toString() === 'win32' ? '\r\n' : '\n')
+            )
+        ]
+    };
+}
+
+function removeEolLast(diagnostic: BsDiagnostic): ChangeEntry {
+    return {
+        diagnostic,
+        changes: [
+            replaceText(diagnostic.range, '')
         ]
     };
 }

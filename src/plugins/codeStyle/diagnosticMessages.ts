@@ -16,7 +16,9 @@ export enum CodeStyleError {
     AACommaFound = 'LINT3013',
     AACommaMissing = 'LINT3014',
     NoTodo = 'LINT3015',
-    NoStop = 'LINT3016'
+    NoStop = 'LINT3016',
+    EolLastMissing = 'LINT3017',
+    EolLastFound = 'LINT3018'
 }
 
 const CS = 'Code style:';
@@ -141,6 +143,21 @@ export const messages = {
         code: CodeStyleError.AACommaMissing,
         source: 'bslint',
         message: `Add comma after the expression`,
+        range
+    }),
+    addEolLast: (range: Range, preferredEol: string) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.EolLastMissing,
+        source: 'bslint',
+        message: `${CS} File should end with a newline`,
+        range,
+        data: { preferredEol }
+    }),
+    removeEolLast: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.EolLastFound,
+        source: 'bslint',
+        message: `${CS} File should not end with a newline`,
         range
     })
 };

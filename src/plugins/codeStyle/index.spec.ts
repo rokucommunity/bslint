@@ -426,6 +426,77 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+    describe('enforce eol at end of file', () => {
+        it('eol always', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/no-eol-last.brs'],
+                rules: {
+                    'eol-last': 'always'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `03:LINT3017:Code style: File should end with a newline`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('eol never', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/eol-last.brs'],
+                rules: {
+                    'eol-last': 'never'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `03:LINT3018:Code style: File should not end with a newline`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('empty file', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/empty.brs'],
+                rules: {
+                    'eol-last': 'always'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('off without eol', async() => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/no-eol-last.brs'],
+                rules: {
+                    'eol-last': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('off with eol', async() => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/main.brs'],
+                rules: {
+                    'eol-last': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+    });
+
     describe('AA style', () => {
         it('collects wrapping AA members indexes', () => {
             const { statements } = Parser.parse(`
@@ -527,25 +598,28 @@ describe('codeStyle', () => {
     });
 
     describe('fix', () => {
+        // Filenames (without the extension) that we want to copy with a "-temp" suffix
+        const tmpFileNames = [
+            'function-style',
+            'if-style',
+            'aa-style',
+            'eol-last',
+            'no-eol-last',
+            'single-line'
+        ];
+
         beforeEach(() => {
-            fs.copyFileSync(
-                `${project1.rootDir}/source/function-style.brs`,
-                `${project1.rootDir}/source/function-style-temp.brs`
-            );
-            fs.copyFileSync(
-                `${project1.rootDir}/source/if-style.brs`,
-                `${project1.rootDir}/source/if-style-temp.brs`
-            );
-            fs.copyFileSync(
-                `${project1.rootDir}/source/aa-style.brs`,
-                `${project1.rootDir}/source/aa-style-temp.brs`
-            );
+            tmpFileNames.forEach(filename => fs.copyFileSync(
+                `${project1.rootDir}/source/${filename}.brs`,
+                `${project1.rootDir}/source/${filename}-temp.brs`
+            ));
         });
 
         afterEach(() => {
-            fs.unlinkSync(`${project1.rootDir}/source/function-style-temp.brs`);
-            fs.unlinkSync(`${project1.rootDir}/source/if-style-temp.brs`);
-            fs.unlinkSync(`${project1.rootDir}/source/aa-style-temp.brs`);
+            // Clear temp files
+            tmpFileNames.forEach(filename => fs.unlinkSync(
+                `${project1.rootDir}/source/${filename}-temp.brs`
+            ));
         });
 
         it('replaces `sub` with `function`', async () => {
@@ -772,6 +846,77 @@ describe('codeStyle', () => {
 
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/aa-style-nodangling.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('adds eol last', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/no-eol-last-temp.brs'],
+                rules: {
+                    'eol-last': 'always'
+                },
+                fix: true
+            });
+
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/no-eol-last-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/eol-last.brs`).toString();
+
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('adds eol last to single line file', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/single-line-temp.brs'],
+                rules: {
+                    'eol-last': 'always'
+                },
+                fix: true
+            });
+
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/single-line-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/single-line-eol.brs`).toString();
+            expect(actualSrc).to.equal(expectedSrc);
+        });
+
+        it('removes eol last', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/eol-last-temp.brs'],
+                rules: {
+                    'eol-last': 'never'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+
+            expect(lintContext.pendingFixes.size).equals(1);
+            await lintContext.applyFixes();
+            expect(lintContext.pendingFixes.size).equals(0);
+
+            const actualSrc = fs.readFileSync(`${project1.rootDir}/source/eol-last-temp.brs`).toString();
+            const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/no-eol-last.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
         });
     });
