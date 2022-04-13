@@ -486,7 +486,7 @@ describe('codeStyle', () => {
         it('off with eol', async() => {
             const diagnostics = await linter.run({
                 ...project1,
-                files: ['source/main.brs'],
+                files: ['source/eol-last.brs'],
                 rules: {
                     'eol-last': 'off'
                 }
