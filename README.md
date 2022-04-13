@@ -135,6 +135,7 @@ Default rules:
         "no-print": "off",
         "no-todo": "off",
         "todo-pattern": "TODO|todo|FIXME",
+        "no-stop": "warn",
 
         "type-annotations": "off",
 
@@ -190,6 +191,7 @@ Default rules:
 - `no-todo`: prevent usage of `todo` comments in code (`error | warn | info | off`)
 
 - `todo-pattern`: string regex pattern to determine what a TODO is. default is `TODO|todo|FIXME` (**do not** include surrounding `/` characters).
+- `no-stop`: prevent usage of `STOP` statements in the code (`error | warn | info | off`)
 
 ### Strictness rules
 

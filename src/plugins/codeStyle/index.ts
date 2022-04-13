@@ -24,9 +24,10 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, aaCommaStyle } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
+        const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
@@ -92,6 +93,11 @@ export default class CodeStyle {
                     if (this.lintContext.todoPattern.test(e.text)) {
                         diagnostics.push(messages.noTodo(e.range, noTodo));
                     }
+                }
+            },
+            StopStatement: s => {
+                if (validateNoStop) {
+                    diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
                 }
             }
         }), { walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive });

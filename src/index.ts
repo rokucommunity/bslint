@@ -23,7 +23,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'case-sensitivity'?: RuleSeverity;
         'unused-variable'?: RuleSeverity;
         'consistent-return'?: RuleSeverity;
-        // 'no-stop'?: RuleSeverity,
+        'no-stop'?: RuleSeverity;
         // 'only-function'?: RuleSeverity,
         // 'only-sub'?: RuleSeverity,
         'inline-if-style'?: RuleInlineIf;
@@ -63,6 +63,7 @@ export interface BsLintRules {
     typeAnnotations: RuleTypeAnnotations;
     noPrint: BsLintSeverity;
     noTodo: BsLintSeverity;
+    noStop: BsLintSeverity;
 }
 
 export { Linter };
