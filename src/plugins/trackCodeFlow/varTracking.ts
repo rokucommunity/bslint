@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -42,6 +42,7 @@ export function createVarLinter(
 ) {
     const { severity } = lintContext;
     const deferred = getDeferred(file);
+    let foundLabelAt = 0;
 
     const args: Map<string, VarInfo> = new Map();
     args.set('m', { name: 'm', range: Range.create(0, 0, 0, 0), isParam: true, isUnsafe: false, isUsed: true });
@@ -187,6 +188,22 @@ export function createVarLinter(
             setLocal(state.parent, stat.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
         } else if (isCatchStatement(stat) && state.parent) {
             setLocal(curr, stat.exceptionVariable, VarRestriction.CatchedError);
+        } else if (isLabelStatement(stat) && !foundLabelAt) {
+            foundLabelAt = stat.range.start.line;
+        } else if (foundLabelAt && isGotoStatement(stat) && state.parent) {
+            // To avoid false positives when finding a goto statement,
+            // very generously mark as used all unused variables after 1st found label line.
+            // This isn't accurate but tracking usage across goto jumps is tricky
+            const { stack, blocks } = state;
+            const labelLine = foundLabelAt;
+            for (let i = state.stack.length - 1; i >= 0; i--) {
+                const block = blocks.get(stack[i]);
+                block?.locals?.forEach(local => {
+                    if (local.range?.start.line > labelLine) {
+                        local.isUsed = true;
+                    }
+                });
+            }
         }
     }
 

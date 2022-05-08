@@ -8,6 +8,19 @@ sub error2()
     a = 20 ' error
 end sub
 
+sub error3()
+    a = 10 ' error
+    loop:
+    b = 0
+    c = 10 ' should be an error but...
+    d = 10
+    if b < 10
+        b = b + 1
+        goto loop
+    end if
+    d = 30 ' error
+end sub
+
 sub ok1(usageNotChecked)
     a = 10
     print a
