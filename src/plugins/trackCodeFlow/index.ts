@@ -21,13 +21,18 @@ export interface StatementInfo {
     narrows?: NarrowingInfo[];
 }
 
+export enum VarRestriction {
+    Iterator = 1,
+    CatchedError = 2
+}
+
 export interface VarInfo {
     name: string;
     range: Range;
     isGlobal?: boolean;
     isParam?: boolean;
-    isIterator?: boolean;
     isUnsafe: boolean;
+    restriction?: VarRestriction;
     parent?: StatementInfo;
     metBranches?: number;
     narrowed?: NarrowingInfo;

@@ -1,5 +1,5 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile } from 'brighterscript';
-import { LintState, StatementInfo, NarrowingInfo, VarInfo } from '.';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement } from 'brighterscript';
+import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
 export enum VarLintError {
@@ -70,14 +70,17 @@ export function createVarLinter(
         }
     }
 
-    function setLocal(parent: StatementInfo, name: { text: string; range: Range }, isIterator: boolean): VarInfo {
+    function setLocal(parent: StatementInfo, name: { text: string; range: Range }, restriction?: VarRestriction): VarInfo {
+        if (!name) {
+            return;
+        }
         const key = name.text.toLowerCase();
         const arg = args.get(key);
         const local = {
             name: name.text,
             range: name.range,
             parent: parent,
-            isIterator: isIterator,
+            restriction: restriction,
             metBranches: 1,
             isUnsafe: false,
             isUsed: false
@@ -149,7 +152,7 @@ export function createVarLinter(
             // for iterator will be declared by the next assignement statement
         } else if (isForEachStatement(stat)) {
             // declare `for each` iterator variable
-            setLocal(block, stat.item, true);
+            setLocal(block, stat.item, VarRestriction.Iterator);
         } else if (state.parent?.narrows) {
             narrowBlock(block);
         }
@@ -166,10 +169,10 @@ export function createVarLinter(
 
         parent?.narrows?.forEach(narrow => {
             if (narrow.block === stat) {
-                setLocal(block, narrow, false).narrowed = narrow;
+                setLocal(block, narrow).narrowed = narrow;
             } else {
                 // opposite narrowing for other branches
-                setLocal(block, narrow, false).narrowed = {
+                setLocal(block, narrow).narrowed = {
                     ...narrow,
                     type: narrow.type === 'invalid' ? 'valid' : 'invalid'
                 };
@@ -181,7 +184,9 @@ export function createVarLinter(
         const { stat } = curr;
         if (isAssignmentStatement(stat) && state.parent) {
             // value = stat.value;
-            setLocal(state.parent, stat.name, isForStatement(state.parent.stat));
+            setLocal(state.parent, stat.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
+        } else if (isCatchStatement(stat) && state.parent) {
+            setLocal(curr, stat.exceptionVariable, VarRestriction.CatchedError);
         }
     }
 
@@ -211,6 +216,13 @@ export function createVarLinter(
                     }
                 }
             });
+        } else if (isCatchStatement(closed.stat)) {
+            locals.forEach(local => {
+                // drop error variable
+                if (local.restriction === VarRestriction.CatchedError) {
+                    locals.delete(local.name.toLowerCase());
+                }
+            });
         }
         // move locals to parent
         if (!parent.locals) {
@@ -221,7 +233,7 @@ export function createVarLinter(
             locals.forEach((local, name) => {
                 const parentLocal = parent.locals.get(name);
                 // if var is an iterator var, flag as partial
-                if (local.isIterator) {
+                if (local.restriction) {
                     local.isUnsafe = true;
                 }
                 // if a parent var isn't partial then the var stays non-partial
@@ -233,8 +245,8 @@ export function createVarLinter(
                 } else if (parentLocal && !parentLocal.isUnsafe) {
                     local.isUnsafe = false;
                 }
-                if (parentLocal?.isIterator) {
-                    local.isIterator = parentLocal.isIterator;
+                if (parentLocal?.restriction) {
+                    local.restriction = parentLocal.restriction;
                 }
                 if (!local.isUsed && isLoop) {
                     // avoid false positive if a local set in a loop isn't used
@@ -269,7 +281,7 @@ export function createVarLinter(
             }
 
             if (local.isUnsafe && !findSafeLocal(name)) {
-                if (local.isIterator) {
+                if (local.restriction) {
                     diagnostics.push({
                         severity: severity.unsafeIterators,
                         code: VarLintError.UnsafeIteratorVar,
@@ -322,7 +334,7 @@ export function createVarLinter(
 
     function finalize(locals: Map<string, VarInfo>) {
         locals.forEach(local => {
-            if (!local.isUsed && !local.isIterator) {
+            if (!local.isUsed && !local.restriction) {
                 diagnostics.push({
                     severity: severity.unusedVariable,
                     code: VarLintError.UnusedVariable,

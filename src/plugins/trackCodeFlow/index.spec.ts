@@ -173,6 +173,23 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('supports catch error variable within catch branch', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/catch-statement.brs'],
+            rules: {
+                'consistent-return': 'off',
+                'assign-all-paths': 'error'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `02:LINT1001:Using uninitialised variable 'err' when this file is included in scope 'source'`,
+            `08:LINT1001:Using uninitialised variable 'err' when this file is included in scope 'source'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
     it('implements unreachable-code', async () => {
         const diagnostics = await linter.run({
             ...project1,
