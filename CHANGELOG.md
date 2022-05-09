@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.1](https://github.com/rokucommunity/bslint/compare/v0.7.0...v0.7.1) - 2022-05-09
+### Fixed
+ - error variable from `catch` statement should be available within the `catch` block ([#64](https://github.com/rokucommunity/bslint/pull/64))
+ - Prevent "unused var" in `goto` loop ([#65](https://github.com/rokucommunity/bslint/pull/65))
+
+
+
 ## [0.7.0](https://github.com/rokucommunity/bslint/compare/v0.6.1...v0.7.0) - 2022-04-13
 ### Added
  - `no-todo` code style rule ([#56](https://github.com/rokucommunity/bslint/pull/56))
