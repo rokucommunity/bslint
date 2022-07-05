@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AssignmentStatement, BsDiagnostic, ParseMode, Parser, Program } from 'brighterscript';
+import { AALiteralExpression, AssignmentStatement, BsDiagnostic, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import { createContext, PluginWrapperContext } from '../../util';
@@ -318,6 +318,10 @@ describe('codeStyle', () => {
             `05:LINT3010:Strictness: function should declare the return type`
         ];
         expect(actual).deep.equal(expected);
+        // should only highlight the function name
+        expect(diagnostics[0].range).to.eql(
+            util.createRange(4, 0, 4, 8)
+        );
     });
 
     it('enforce arguments type only', async () => {
@@ -470,7 +474,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('off without eol', async() => {
+        it('off without eol', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/no-eol-last.brs'],
@@ -483,7 +487,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('off with eol', async() => {
+        it('off with eol', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/eol-last.brs'],

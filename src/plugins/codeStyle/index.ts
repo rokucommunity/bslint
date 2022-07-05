@@ -191,7 +191,10 @@ export default class CodeStyle {
         if (typeAnnotations !== 'off') {
             if (typeAnnotations !== 'args') {
                 if (hasReturnedValue && !fun.returnTypeToken) {
-                    diagnostics.push(messages.expectedReturnTypeAnnotation(fun.range));
+                    diagnostics.push(messages.expectedReturnTypeAnnotation(
+                        // add the error to the function name (or if no function name, just highlight the whole function)
+                        fun.functionType?.range ?? fun.range
+                    ));
                 }
             }
             if (typeAnnotations !== 'return') {
