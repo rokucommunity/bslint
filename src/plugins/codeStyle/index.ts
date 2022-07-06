@@ -192,7 +192,7 @@ export default class CodeStyle {
             if (typeAnnotations !== 'args') {
                 if (hasReturnedValue && !fun.returnTypeToken) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
-                        // add the error to the function name (or if no function name, just highlight the whole function)
+                        // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
                         fun.functionType?.range ?? fun.range
                     ));
                 }
