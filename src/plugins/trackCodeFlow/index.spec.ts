@@ -42,8 +42,9 @@ describe('trackCodeFlow', () => {
             rules: {
                 'consistent-return': 'off',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1001]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `02:LINT1001:Using uninitialised variable 'a' when this file is included in scope 'source'`,
@@ -101,8 +102,9 @@ describe('trackCodeFlow', () => {
                 'assign-all-paths': 'error',
                 'consistent-return': 'off',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1001]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `06:LINT1003:Not all the code paths assign 'b'`,
@@ -126,13 +128,13 @@ describe('trackCodeFlow', () => {
                 'assign-all-paths': 'error',
                 'consistent-return': 'off',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1001]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
-            `27:LINT1003:Not all the code paths assign 'b'`,
-            `64:1029:Class 'Bar' could not be found when this file is included in scope 'source'`
+            `27:LINT1003:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -218,8 +220,9 @@ describe('trackCodeFlow', () => {
             rules: {
                 'case-sensitivity': 'error',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1001]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `03:LINT1004:Variable 'A' was previously set with a different casing as 'a'`,
@@ -281,8 +284,9 @@ describe('trackCodeFlow', () => {
             rules: {
                 'unused-variable': 'error'
             },
-            globals: ['a']
-        });
+            globals: ['a'],
+            diagnosticFilters: [1001]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `14:LINT1005:Variable 'a' is set but value is never used`
