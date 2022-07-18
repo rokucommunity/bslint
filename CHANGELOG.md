@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.2](https://github.com/rokucommunity/bslint/compare/v0.7.1...0.7.2) - 2022-07-18
+### Changed
+ - upgrade to [brighterscript@0.53.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0531---2022-07-15)
+### Fixed
+ - Use smaller range for LINT3010 ([#70](https://github.com/rokucommunity/bslint/pull/70))
+
+
+
 ## [0.7.1](https://github.com/rokucommunity/bslint/compare/v0.7.0...v0.7.1) - 2022-05-09
 ### Fixed
  - error variable from `catch` statement should be available within the `catch` block ([#64](https://github.com/rokucommunity/bslint/pull/64))
