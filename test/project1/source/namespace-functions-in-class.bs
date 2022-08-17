@@ -1,0 +1,16 @@
+
+namespace TestNamespace
+
+    function one() as integer
+        return 1
+    end function
+
+
+    class TestClass
+        value as integer
+        sub new()
+            m.value = one()
+        end sub
+    end class
+
+end namespace

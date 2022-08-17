@@ -1,0 +1,12 @@
+
+namespace TestNamespace
+
+    function one() as integer
+        return 1
+    end function
+
+    function two() as integer
+        return one() + one()
+    end function
+
+end namespace

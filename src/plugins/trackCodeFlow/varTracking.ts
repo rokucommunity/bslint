@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, NamespacedVariableNameExpression, ParseMode } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -21,6 +21,7 @@ interface ValidationInfo {
     name: string;
     local?: VarInfo;
     range: Range;
+    namespace?: NamespacedVariableNameExpression;
 }
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
@@ -289,7 +290,8 @@ export function createVarLinter(
                 deferred.push({
                     kind: ValidationKind.UninitializedVar,
                     name: name,
-                    range: expr.range
+                    range: expr.range,
+                    namespace: expr.namespaceName
                 });
                 return;
             } else {
@@ -415,9 +417,13 @@ function deferredVarLinter(
         });
     }
 
-    deferred.forEach(({ kind, name, local, range }) => {
+    deferred.forEach(({ kind, name, local, range, namespace }) => {
         const key = name?.toLowerCase();
-        const hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
+        let hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
+        if (key && !hasCallable && namespace) {
+            const keyUnderNamespace = `${namespace.getName(ParseMode.BrightScript)}_${key}`.toLowerCase();
+            hasCallable = callables.has(keyUnderNamespace);
+        }
         switch (kind) {
             case ValidationKind.UninitializedVar:
                 if (!hasCallable) {
