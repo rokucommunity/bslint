@@ -353,7 +353,7 @@ export function createVarLinter(
 
     function finalize(locals: Map<string, VarInfo>) {
         locals.forEach(local => {
-            if (!local.isUsed && !local.restriction) {
+            if (!local.isUsed && !local.restriction && !local.name.startsWith('_')) {
                 diagnostics.push({
                     severity: severity.unusedVariable,
                     code: VarLintError.UnusedVariable,
