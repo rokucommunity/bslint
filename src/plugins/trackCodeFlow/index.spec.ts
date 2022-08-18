@@ -94,6 +94,50 @@ describe('trackCodeFlow', () => {
         });
     });
 
+    describe('namespaced functions', () => {
+        it('does not mark as uninitialised vars when used within namespace', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/namespace-functions.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('does not mark as uninitialised vars when used in a class within namespace', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/namespace-functions-in-class.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('does mark as uninitialised vars when used outside of namespace', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/namespace-functions-outside-namespace.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `11:1001:Cannot find name 'one'`,
+                `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+    });
+
     it('implements assign-all-paths', async () => {
         const diagnostics = await linter.run({
             ...project1,
