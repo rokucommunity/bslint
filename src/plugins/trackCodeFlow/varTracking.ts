@@ -421,6 +421,7 @@ function deferredVarLinter(
         const key = name?.toLowerCase();
         let hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
         if (key && !hasCallable && namespace) {
+            // check if this could be a callable in the current namespace
             const keyUnderNamespace = `${namespace.getName(ParseMode.BrightScript)}_${key}`.toLowerCase();
             hasCallable = callables.has(keyUnderNamespace);
         }
