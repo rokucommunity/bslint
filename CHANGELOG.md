@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.5](https://github.com/rokucommunity/bslint/compare/v0.7.4...0.7.5) - 2022-09-02
+### Changed
+ - upgrade to [brighterscript@0.57.0](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0570---2022-09-02). Notable changes since 0.56.0:
+     - Allow `mod` as an aa prop, aa member identifier kinds forced to Identifier ([brighterscript#684](https://github.com/rokucommunity/brighterscript/pull/684))
+     - Doc Scraper Fixes ([brighterscript#585](https://github.com/rokucommunity/brighterscript/pull/585))
+     - Validate too deep nested files ([brighterscript#680](https://github.com/rokucommunity/brighterscript/pull/680))
+     - Fix case sensitivity issue with bs_const values ([brighterscript#677](https://github.com/rokucommunity/brighterscript/pull/677))
+
+
+
 ## [0.7.4](https://github.com/rokucommunity/bslint/compare/v0.7.3...0.7.4) - 2022-08-24
 ### Changed
  - Fixes issue with tagging namespaced function as Unitialized Vars ([#74](https://github.com/rokucommunity/bslint/pull/74))
