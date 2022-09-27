@@ -94,6 +94,15 @@ Where each value is optional:
 - `globals`: a list of tokens which should always be considered as safe (ex. `_brs_`)
 - `ignores`: a list of files or globs of files to omit from linting
 
+If you are using `brighterscript` with the Visual Studio Code plugin, you might want to mention your configuration file in `brighterscript`'s `bsconfig.json` as follow:
+
+```json
+{
+    "plugins": [ "@rokucommunity/bslint" ],
+    "lintConfig": "path/to/bslint.json"
+}
+```
+
 ### Ignores
 
 Unlike `brighterscripts`'s `diagnosticFilter` which hides issues, `bslint` will completely
