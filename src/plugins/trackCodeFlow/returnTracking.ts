@@ -1,10 +1,14 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, TokenKind, util, ReturnStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
 interface ReturnInfo {
     stat: ReturnStatement;
     hasValue: boolean;
+}
+
+interface ThrowInfo {
+    stat: ThrowStatement;
 }
 
 enum ReturnLintError {
@@ -26,6 +30,7 @@ export function createReturnLinter(
 ) {
     const { severity } = lintContext;
     const returns: ReturnInfo[] = [];
+    const throws: ThrowInfo[] = [];
 
     function visitStatement(curr: StatementInfo) {
         const { parent } = state;
@@ -47,6 +52,14 @@ export function createReturnLinter(
                 hasValue: !!curr.stat.value && !isCommentStatement(curr.stat.value)
             });
             // flag parent branch to return
+            const returnBlock = ifs ? branch : parent;
+            if (returnBlock && parent?.branches === 1) {
+                returnBlock.returns = true;
+            }
+        } else if (isThrowStatement(curr.stat)) {
+            const { ifs, branch, parent } = state;
+            throws.push({ stat: curr.stat });
+            // flag parent branch to 'return'
             const returnBlock = ifs ? branch : parent;
             if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
@@ -108,7 +121,7 @@ export function createReturnLinter(
 
         // Function doesn't consistently return,
         // or doesn't return at all but has an explicit type
-        if ((requiresReturnValue || hasReturnedValue) && (missingBranches || returns.length === 0)) {
+        if ((requiresReturnValue || hasReturnedValue) && (missingBranches || (returns.length + throws.length) === 0)) {
             diagnostics.push({
                 severity: consistentReturn,
                 code: ReturnLintError.UnsafeReturnValue,
