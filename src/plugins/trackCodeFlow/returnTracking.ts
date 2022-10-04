@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -46,21 +46,21 @@ export function createReturnLinter(
                 });
             }
         } else if (isReturnStatement(curr.stat)) {
-            const { ifs, branch, parent } = state;
+            const { ifs, trys, branch, parent } = state;
             returns.push({
                 stat: curr.stat,
                 hasValue: !!curr.stat.value && !isCommentStatement(curr.stat.value)
             });
             // flag parent branch to return
-            const returnBlock = ifs ? branch : parent;
+            const returnBlock = (ifs || trys) ? branch : parent;
             if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
             }
         } else if (isThrowStatement(curr.stat)) {
-            const { ifs, branch, parent } = state;
+            const { ifs, trys, branch, parent } = state;
             throws.push({ stat: curr.stat });
             // flag parent branch to 'return'
-            const returnBlock = ifs ? branch : parent;
+            const returnBlock = (ifs || trys) ? branch : parent;
             if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
             }
@@ -71,13 +71,17 @@ export function createReturnLinter(
         const { parent } = state;
         if (!parent) {
             finalize(closed);
-        } else if (isIfStatement(closed.stat)) {
+        } else if (isIfStatement(closed.stat) || isTryCatchStatement(closed.stat) || isCatchStatement(closed.stat)) {
             if (closed.branches === 0) {
                 parent.returns = true;
                 parent.branches--;
             }
         } else if (closed.returns) {
             if (isIfStatement(parent.stat)) {
+                parent.branches--;
+            } else if (isTryCatchStatement(parent.stat)) {
+                parent.branches--;
+            } else if (isCatchStatement(parent.stat)) {
                 parent.branches--;
             }
         }

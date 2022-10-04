@@ -105,6 +105,27 @@ function ok8() as integer
     throw "Not yet implemented"
 end function
 
+function ok9() as integer
+    try
+        a = 0
+        b = 100 / a
+        return b
+    catch err
+        throw "Not yet implemented"
+    end try
+end function
+
+function ok10() as integer
+    throw "Not yet implemented"
+end function
+
+function ok11() as void
+    a = 1
+    if a > 0
+        throw "something wrong"
+    end if
+end function
+
 sub some(o)
     print o
 end sub
