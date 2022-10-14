@@ -58,7 +58,7 @@
     "typescript": "^3.9.7"
   },
   "peerDependencies": {
-    "brighterscript": ">= 0.43 < 1"
+    "brighterscript": ">= 0.59.0 < 1"
   },
   "mocha": {
     "spec": "src/**/*.spec.ts",
