@@ -190,6 +190,7 @@ Default rules:
 
 - `aa-comma-style`: validation of commas in Associative Array (AA) literals
 
+    - `all-except-single-line` : enforce the presence of dangling commas except for single line Associative Array (AA)
     - `always`: enforce the presence of commas, always
     - `no-dangling`: enforce the presence of commas but don't leave one dangling (**default**)
     - `never`: enforce that optional commas aren't used
