@@ -167,18 +167,12 @@ export default class CodeStyle {
     validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
         const indexes = collectWrappingAAMembersIndexes(aa);
         const last = indexes.length - 1;
-        if (aaCommaStyle === 'all-except-single-line') {
-            // Switch aaCommaStyle based on if it is a single line
-            if (aa.open.range.start.line === aa.close.range.end.line) {
-                aaCommaStyle = 'no-dangling'
-            } else {
-                aaCommaStyle = "always"
-            }
-        }
+        const singleLine = aa.open.range.start.line === aa.close.range.end.line
+
         indexes.forEach((index, i) => {
             const member = aa.elements[index] as AAMemberExpression;
             const hasComma = !!member.commaToken;
-            if (aaCommaStyle === 'never' || (i === last && aaCommaStyle === 'no-dangling')) {
+            if (aaCommaStyle === 'never' || (i === last && (aaCommaStyle === 'no-dangling') || singleLine )) {
                 if (hasComma) {
                     diagnostics.push(messages.removeAAComma(member.commaToken.range));
                 }

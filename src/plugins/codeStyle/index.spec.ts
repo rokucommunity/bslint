@@ -595,25 +595,6 @@ describe('codeStyle', () => {
                 `19:LINT3014:Add comma after the expression`,
                 `20:LINT3014:Add comma after the expression`,
                 `21:LINT3014:Add comma after the expression`,
-                `27:LINT3014:Add comma after the expression`
-            ];
-            expect(actual).deep.equal(expected);
-        });
-
-        it('enforce aa comma, always', async () => {
-            const diagnostics = await linter.run({
-                ...project1,
-                files: ['source/aa-style.brs'],
-                rules: {
-                    'aa-comma-style': 'all-except-single-line'
-                }
-            });
-            const actual = fmtDiagnostics(diagnostics);
-            const expected = [
-                `05:LINT3014:Add comma after the expression`,
-                `19:LINT3014:Add comma after the expression`,
-                `20:LINT3014:Add comma after the expression`,
-                `21:LINT3014:Add comma after the expression`,
                 `31:LINT3013:Remove optional comma`
             ];
             expect(actual).deep.equal(expected);
