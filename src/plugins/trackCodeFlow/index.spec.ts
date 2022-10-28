@@ -195,7 +195,9 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
+            `05:1001:Cannot find name 'a'`,
             `05:LINT1003:Not all the code paths assign 'a'`,
+            `15:1001:Cannot find name 'b'`,
             `15:LINT1003:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
@@ -298,7 +300,8 @@ describe('trackCodeFlow', () => {
             `25:LINT2004:Not all code paths return a value`,
             `32:LINT2004:Not all code paths return a value`,
             `39:LINT2004:Not all code paths return a value`,
-            `45:LINT2004:Not all code paths return a value`
+            `45:LINT2004:Not all code paths return a value`,
+            `49:LINT2004:Not all code paths return a value`
         ];
         expect(actual).deep.equal(expected);
     });

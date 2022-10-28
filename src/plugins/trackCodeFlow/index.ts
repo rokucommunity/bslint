@@ -1,4 +1,4 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode } from 'brighterscript';
+import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -46,6 +46,7 @@ export interface LintState {
     stack: Statement[];
     blocks: WeakMap<Statement, StatementInfo>;
     ifs?: StatementInfo;
+    trys?: StatementInfo;
     branch?: StatementInfo;
 }
 
@@ -82,6 +83,7 @@ export default class TrackCodeFlow {
                 stack: [],
                 blocks: new WeakMap(),
                 ifs: undefined,
+                trys: undefined,
                 branch: undefined
             };
             let curr: StatementInfo = {
@@ -109,17 +111,22 @@ export default class TrackCodeFlow {
 
                 if (isIfStatement(opened)) {
                     state.ifs = curr;
-                } else if (!curr.parent || isIfStatement(curr.parent)) {
+                } else if (isTryCatchStatement(opened)) {
+                    state.trys = curr;
+                } else if (!curr.parent || isIfStatement(curr.parent) || isTryCatchStatement(curr.parent) || isCatchStatement(curr.parent)) {
                     state.branch = curr;
                 }
                 state.parent = curr;
-
             }, (closed, stack) => {
                 const block = state.blocks.get(closed);
                 state.parent = state.blocks.get(stack[stack.length - 1]);
                 if (isIfStatement(closed)) {
-                    const { ifs, branch } = findBranch(state);
+                    const { ifs, branch } = findIfBranch(state);
                     state.ifs = ifs;
+                    state.branch = branch;
+                } else if (isTryCatchStatement(closed)) {
+                    const { trys, branch } = findTryBranch(state);
+                    state.trys = trys;
                     state.branch = branch;
                 }
                 if (block) {
@@ -171,7 +178,7 @@ export default class TrackCodeFlow {
 }
 
 // Find parent if and block where code flow is branched
-function findBranch(state: LintState): { ifs?: StatementInfo; branch?: StatementInfo } {
+function findIfBranch(state: LintState): { ifs?: StatementInfo; branch?: StatementInfo } {
     const { blocks, parent, stack } = state;
     for (let i = stack.length - 2; i >= 0; i--) {
         if (isIfStatement(stack[i])) {
@@ -187,7 +194,24 @@ function findBranch(state: LintState): { ifs?: StatementInfo; branch?: Statement
     };
 }
 
+// Find parent try and block where code flow is branched
+function findTryBranch(state: LintState): { trys?: StatementInfo; branch?: StatementInfo } {
+    const { blocks, parent, stack } = state;
+    for (let i = stack.length - 2; i >= 0; i--) {
+        if (isTryCatchStatement(stack[i])) {
+            return {
+                trys: blocks.get(stack[i]),
+                branch: blocks.get(stack[i + 1])
+            };
+        }
+    }
+    return {
+        trys: undefined,
+        branch: parent
+    };
+}
+
 // `if` and `for/while` are considered as multi-branch
 export function isBranchedStatement(stat: Statement) {
-    return isIfStatement(stat) || isForStatement(stat) || isForEachStatement(stat) || isWhileStatement(stat);
+    return isIfStatement(stat) || isForStatement(stat) || isForEachStatement(stat) || isWhileStatement(stat) || isTryCatchStatement(stat);
 }

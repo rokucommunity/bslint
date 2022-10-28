@@ -10,7 +10,7 @@ sub error2()
     a = Rnd(10)
     if a > 0
         b = 0
-    elseif a > 1
+    else if a > 1
         b = 1
     end if
     print "b"; b 'error
@@ -56,7 +56,7 @@ sub error6()
     if a > 5
         b = a
     end if
-    if b <> invalid  ' opposite of narrowed exit
+    if b <> invalid ' opposite of narrowed exit
         return
     end if
     print "b"; b ' error
@@ -102,7 +102,7 @@ sub ok2()
     a = Rnd(10)
     if a > 0
         b = 0
-    elseif a > 1
+    else if a > 1
         b = 1
     else
         b = 2
@@ -155,7 +155,7 @@ sub ok6()
     a = Rnd(10)
     if a > 0
         b = 0
-    elseif a > 1
+    else if a > 1
         b = 1
     else
         ' dead branch

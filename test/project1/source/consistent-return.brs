@@ -36,7 +36,7 @@ sub error7() as string ' error
 end sub
 
 sub error8()
-    some(function () 'error
+    some(function() 'error
         if true then return 0
     end function)
 end sub
@@ -45,6 +45,15 @@ sub error9()
     some(sub () as string 'error
     end sub)
 end sub
+
+function error10() as integer
+    a = 1
+    if a > 0
+        throw "something wrong"
+    else
+        ' missing return or throw here
+    end if
+end function
 
 sub ok1()
     return
@@ -81,6 +90,40 @@ end sub
 
 function ok6() as void
     return ' error
+end function
+
+function ok7() as integer
+    a = 1
+    if a > 0
+        throw "something wrong"
+    else
+        return 0
+    end if
+end function
+
+function ok8() as integer
+    throw "Not yet implemented"
+end function
+
+function ok9() as integer
+    try
+        a = 0
+        b = 100 / a
+        return b
+    catch err
+        throw "Not yet implemented"
+    end try
+end function
+
+function ok10() as integer
+    throw "Not yet implemented"
+end function
+
+function ok11() as void
+    a = 1
+    if a > 0
+        throw "something wrong"
+    end if
 end function
 
 sub some(o)
