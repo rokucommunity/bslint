@@ -24,9 +24,9 @@ sub syle3()
 end sub
 
 sub style4()
-    a = { a1: 1, a2: 2, a3: 3, }
+    a = { a1: 1, a2: 2, a3: 3 }
 end sub
 
 sub style5()
-    a = { a1: 1, a2: 2, a3: 3, }
+    a = { a1: 1, a2: 2, a3: 3 }
 end sub

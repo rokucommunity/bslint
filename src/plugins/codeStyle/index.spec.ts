@@ -595,7 +595,7 @@ describe('codeStyle', () => {
                 `19:LINT3014:Add comma after the expression`,
                 `20:LINT3014:Add comma after the expression`,
                 `21:LINT3014:Add comma after the expression`,
-                `27:LINT3014:Add comma after the expression`
+                `31:LINT3013:Remove optional comma`
             ];
             expect(actual).deep.equal(expected);
         });
