@@ -77,7 +77,9 @@ describe('trackCodeFlow', () => {
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
-            const expected = [];
+            const expected = [
+                '04:1136:enum must be declared at the root level or within a namespace'
+            ];
             expect(actual).deep.equal(expected);
         });
         it('inside a namespace', async () => {
@@ -195,9 +197,7 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `05:1001:Cannot find name 'a'`,
             `05:LINT1003:Not all the code paths assign 'a'`,
-            `15:1001:Cannot find name 'b'`,
             `15:LINT1003:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
