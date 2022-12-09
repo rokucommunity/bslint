@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.0](https://github.com/rokucommunity/bslint/compare/v0.7.7...0.8.0) - 2022-12-09
+### Changed
+ - re-released the content from v0.7.6 but with a minor version bump instead of patch
+
+
+
+## [0.7.7](https://github.com/rokucommunity/bslint/compare/v0.7.6...0.7.7) - 2022-12-09
+### Changed
+ - Roll back v0.7.6 because it introduced breaking peerDependency changes. That should have been introduced in v0.8.0
+
+
+
 ## [0.7.6](https://github.com/rokucommunity/bslint/compare/v0.7.5...0.7.6) - 2022-12-08
 ### Added
  - Add new aa-comma-style all-except-single-line. ([#80](https://github.com/rokucommunity/bslint/pull/80))
