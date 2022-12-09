@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.7](https://github.com/rokucommunity/bslint/compare/v0.7.6...0.7.7) - 2022-12-08
+### Changed
+ - Roll back v0.7.6 because it introduced breaking peerDependency changes. That should have been introduced in v0.8.0
+
+
+
 ## [0.7.5](https://github.com/rokucommunity/bslint/compare/v0.7.4...0.7.5) - 2022-09-02
 ### Changed
  - upgrade to [brighterscript@0.57.0](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0570---2022-09-02). Notable changes since 0.56.0:
