@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.1](https://github.com/rokucommunity/bslint/compare/v0.8.0...v0.8.1) - 2023-01-12
+### Changed
+ - upgrade to [brighterscript@0.61.3](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0613---2023-01-12). Notable changes since 0.61.1:
+     - Add diagnostic for passing more than 5 arguments to a callFunc ([brighterscript#765](https://github.com/rokucommunity/brighterscript/pull/765))
+
+
+
 ## [0.8.0](https://github.com/rokucommunity/bslint/compare/v0.7.7...0.8.0) - 2022-12-09
 ### Changed
  - re-released the content from v0.7.6 but with a minor version bump instead of patch
