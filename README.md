@@ -145,6 +145,7 @@ Default rules:
         "no-todo": "off",
         "todo-pattern": "TODO|todo|FIXME",
         "no-stop": "warn",
+        "eol-last": "always",
 
         "type-annotations": "off",
 
