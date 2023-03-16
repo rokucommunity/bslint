@@ -1,6 +1,6 @@
 # bslint - BrighterScript Lint
 
-[![build status](https://img.shields.io/github/workflow/status/rokucommunity/bslint/build.svg?logo=github)](https://github.com/rokucommunity/bslint/actions?query=workflow%3Abuild)
+[![build status](https://img.shields.io/github/actions/workflow/status/rokucommunity/bslint/build.yml?branch=master&logo=github)](https://github.com/rokucommunity/bslint/actions?query=branch%3Amaster+workflow%3Abuild)
 [![coverage status](https://img.shields.io/coveralls/github/rokucommunity/bslint?logo=coveralls)](https://coveralls.io/github/rokucommunity/bslint?branch=master)
 [![monthly downloads](https://img.shields.io/npm/dm/@rokucommunity/bslint.svg?sanitize=true&logo=npm&logoColor=)](https://npmcharts.com/compare/@rokucommunity/bslint?minimal=true)
 [![npm version](https://img.shields.io/npm/v/@rokucommunity/bslint.svg?logo=npm)](https://www.npmjs.com/package/@rokucommunity/bslint)
