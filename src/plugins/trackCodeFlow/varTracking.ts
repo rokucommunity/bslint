@@ -411,6 +411,9 @@ function deferredVarLinter(
     scope.getEnumMap().forEach(enm => {
         toplevel.add(enm.item.name.toLowerCase());
     });
+    scope.getConstMap().forEach(cnt => {
+        toplevel.add(cnt.item.name.toLowerCase());
+    })
     if (isBrsFile(file)) {
         file.parser.references.classStatements.forEach(cls => {
             toplevel.add(cls.name.text.toLowerCase());
