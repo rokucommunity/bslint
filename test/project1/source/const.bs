@@ -1,0 +1,4 @@
+const a = "noop"
+sub test()
+    print a ' not an error
+end sub

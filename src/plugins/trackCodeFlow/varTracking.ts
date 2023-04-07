@@ -413,7 +413,7 @@ function deferredVarLinter(
     });
     scope.getConstMap().forEach(cnt => {
         toplevel.add(cnt.item.name.toLowerCase());
-    })
+    });
     if (isBrsFile(file)) {
         file.parser.references.classStatements.forEach(cls => {
             toplevel.add(cls.name.text.toLowerCase());
