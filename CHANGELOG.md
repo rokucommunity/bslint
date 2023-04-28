@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.4](https://github.com/rokucommunity/bslint/compare/v0.8.3...v0.8.4) - 2023-04-28
+### Changed
+ - upgrade to [brighterscript@0.64.3](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0643---2023-04-28). Notable changes since 0.64.2:
+     - Improves performance in symbol table fetching ([brighterscript#797](https://github.com/rokucommunity/brighterscript/pull/797))
+
+
+
 ## [0.8.3](https://github.com/rokucommunity/bslint/compare/v0.8.2...v0.8.3) - 2023-04-18
 ### Changed
  - upgrade to [brighterscript@0.64.2](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0642---2023-04-18). Notable changes since 0.62.0:
