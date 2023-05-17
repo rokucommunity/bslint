@@ -1,6 +1,6 @@
 {
   "name": "@rokucommunity/bslint",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "BrighterScript linter plugin",
   "main": "dist/index.js",
   "bin": {
