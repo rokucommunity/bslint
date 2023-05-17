@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.6](https://github.com/rokucommunity/bslint/compare/v0.8.5...v0.8.6) - 2023-05-17
+### Changed
+ - upgrade to [brighterscript@0.65.0](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0650---2023-05-17)
+
+
+
 ## [0.8.5](https://github.com/rokucommunity/bslint/compare/v0.8.4...v0.8.5) - 2023-05-10
 ### Changed
  - upgrade to [brighterscript@0.64.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0644---2023-05-10)
