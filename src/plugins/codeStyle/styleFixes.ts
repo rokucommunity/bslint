@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, WhileStatement } from 'brighterscript';
+import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, SymbolTypeFlags, VoidType, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
@@ -79,7 +79,7 @@ function addConditionGroup(diagnostic: BsDiagnostic) {
 }
 
 function removeConditionGroup(diagnostic: BsDiagnostic) {
-    const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression} = diagnostic.data;
+    const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression } = diagnostic.data;
     const { left, right } = stat.condition.tokens;
     const spaceBefore = left.leadingWhitespace?.length > 0 ? '' : ' ';
     let spaceAfter = '';
@@ -136,8 +136,9 @@ function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
         replaceText(fun.end?.range, `end${space}${token}`)
     ];
     // remove `as void` in case of `sub`
-    const returnChanges = token === 'sub' && fun.returnTypeToken?.kind === TokenKind.Void ? [
-        replaceText(Range.create(fun.rightParen.range.end, fun.returnTypeToken.range.end), '')
+    const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlags.typetime }) ?? VoidType.instance;
+    const returnChanges = token === 'sub' && fun.returnTypeExpression && isVoidType(returnType) ? [
+        replaceText(Range.create(fun.rightParen.range.end, fun.returnTypeExpression.range.end), '')
     ] : [];
     return {
         diagnostic,

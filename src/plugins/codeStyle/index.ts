@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, SymbolTypeFlags, isVoidType } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
@@ -194,7 +194,7 @@ export default class CodeStyle {
         // type annotations
         if (typeAnnotations !== 'off') {
             if (typeAnnotations !== 'args') {
-                if (hasReturnedValue && !fun.returnTypeToken) {
+                if (hasReturnedValue && !fun.returnTypeExpression) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
                         // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
                         fun.functionType?.range ?? fun.range
@@ -202,7 +202,7 @@ export default class CodeStyle {
                 }
             }
             if (typeAnnotations !== 'return') {
-                const missingAnnotation = fun.parameters.find(arg => !arg.typeToken);
+                const missingAnnotation = fun.parameters.find(arg => !arg.typeExpression);
                 if (missingAnnotation) {
                     // only report 1st missing arg annotation to avoid error overload
                     diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.range));
@@ -240,8 +240,8 @@ export default class CodeStyle {
 
     getFunctionReturns(fun: FunctionExpression) {
         let hasReturnedValue = false;
-        if (fun.returnTypeToken) {
-            hasReturnedValue = fun.returnTypeToken.kind !== TokenKind.Void;
+        if (fun.returnTypeExpression) {
+            hasReturnedValue = !isVoidType(fun.returnTypeExpression.getType({ flags: SymbolTypeFlags.typetime }));
         } else {
             const cancel = new CancellationTokenSource();
             fun.body.walk(createVisitor({

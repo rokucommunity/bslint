@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, NamespacedVariableNameExpression, ParseMode } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -21,7 +21,7 @@ interface ValidationInfo {
     name: string;
     local?: VarInfo;
     range: Range;
-    namespace?: NamespacedVariableNameExpression;
+    namespace?: NamespaceStatement;
 }
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
@@ -291,7 +291,7 @@ export function createVarLinter(
                     kind: ValidationKind.UninitializedVar,
                     name: name,
                     range: expr.range,
-                    namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)?.nameExpression
+                    namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)
                 });
                 return;
             } else {

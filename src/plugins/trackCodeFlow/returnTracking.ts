@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlags } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -94,13 +94,15 @@ export function createReturnLinter(
         const hasReturnedValue = returnedValues.length > 0;
         // Function range only includes the function signature
         const funRangeStart = (fun.functionType ?? fun.leftParen).range.start;
-        const funRangeEnd = (fun.returnTypeToken ?? fun.rightParen).range.end;
+        const funRangeEnd = (fun.returnTypeExpression ?? fun.rightParen).range.end;
         const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
 
         // Explicit `as void` or `sub` without return type should never return a value
+        const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlags.typetime });
+
         if (
-            fun.returnTypeToken?.kind === TokenKind.Void ||
-            (kind === 'Sub' && !fun.returnTypeToken)
+            isVoidType(returnType) ||
+            (kind === 'Sub' && !fun.returnTypeExpression)
         ) {
             if (hasReturnedValue) {
                 returnedValues.forEach((r) => {
@@ -117,7 +119,7 @@ export function createReturnLinter(
         }
 
         const requiresReturnValue =
-            !!fun.returnTypeToken ||
+            !!fun.returnTypeExpression ||
             returnedValues.length > 0 ||
             (kind === 'Function' && returns.length > 0);
         const missingValue = requiresReturnValue && returnedValues.length !== returns.length;
