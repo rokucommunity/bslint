@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -27,11 +27,11 @@ interface ValidationInfo {
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
 function getDeferred(file: BscFile) {
-    return deferredValidation.get(file.pathAbsolute);
+    return deferredValidation.get(file.srcPath);
 }
 
 export function resetVarContext(file: BscFile) {
-    deferredValidation.set(file.pathAbsolute, []);
+    deferredValidation.set(file.srcPath, []);
 }
 
 export function createVarLinter(
@@ -52,7 +52,7 @@ export function createVarLinter(
         args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false, isUsed: false });
     });
 
-    if (isClassMethodStatement(fun.functionStatement)) {
+    if (isMethodStatement(fun.functionStatement)) {
         args.set('super', { name: 'super', range: null, isParam: true, isUnsafe: false, isUsed: true });
     }
 
@@ -383,7 +383,7 @@ export function runDeferredValidation(
 
     const diagnostics: BsDiagnostic[] = [];
     files.forEach((file) => {
-        const deferred = deferredValidation.get(file.pathAbsolute);
+        const deferred = deferredValidation.get(file.srcPath);
         if (deferred) {
             deferredVarLinter(scope, file, callables, globals, deferred, diagnostics);
         }

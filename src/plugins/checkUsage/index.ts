@@ -1,4 +1,4 @@
-import { BscFile, CallableContainerMap, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Program, Range, Scope, TokenKind, WalkMode, XmlFile } from 'brighterscript';
+import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, BscFile, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 
@@ -9,7 +9,7 @@ export enum UnusedCode {
     UnusedScript = 'LINT4002'
 }
 
-export default class CheckUsage {
+export default class CheckUsage implements CompilerPlugin {
 
     name = 'checkUsage';
 
@@ -39,16 +39,16 @@ export default class CheckUsage {
 
     private walkChildren(v: Vertice, children: SGNode[], file: BscFile) {
         children.forEach(node => {
-            const name = node.tag?.text;
+            const name = node.tagName;
             if (name) {
-                v.edges.push(createComponentEdge(name, node.tag.range, file));
+                v.edges.push(createComponentEdge(name, node.tokens.startTagName.range, file));
             }
             const itemComponentName = node.getAttribute('itemcomponentname');
             if (itemComponentName) {
-                v.edges.push(createComponentEdge(itemComponentName.value.text, itemComponentName.value.range, file));
+                v.edges.push(createComponentEdge(itemComponentName.value, itemComponentName.range, file));
             }
-            if (node.children) {
-                this.walkChildren(v, node.children, file);
+            if (node.elements) {
+                this.walkChildren(v, node.elements, file);
             }
         });
     }
@@ -69,7 +69,8 @@ export default class CheckUsage {
         });
     }
 
-    afterFileValidate(file: BscFile) {
+    afterFileValidate(event: AfterFileValidateEvent) {
+        const { file } = event;
         // collect all XML components
         if (isXmlFile(file)) {
             if (!file.componentName) {
@@ -100,14 +101,16 @@ export default class CheckUsage {
                 v.edges.push(createComponentEdge(text, range, file));
             }
 
-            const children = file.ast.component?.children;
+            const children = file.ast.componentElement?.childrenElement;
             if (children) {
-                this.walkChildren(v, children.children, file);
+                this.walkChildren(v, children.elements, file);
             }
         }
     }
 
-    afterScopeValidate(scope: Scope, files: BscFile[], _: CallableContainerMap) {
+    afterScopeValidate(event: AfterScopeValidateEvent) {
+        const { scope } = event;
+        const files = scope.getAllFiles();
         const pkgPath = scope.name.toLowerCase();
         let v: Vertice;
         if (scope.name === 'global') {
@@ -180,7 +183,7 @@ export default class CheckUsage {
         });
     }
 
-    afterProgramValidate(_: Program) {
+    afterProgramValidate(_: AfterProgramValidateEvent) {
         if (!this.main) {
             throw new Error('No `main.brs`');
         }

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { BsDiagnostic, Program } from 'brighterscript';
+import { AfterProgramCreateEvent, BsDiagnostic } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import { createContext, PluginWrapperContext } from '../../util';
@@ -27,7 +27,8 @@ describe('trackCodeFlow', () => {
         linter = new Linter();
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const trackCodeFlow = new TrackCodeFlow(lintContext);
                 program.plugins.add(trackCodeFlow);

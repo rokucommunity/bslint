@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AssignmentStatement, BsDiagnostic, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProgramCreateEvent, AssignmentStatement, BsDiagnostic, ParseMode, Parser, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import { createContext, PluginWrapperContext } from '../../util';
@@ -28,7 +28,8 @@ describe('codeStyle', () => {
         linter = new Linter();
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const codeStyle = new CodeStyle(lintContext);
                 program.plugins.add(codeStyle);

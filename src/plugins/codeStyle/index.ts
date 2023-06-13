@@ -1,11 +1,11 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, SymbolTypeFlags, isVoidType } from 'brighterscript';
+import { BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, SymbolTypeFlag, isVoidType, CompilerPlugin, AfterFileValidateEvent } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
 
-export default class CodeStyle {
+export default class CodeStyle implements CompilerPlugin {
 
     name: 'codeStyle';
 
@@ -17,7 +17,8 @@ export default class CodeStyle {
         extractFixes(addFixes, event.diagnostics);
     }
 
-    afterFileValidate(file: BscFile) {
+    afterFileValidate(event: AfterFileValidateEvent) {
+        const { file } = event;
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
@@ -241,7 +242,7 @@ export default class CodeStyle {
     getFunctionReturns(fun: FunctionExpression) {
         let hasReturnedValue = false;
         if (fun.returnTypeExpression) {
-            hasReturnedValue = !isVoidType(fun.returnTypeExpression.getType({ flags: SymbolTypeFlags.typetime }));
+            hasReturnedValue = !isVoidType(fun.returnTypeExpression.getType({ flags: SymbolTypeFlag.typetime }));
         } else {
             const cancel = new CancellationTokenSource();
             fun.body.walk(createVisitor({

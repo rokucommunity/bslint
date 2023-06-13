@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlags } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -98,7 +98,7 @@ export function createReturnLinter(
         const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
 
         // Explicit `as void` or `sub` without return type should never return a value
-        const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlags.typetime });
+        const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime });
 
         if (
             isVoidType(returnType) ||

@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, SymbolTypeFlags, VoidType, WhileStatement } from 'brighterscript';
+import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, SymbolTypeFlag, VoidType, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
@@ -136,7 +136,7 @@ function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
         replaceText(fun.end?.range, `end${space}${token}`)
     ];
     // remove `as void` in case of `sub`
-    const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlags.typetime }) ?? VoidType.instance;
+    const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime }) ?? VoidType.instance;
     const returnChanges = token === 'sub' && fun.returnTypeExpression && isVoidType(returnType) ? [
         replaceText(Range.create(fun.rightParen.range.end, fun.returnTypeExpression.range.end), '')
     ] : [];

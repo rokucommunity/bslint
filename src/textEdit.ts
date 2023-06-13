@@ -128,7 +128,7 @@ export function addFixesToEvent(event: OnGetCodeActionsEvent) {
     return (file: BscFile, entry: ChangeEntry) => {
         const changes: LintCodeAction[] = entry.changes.map(change => ({
             type: 'replace',
-            filePath: file.pathAbsolute,
+            filePath: file.srcPath,
             range: change.range,
             newText: change.text
         }));

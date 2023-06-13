@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { BsDiagnostic, Program } from 'brighterscript';
+import { AfterProgramCreateEvent, BsDiagnostic } from 'brighterscript';
 import Linter from '../../Linter';
 import { createContext, PluginWrapperContext } from '../../util';
 import CheckUsage from './index';
@@ -26,7 +26,8 @@ describe('checkUsage', () => {
         linter = new Linter();
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const checkUsage = new CheckUsage(lintContext);
                 program.plugins.add(checkUsage);

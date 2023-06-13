@@ -1,4 +1,4 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement } from 'brighterscript';
+import { BsDiagnostic, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterScopeValidateEvent, AfterFileValidateEvent, util } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -50,7 +50,7 @@ export interface LintState {
     branch?: StatementInfo;
 }
 
-export default class TrackCodeFlow {
+export default class TrackCodeFlow implements CompilerPlugin {
 
     name: 'trackCodeFlow';
 
@@ -62,12 +62,15 @@ export default class TrackCodeFlow {
         extractFixes(addFixes, event.diagnostics);
     }
 
-    afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
-        const diagnostics = runDeferredValidation(this.lintContext, scope, files, callables);
+    afterScopeValidate(event: AfterScopeValidateEvent) {
+        const { scope } = event;
+        const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
+        const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
         scope.addDiagnostics(diagnostics);
     }
 
-    afterFileValidate(file: BscFile) {
+    afterFileValidate(event: AfterFileValidateEvent) {
+        const { file } = event;
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
