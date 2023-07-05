@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.7](https://github.com/rokucommunity/bslint/compare/v0.8.6...v0.8.7) - 2023-07-05
+### Changed
+ - upgrade to [brighterscript@0.65.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0651---2023-06-09). Notable changes since 0.65.0:
+     - Fix injection of duplicate super calls into classes ([brighterscript#823](https://github.com/rokucommunity/brighterscript/pull/823))
+
+
+
 ## [0.8.6](https://github.com/rokucommunity/bslint/compare/v0.8.5...v0.8.6) - 2023-05-17
 ### Changed
  - upgrade to [brighterscript@0.65.0](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0650---2023-05-17)
