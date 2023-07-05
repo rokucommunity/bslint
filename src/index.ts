@@ -1,4 +1,4 @@
-import { BsConfig, Program, DiagnosticSeverity } from 'brighterscript';
+import { BsConfig, Program, DiagnosticSeverity, AfterProgramCreateEvent, AfterProgramValidateEvent } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
@@ -74,7 +74,8 @@ export { Linter };
 export default function factory() {
     const contextMap = new WeakMap<Program, PluginWrapperContext>();
     return {
-        afterProgramCreate: (program: Program) => {
+        afterProgramCreate: (event: AfterProgramCreateEvent) => {
+            const { program } = event;
             const context = createContext(program);
             contextMap.set(program, context);
 
@@ -89,8 +90,8 @@ export default function factory() {
                 program.plugins.add(checkUsage);
             }
         },
-        afterProgramValidate: async (program: Program) => {
-            const context = contextMap.get(program);
+        afterProgramValidate: async (event: AfterProgramValidateEvent) => {
+            const context = contextMap.get(event.program);
             await context.applyFixes();
         }
     };
