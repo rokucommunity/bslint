@@ -12,6 +12,18 @@
 			"label": "npm: build",
 			"detail": "tsc"
 		},
+        {
+            "label": "watch",
+            "type": "npm",
+            "script": "watch",
+            "presentation": {
+                "group": "watch"
+            },
+            "isBackground": true,
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        },
 		{
 			"type": "shell",
 			"label": "test",
