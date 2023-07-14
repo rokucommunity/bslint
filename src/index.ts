@@ -1,4 +1,4 @@
-import { BsConfig, Program, DiagnosticSeverity } from 'brighterscript';
+import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
@@ -71,9 +71,10 @@ export interface BsLintRules {
 
 export { Linter };
 
-export default function factory() {
+export default function factory(): CompilerPlugin {
     const contextMap = new WeakMap<Program, PluginWrapperContext>();
     return {
+        name: 'bslint',
         afterProgramCreate: (program: Program) => {
             const context = createContext(program);
             contextMap.set(program, context);
