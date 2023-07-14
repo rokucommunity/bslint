@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -379,47 +379,48 @@ export function runDeferredValidation(
     files: BscFile[],
     callables: CallableContainerMap
 ) {
-    const globals = lintContext.globals;
-
+    const topLevelVars = buildTopLevelVars(scope, lintContext.globals);
     const diagnostics: BsDiagnostic[] = [];
     files.forEach((file) => {
         const deferred = deferredValidation.get(file.srcPath);
         if (deferred) {
-            deferredVarLinter(scope, file, callables, globals, deferred, diagnostics);
+            deferredVarLinter(scope, file, callables, topLevelVars, deferred, diagnostics);
         }
     });
     return diagnostics;
+}
+
+/**
+ * Get a list of all top level variables available in the scope
+ */
+function buildTopLevelVars(scope: Scope, globals: string[]) {
+    // lookups for namespaces, classes, enums, etc...
+    // to add them to the topLevel so that they don't get marked as unused.
+    const toplevel = new Set<string>(globals);
+
+    for (const namespace of scope.getAllNamespaceStatements()) {
+        toplevel.add(getRootNamespaceName(namespace).toLowerCase()); // keep root of namespace
+    }
+    for (const [, cls] of scope.getClassMap()) {
+        toplevel.add(cls.item.name.text.toLowerCase());
+    }
+    for (const [, enm] of scope.getEnumMap()) {
+        toplevel.add(enm.item.name.toLowerCase());
+    }
+    for (const [, cnst] of scope.getConstMap()) {
+        toplevel.add(cnst.item.name.toLowerCase());
+    }
+    return toplevel;
 }
 
 function deferredVarLinter(
     scope: Scope,
     file: BscFile,
     callables: CallableContainerMap,
-    globals: string[],
+    toplevel: Set<string>,
     deferred: ValidationInfo[],
     diagnostics: BsDiagnostic[]
 ) {
-    // lookups for namespaces, classes, and enums
-    // to add them to the topLevel so that they don't get marked as unused.
-    const toplevel = new Set<string>(globals);
-    scope.getAllNamespaceStatements().forEach(ns => {
-        toplevel.add(ns.name.toLowerCase().split('.')[0]); // keep root of namespace
-    });
-    scope.getClassMap().forEach(cls => {
-        toplevel.add(cls.item.name.text.toLowerCase());
-    });
-    scope.getEnumMap().forEach(enm => {
-        toplevel.add(enm.item.name.toLowerCase());
-    });
-    scope.getConstMap().forEach(cnt => {
-        toplevel.add(cnt.item.name.toLowerCase());
-    });
-    if (isBrsFile(file)) {
-        file.parser.references.classStatements.forEach(cls => {
-            toplevel.add(cls.name.text.toLowerCase());
-        });
-    }
-
     deferred.forEach(({ kind, name, local, range, namespace }) => {
         const key = name?.toLowerCase();
         let hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
@@ -447,4 +448,27 @@ function deferredVarLinter(
                 break;
         }
     });
+}
+
+/**
+ * Get the leftmost part of the namespace name. (i.e. `alpha` from `alpha.beta.charlie`) by walking
+ * up the namespace chain until we get to the very topmost namespace. Then grabbing the leftmost token's name.
+ *
+ */
+export function getRootNamespaceName(namespace: NamespaceStatement) {
+    // there are more concise ways to accomplish this, but this is a hot function so it's been optimized.
+    while (true) {
+        const parent = namespace.parent?.parent as NamespaceStatement;
+        if (isNamespaceStatement(parent)) {
+            namespace = parent;
+        } else {
+            break;
+        }
+    }
+    const result = util.getDottedGetPath(namespace.nameExpression)[0]?.name?.text;
+    // const name = namespace.getName(ParseMode.BrighterScript).toLowerCase();
+    // if (name.includes('imigx')) {
+    //     console.log([name, result]);
+    // }
+    return result;
 }
