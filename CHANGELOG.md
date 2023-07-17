@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.8](https://github.com/rokucommunity/bslint/compare/v0.8.7...v0.8.8) - 2023-07-17
+### Changed
+ - upgrade to [brighterscript@0.65.2](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0652---2023-07-17). Notable changes since 0.65.1:
+     - Prevent crashing when diagnostic is missing range. ([brighterscript#832](https://github.com/rokucommunity/brighterscript/pull/832))
+     - Prevent crash when diagnostic is missing range ([brighterscript#831](https://github.com/rokucommunity/brighterscript/pull/831))
+### Fixed
+ - code flow bug with try/catch ([#93](https://github.com/rokucommunity/bslint/pull/93))
+ - performance issues due to needless duplicate global var lookups ([#92](https://github.com/rokucommunity/bslint/pull/92))
+
+
+
 ## [0.8.7](https://github.com/rokucommunity/bslint/compare/v0.8.6...v0.8.7) - 2023-07-05
 ### Changed
  - upgrade to [brighterscript@0.65.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0651---2023-06-09). Notable changes since 0.65.0:
