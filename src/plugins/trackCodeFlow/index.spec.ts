@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AfterProgramCreateEvent, BsDiagnostic } from 'brighterscript';
+import { AfterProgramCreateEvent, BsDiagnostic, Program } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
+import bslintFactory from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
 
 function pad(n: number) {
@@ -19,12 +20,17 @@ function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
 describe('trackCodeFlow', () => {
     let linter: Linter;
     let lintContext: PluginWrapperContext;
+    let program: Program;
     const project1 = {
         rootDir: 'test/project1'
     };
 
     beforeEach(() => {
         linter = new Linter();
+        program = new Program({});
+        program.plugins.add(bslintFactory());
+        program.plugins.emit('afterProgramCreate', { builder: undefined, program: program });
+
         linter.builder.plugins.add({
             name: 'test',
             afterProgramCreate: (event: AfterProgramCreateEvent) => {
@@ -34,6 +40,28 @@ describe('trackCodeFlow', () => {
                 program.plugins.add(trackCodeFlow);
             }
         });
+    });
+
+    it('properly tracks code flow between try/catch', () => {
+        program.setFile('source/main.brs', `
+            sub main()
+                try
+                    text1 = "a"
+                    text2 = "b"
+                catch e
+                    text1 = "c"
+                end try
+                print text1
+                print text2
+            end sub
+        `);
+        program.validate();
+
+        expect(
+            fmtDiagnostics(program.getDiagnostics())
+        ).to.eql([
+            `10:LINT1003:Not all the code paths assign 'text2'`
+        ]);
     });
 
     it('detects use of uninitialized vars', async () => {
