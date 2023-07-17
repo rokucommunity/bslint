@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, NamespacedVariableNameExpression, ParseMode } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isClassMethodStatement, isBrsFile, isCatchStatement, isLabelStatement, isGotoStatement, NamespacedVariableNameExpression, ParseMode, isTryCatchStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -246,7 +246,7 @@ export function createVarLinter(
         if (!parent.locals) {
             parent.locals = locals;
         } else {
-            const isParentIf = isIfStatement(parent.stat);
+            const isParentBranched = isIfStatement(parent.stat) || isTryCatchStatement(parent.stat);
             const isLoop = isForStatement(closed.stat) || isForEachStatement(closed.stat) || isWhileStatement(closed.stat);
             locals.forEach((local, name) => {
                 const parentLocal = parent.locals.get(name);
@@ -254,8 +254,8 @@ export function createVarLinter(
                 if (local.restriction) {
                     local.isUnsafe = true;
                 }
-                // if a parent var isn't partial then the var stays non-partial
-                if (isParentIf) {
+                // combine attributes / met branches
+                if (isParentBranched) {
                     if (parentLocal) {
                         local.isUnsafe = parentLocal.isUnsafe || local.isUnsafe;
                         local.metBranches = (parentLocal.metBranches ?? 0) + 1;

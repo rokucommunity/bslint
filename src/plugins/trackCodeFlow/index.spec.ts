@@ -45,10 +45,12 @@ describe('trackCodeFlow', () => {
         program.setFile('source/main.brs', `
             sub main()
                 try
-                    text2 = "true"
+                    text1 = "a"
+                    text2 = "b"
                 catch e
-                    text2 = "false"
+                    text1 = "c"
                 end try
+                print text1
                 print text2
             end sub
         `);
@@ -56,7 +58,9 @@ describe('trackCodeFlow', () => {
 
         expect(
             fmtDiagnostics(program.getDiagnostics())
-        ).to.eql([]);
+        ).to.eql([
+            `10:LINT1003:Not all the code paths assign 'text2'`
+        ]);
     });
 
     it('detects use of uninitialized vars', async () => {
