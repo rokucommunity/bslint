@@ -828,6 +828,20 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
 
+        it('color formatting should all be zero-x (0x) format', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/color-should-be-zero-x.brs'],
+                rules: {
+                    'color-format': 'zero-x'
+                },
+                fix: true
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
         it('add missing aa comma, no dangling', async () => {
             const diagnostics = await linter.run({
                 ...project1,

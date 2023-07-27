@@ -13,6 +13,7 @@ export type RuleFunction = 'no-function' | 'no-sub' | 'auto' | 'off';
 export type RuleAAComma = 'always' | 'no-dangling' | 'never' | 'off';
 export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off';
 export type RuleEolLast = 'always' | 'never' | 'off';
+export type RuleColorFormat = 'hash' | 'zero-x' | 'off';
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
     lintConfig?: string;
@@ -39,6 +40,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         // Will be transformed to RegExp type when program context is created.
         'todo-pattern'?: string;
         'eol-last'?: RuleEolLast;
+        'color-format'?: RuleColorFormat;
     };
     globals?: string[];
     ignores?: string[];
@@ -67,6 +69,7 @@ export interface BsLintRules {
     noTodo: BsLintSeverity;
     noStop: BsLintSeverity;
     eolLast: RuleEolLast;
+    colorFormat: RuleColorFormat;
 }
 
 export { Linter };

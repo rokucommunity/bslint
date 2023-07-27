@@ -1,5 +1,5 @@
 import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
-import { RuleAAComma } from '../..';
+import { RuleAAComma, RuleColorFormat } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { messages } from './diagnosticMessages';
@@ -24,11 +24,12 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
+        const validateColorFormat = colorFormat !== 'off';
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
         const validateBlockIf = blockIfStyle !== 'off';
@@ -43,6 +44,11 @@ export default class CodeStyle {
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
         const { tokens } = file.parser;
+
+        if (validateColorFormat) {
+            this.validateColorFormat(file.fileContents, diagnostics, colorFormat);
+        }
+
         let isFileEmpty = true;
         for (let i = tokens.length - 1; i >= 0; i--) {
             if (tokens[i].kind !== TokenKind.Eof &&
@@ -162,6 +168,24 @@ export default class CodeStyle {
 
         // append diagnostics
         file.addDiagnostics(bsDiagnostics);
+    }
+
+    validateColorFormat(fileContents: string, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat) {
+        const colorHashRegex = /#[0-9A-Fa-f]{6}/g;
+        const colorZeroXRegex = /0x[0-9A-Fa-f]{6}/g;
+        const colorHashMatches = fileContents.match(colorHashRegex);
+        const colorZeroXRegexMatches = fileContents.match(colorZeroXRegex);
+        if (colorFormat === 'hash') {
+            if (colorZeroXRegexMatches !== null) {
+                // Color formatting set to hash and has zero-x color formatting values!
+                debugger;
+            }
+        } else if (colorFormat === 'zero-x') {
+            if (colorHashMatches !== null) {
+                // Color formatting set to zero-x and has hash color formatting values!
+                debugger;
+            }
+        }
     }
 
     validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {

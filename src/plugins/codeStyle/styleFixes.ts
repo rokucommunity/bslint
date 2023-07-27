@@ -41,6 +41,8 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return addEolLast(diagnostic);
         case CodeStyleError.EolLastFound:
             return removeEolLast(diagnostic);
+        case CodeStyleError.ColorFormat:
+            return expectedColorFormat(diagnostic);
         default:
             return null;
     }
@@ -79,7 +81,7 @@ function addConditionGroup(diagnostic: BsDiagnostic) {
 }
 
 function removeConditionGroup(diagnostic: BsDiagnostic) {
-    const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression} = diagnostic.data;
+    const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression } = diagnostic.data;
     const { left, right } = stat.condition.tokens;
     const spaceBefore = left.leadingWhitespace?.length > 0 ? '' : ' ';
     let spaceAfter = '';
@@ -163,6 +165,15 @@ function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
 }
 
 function removeEolLast(diagnostic: BsDiagnostic): ChangeEntry {
+    return {
+        diagnostic,
+        changes: [
+            replaceText(diagnostic.range, '')
+        ]
+    };
+}
+
+function expectedColorFormat(diagnostic: BsDiagnostic): ChangeEntry {
     return {
         diagnostic,
         changes: [
