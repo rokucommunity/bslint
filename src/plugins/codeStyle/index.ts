@@ -44,11 +44,6 @@ export default class CodeStyle {
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
         const { tokens } = file.parser;
-
-        if (validateColorFormat) {
-            this.validateColorFormat(file.fileContents, diagnostics, colorFormat);
-        }
-
         let isFileEmpty = true;
         for (let i = tokens.length - 1; i >= 0; i--) {
             if (tokens[i].kind !== TokenKind.Eof &&
@@ -131,6 +126,11 @@ export default class CodeStyle {
                     diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
                 }
             },
+            LiteralExpression: e => {
+                if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
+                    this.validateColorFormat(e.token, diagnostics, colorFormat);
+                }
+            },
             AALiteralExpression: e => {
                 if (validateAAStyle) {
                     this.validateAAStyle(e, aaCommaStyle, diagnostics);
@@ -170,20 +170,20 @@ export default class CodeStyle {
         file.addDiagnostics(bsDiagnostics);
     }
 
-    validateColorFormat(fileContents: string, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat) {
+    validateColorFormat(token: AALiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat) {
         const colorHashRegex = /#[0-9A-Fa-f]{6}/g;
         const colorZeroXRegex = /0x[0-9A-Fa-f]{6}/g;
-        const colorHashMatches = fileContents.match(colorHashRegex);
-        const colorZeroXRegexMatches = fileContents.match(colorZeroXRegex);
+        const colorHashMatches = token.text.match(colorHashRegex);
+        const colorZeroXRegexMatches = token.text.match(colorZeroXRegex);
         if (colorFormat === 'hash') {
             if (colorZeroXRegexMatches !== null) {
                 // Color formatting set to hash and has zero-x color formatting values!
-                debugger;
+                diagnostics.push(messages.expectedColorFormat(token.range));
             }
         } else if (colorFormat === 'zero-x') {
             if (colorHashMatches !== null) {
                 // Color formatting set to zero-x and has hash color formatting values!
-                debugger;
+                diagnostics.push(messages.expectedColorFormat(token.range));
             }
         }
     }

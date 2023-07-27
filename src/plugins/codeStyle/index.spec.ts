@@ -838,7 +838,7 @@ describe('codeStyle', () => {
                 fix: true
             });
             const actual = fmtDiagnostics(diagnostics);
-            const expected = [];
+            const expected = ['19:LINT3019:Code style: File should follow color format'];
             expect(actual).deep.equal(expected);
         });
 
