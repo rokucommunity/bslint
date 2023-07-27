@@ -170,7 +170,7 @@ export default class CodeStyle {
         file.addDiagnostics(bsDiagnostics);
     }
 
-    validateColorFormat(token: AALiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat) {
+    validateColorFormat(token: LiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat) {
         const colorHashRegex = /#[0-9A-Fa-f]{6}/g;
         const colorZeroXRegex = /0x[0-9A-Fa-f]{6}/g;
         const colorHashMatches = token.text.match(colorHashRegex);
