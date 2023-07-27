@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.9.0-alpha.0](https://github.com/rokucommunity/bslint/compare/v0.8.9...v0.9.0-alpha.0) - 2023-07-27
+### Changed
+- fixes for brighterscript v0.66.0-alpha.0 through v0.66.0-alpha.4
+
+
+
 ## [0.8.9](https://github.com/rokucommunity/bslint/compare/v0.8.8...v0.8.9) - 2023-07-24
 ### Changed
  - upgrade to [brighterscript@0.65.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0654---2023-07-24). Notable changes since 0.65.2:
@@ -58,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      - Fix namespace-relative items ([brighterscript#789](https://github.com/rokucommunity/brighterscript/pull/789))
      - Wrap transpiled template strings in parens ([brighterscript#788](https://github.com/rokucommunity/brighterscript/pull/788))
      - Simplify the ast range logic ([brighterscript#784](https://github.com/rokucommunity/brighterscript/pull/784))
-### Fixed 
+### Fixed
  - do not consider consts as unused variables ([#85](https://github.com/rokucommunity/bslint/pull/85))
 
 
