@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.9](https://github.com/rokucommunity/bslint/compare/v0.8.8...v0.8.9) - 2023-07-24
+### Changed
+ - upgrade to [brighterscript@0.65.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0654---2023-07-24). Notable changes since 0.65.2:
+     - Install `v8-profiler-next` on demand instead of being a dependency ([brighterscript#854](https://github.com/rokucommunity/brighterscript/pull/854))
+     - Bump word-wrap from 1.2.3 to 1.2.4 ([brighterscript#851](https://github.com/rokucommunity/brighterscript/pull/851))
+
+
+
 ## [0.8.8](https://github.com/rokucommunity/bslint/compare/v0.8.7...v0.8.8) - 2023-07-17
 ### Changed
  - upgrade to [brighterscript@0.65.2](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0652---2023-07-17). Notable changes since 0.65.1:
