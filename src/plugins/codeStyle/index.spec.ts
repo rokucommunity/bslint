@@ -904,8 +904,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                '02:LINT3023:Strictness: File should follow Roku broadcast safe color cert requirement',
-                '05:LINT3023:Strictness: File should follow Roku broadcast safe color cert requirement'
+                '02:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
+                '05:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'
             ];
             expect(actual).deep.equal(expected);
         });

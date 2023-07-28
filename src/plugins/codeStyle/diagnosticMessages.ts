@@ -197,7 +197,7 @@ export const messages = {
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorCertCompliant,
         source: 'bslint',
-        message: `${ST} File should follow Roku broadcast safe color cert requirement`,
+        message: `${CS} File should follow Roku broadcast safe color cert requirement`,
         range
     })
 };

@@ -149,6 +149,12 @@ Default rules:
 
         "type-annotations": "off",
 
+        "color-format": "off",
+        "color-case": "off",
+        "color-alpha": "off",
+        "color-alpha-defaults": "off",
+        "color-cert": "off",
+
         "assign-all-paths": "error",
         "unsafe-path-loop": "error",
         "unsafe-iterators": "error",
@@ -209,6 +215,38 @@ Default rules:
     - `always`: enforces that files end with a newline (**default**)
     - `never` enforces that files do not end with a newline
     - `off`: do not validate
+
+- `color-format`: ensures that all the color values follow the same prefix formatting. Can also use to prevent any colors values from being defined in the code-base, except for values in a stand-alone file (ie. theme file).
+
+    - `hash`: enforces all color values are type string and use a `#` prefix
+    - `zero-x`: enforces all color values are type string and use a `0x` prefix
+    - `never`: enforces that no color values can be defined in the code-base. Useful if you define colors in a separate stand-alone file. To use this option you would list your stand-alone file in the `ignore` list or `diagnosticFilters`.
+    - `off`: do not validate (**default**)
+
+- `color-case`: ensures that all color values follow the same case. Requires that `color-format` is not set to `off`.
+
+    - `lower`: enforces all color values that are type string are all lowercase. ie. `#11bbdd`
+    - `upper`: enforces all color values that are type string are all uppercase. ie. `#EEAA44`
+    - `off`: do not validate (**default**)
+
+- `color-alpha`: defines the usage of the color alpha value. ie. `#xxxxxxFF` (the 2 last values in this color are `FF` which denotes the alpha is 100% opacity). Requires that `color-format` is not set to `off`.
+
+    - `always`: enforces all color values that are type string define an alpha value
+    - `allowed`: allows color values that are type string to define an alpha value
+    - `never`: enforces that none of the color values that are type string define an alpha value
+    - `off`: do not validate (**default**)
+
+- `color-alpha-defaults`: enforces default color-alpha values. ie. `#xxxxxxFF` or `#xxxxxx00`. Requires that `color-alpha` and `color-format` are not set to `off`.
+
+    - `allowed`: allows both types of defaults to be used
+    - `only-hidden`: only allows opacity 0% (hidden) from being used
+    - `never`: enforces that no defaults can be used
+    - `off`: do not validate (**default**)
+
+- `color-cert`: enforces Roku's [broadcast safe color 6.4 certification requirement](https://developer.roku.com/en-gb/docs/developer-program/certification/certification.md). Requires that `color-format` is not set to `off`.
+
+    - `always`: ensures all white and black color-format values either match or are darker/ lighter than the minimum recommended values. For white the minimum value is `#DBDBDB` and for black the minimum value is `#161616`
+    - `off`: do not validate (**default**)
 
 ### Strictness rules
 
