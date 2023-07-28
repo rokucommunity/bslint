@@ -158,7 +158,11 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         noTodo: ruleToSeverity(rules['no-todo']),
         noStop: ruleToSeverity(rules['no-stop']),
         eolLast: rules['eol-last'],
-        colorFormat: rules['color-format']
+        colorFormat: rules['color-format'],
+        colorCase: rules['color-case'],
+        colorAlpha: rules['color-alpha'],
+        colorAlphaDefaults: rules['color-alpha-defaults'],
+        colorCertCompliant: rules['color-cert']
     };
 }
 

@@ -828,17 +828,171 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
 
-        it('color formatting should all be zero-x (0x) format', async () => {
+        it('color format is zero-x and case is uppercase', async () => {
             const diagnostics = await linter.run({
                 ...project1,
-                files: ['source/color-should-be-zero-x.brs'],
+                files: ['source/colors/color-zero-x-and-mixed-case.brs'],
                 rules: {
-                    'color-format': 'zero-x'
+                    'color-format': 'zero-x',
+                    'color-case': 'upper'
                 },
                 fix: false
             });
             const actual = fmtDiagnostics(diagnostics);
-            const expected = ['02:LINT3019:Code style: File should follow color format'];
+            const expected = [
+                '02:LINT3020:Code style: File should follow color case'
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is hash and case is lowercase', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-hash-and-mixed-case.brs'],
+                rules: {
+                    'color-format': 'hash',
+                    'color-case': 'lower'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = ['04:LINT3020:Code style: File should follow color case'];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is none - no color values found', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-none.brs'],
+                rules: {
+                    'color-format': 'never'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is none - color values found', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-hash-and-mixed-case.brs'],
+                rules: {
+                    'color-format': 'never'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '03:LINT3019:Code style: File should follow color format',
+                '04:LINT3019:Code style: File should follow color format',
+                '05:LINT3019:Code style: File should follow color format'
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-broadcast-safe.brs'],
+                rules: {
+                    'color-format': 'zero-x',
+                    'color-cert': 'always'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '02:LINT3023:Strictness: File should follow Roku broadcast safe color cert requirement',
+                '05:LINT3023:Strictness: File should follow Roku broadcast safe color cert requirement'
+            ];
+            expect(actual).deep.equal(expected);
+        });
+        it('color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-broadcast-safe.brs'],
+                rules: {
+                    'color-format': 'zero-x',
+                    'color-cert': 'off'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is zero-x, alpha values are allowed and alpha defaults are not allowed', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-alpha-mixed-values.brs'],
+                rules: {
+                    'color-format': 'zero-x',
+                    'color-alpha': 'allowed',
+                    'color-alpha-defaults': 'never'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '05:LINT3022:Code style: File should follow color alpha defaults rule',
+                '06:LINT3022:Code style: File should follow color alpha defaults rule'
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is zero-x, alpha values are allowed and only hidden alpha (00) defaults are allowed', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-alpha-mixed-values.brs'],
+                rules: {
+                    'color-format': 'zero-x',
+                    'color-alpha': 'allowed',
+                    'color-alpha-defaults': 'only-hidden'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = ['06:LINT3022:Code style: File should follow color alpha defaults rule'];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is zero-x and alpha values are not allowed', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-alpha-mixed-values.brs'],
+                rules: {
+                    'color-format': 'zero-x',
+                    'color-alpha': 'never'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '03:LINT3021:Code style: File should follow color alpha rule',
+                '05:LINT3021:Code style: File should follow color alpha rule',
+                '06:LINT3021:Code style: File should follow color alpha rule'
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('color format is zero-x and alpha values are required', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-alpha-mixed-values.brs'],
+                rules: {
+                    'color-format': 'zero-x',
+                    'color-alpha': 'always'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '02:LINT3021:Code style: File should follow color alpha rule',
+                '04:LINT3021:Code style: File should follow color alpha rule'
+            ];
             expect(actual).deep.equal(expected);
         });
 

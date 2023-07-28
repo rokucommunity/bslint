@@ -42,7 +42,11 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
         case CodeStyleError.EolLastFound:
             return removeEolLast(diagnostic);
         case CodeStyleError.ColorFormat:
-            return expectedColorFormat(diagnostic);
+        case CodeStyleError.ColorCase:
+        case CodeStyleError.ColorAlpha:
+        case CodeStyleError.ColorAlphaDefaults:
+        case CodeStyleError.ColorCertCompliant:
+            return expectedColorStyle(diagnostic);
         default:
             return null;
     }
@@ -173,7 +177,7 @@ function removeEolLast(diagnostic: BsDiagnostic): ChangeEntry {
     };
 }
 
-function expectedColorFormat(diagnostic: BsDiagnostic): ChangeEntry {
+function expectedColorStyle(diagnostic: BsDiagnostic): ChangeEntry {
     return {
         diagnostic,
         changes: [

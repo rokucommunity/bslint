@@ -1,5 +1,5 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
-import { RuleAAComma, RuleColorFormat } from '../..';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, LiteralExpression, AAMemberExpression } from 'brighterscript';
+import { RuleAAComma, RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorAlphaDefaults, RuleColorCertCompliant } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { messages } from './diagnosticMessages';
@@ -24,12 +24,13 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast } = severity;
+        const { colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
-        const validateColorFormat = colorFormat !== 'off';
+        const validateColorFormat = (colorFormat === 'hash' || colorFormat === 'zero-x' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
         const validateBlockIf = blockIfStyle !== 'off';
@@ -127,8 +128,10 @@ export default class CodeStyle {
                 }
             },
             LiteralExpression: e => {
-                if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
-                    this.validateColorFormat(e.token, diagnostics, colorFormat);
+                if (e.token.kind === TokenKind.StringLiteral) {
+                    if (validateColorFormat) {
+                        this.validateColorStyle(e.token, diagnostics, colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant);
+                    }
                 }
             },
             AALiteralExpression: e => {
@@ -170,22 +173,106 @@ export default class CodeStyle {
         file.addDiagnostics(bsDiagnostics);
     }
 
-    validateColorFormat(token: LiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat) {
+    validateColorStyle(token: LiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat, colorCase: RuleColorCase, alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults, certCompliant: RuleColorCertCompliant) {
         const colorHashRegex = /#[0-9A-Fa-f]{6}/g;
+        const colorHashAlphaRegex = /#[0-9A-Fa-f]{8}/g;
         const colorZeroXRegex = /0x[0-9A-Fa-f]{6}/g;
+        const colorZeroXAlphaRegex = /0x[0-9A-Fa-f]{8}/g;
         const colorHashMatches = token.text.match(colorHashRegex);
-        const colorZeroXRegexMatches = token.text.match(colorZeroXRegex);
+        const colorHashAlphaMatches = token.text.match(colorHashAlphaRegex);
+        const colorZeroXMatches = token.text.match(colorZeroXRegex);
+        const colorZeroXAlphaMatches = token.text.match(colorZeroXAlphaRegex);
+
         if (colorFormat === 'hash') {
-            if (colorZeroXRegexMatches !== null) {
-                // Color formatting set to hash and has zero-x color formatting values!
+            if (colorZeroXMatches !== null) {
                 diagnostics.push(messages.expectedColorFormat(token.range));
             }
+            this.validateColorCase(colorHashMatches, token, diagnostics, colorCase, colorFormat);
+            this.validateColorAlpha(colorHashAlphaMatches, colorHashMatches, colorZeroXMatches, token, diagnostics, alpha, alphaDefaults);
+            this.validateColorCertCompliance(colorHashMatches, token, diagnostics, colorFormat, certCompliant);
+
         } else if (colorFormat === 'zero-x') {
             if (colorHashMatches !== null) {
-                // Color formatting set to zero-x and has hash color formatting values!
+                diagnostics.push(messages.expectedColorFormat(token.range));
+            }
+            this.validateColorCase(colorZeroXMatches, token, diagnostics, colorCase, colorFormat);
+            this.validateColorAlpha(colorZeroXAlphaMatches, colorHashMatches, colorZeroXMatches, token, diagnostics, alpha, alphaDefaults);
+            this.validateColorCertCompliance(colorZeroXMatches, token, diagnostics, colorFormat, certCompliant);
+
+        } else if (colorFormat === 'never') {
+            if (colorZeroXMatches !== null || colorHashMatches !== null) {
                 diagnostics.push(messages.expectedColorFormat(token.range));
             }
         }
+    }
+
+    validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpMatchArray, zeroXMatches: RegExpMatchArray, token: LiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults) {
+        const validateColorAlpha = (alpha === 'never' || alpha === 'always' || alpha === 'allowed');
+        if (validateColorAlpha) {
+            if (alpha === 'never' && alphaMatches !== null) {
+                diagnostics.push(messages.expectedColorAlpha(token.range));
+            }
+            if ((alpha === 'always' && alphaMatches === null) && (hashMatches !== null || zeroXMatches !== null)) {
+                diagnostics.push(messages.expectedColorAlpha(token.range));
+            }
+            if ((alphaDefaults === 'never' || alphaDefaults === 'only-hidden') && alphaMatches !== null) {
+                for (let i = 0; i < alphaMatches.length; i++) {
+                    const colorHashAlpha = alphaMatches[i];
+                    const alphaValue = colorHashAlpha.slice(-2).toLowerCase();
+                    if (alphaValue === 'ff' || (alphaDefaults === 'never' && alphaValue === '00')) {
+                        diagnostics.push(messages.expectedColorAlphaDefaults(token.range));
+                    }
+                }
+            }
+        }
+    }
+
+    validateColorCase(matches: RegExpMatchArray, token: LiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorCase: RuleColorCase, colorFormat: RuleColorFormat) {
+        const validateColorCase = colorCase === 'upper' || colorCase === 'lower';
+        if (validateColorCase && matches !== null) {
+            let colorValue = matches[0];
+            const charsToStrip = (colorFormat === 'hash') ? 1 : 2;
+            colorValue = colorValue.substring(charsToStrip);
+            for (let i = 0; i < colorValue.length; i++) {
+                const char = colorValue.charAt(i);
+                if (colorCase === 'lower' && char === char.toUpperCase() && char !== char.toLowerCase()) {
+                    diagnostics.push(messages.expectedColorCase(token.range));
+                    break;
+                }
+                if (colorCase === 'upper' && char === char.toLowerCase() && char !== char.toUpperCase()) {
+                    diagnostics.push(messages.expectedColorCase(token.range));
+                    break;
+                }
+            }
+        }
+    }
+
+    validateColorCertCompliance(matches: RegExpMatchArray, token: LiteralExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat, certCompliant: RuleColorCertCompliant) {
+        const validateCertCompliant = certCompliant === 'always';
+        if (validateCertCompliant && matches !== null) {
+            const BROADCAST_SAFE_BLACK = '161616';
+            const BROADCAST_SAFE_WHITE = 'DBDBDB';
+            const MAX_BLACK_LUMA = this.getColorLuma(BROADCAST_SAFE_BLACK);
+            const MAX_WHITE_LUMA = this.getColorLuma(BROADCAST_SAFE_WHITE);
+            let colorValue = matches[0];
+            const charsToStrip = (colorFormat === 'hash') ? 1 : 2;
+            colorValue = colorValue.substring(charsToStrip);
+            const colorLuma = this.getColorLuma(colorValue);
+            if (colorLuma > MAX_WHITE_LUMA || colorLuma < MAX_BLACK_LUMA) {
+                diagnostics.push(messages.colorCertCompliance(token.range));
+            }
+        }
+    }
+
+    getColorLuma(value: string) {
+        let luma = -1;
+        // TODO: do we need to check value has alpha?
+        const rgb = parseInt(value, 16); // Convert rrggbb to decimal
+        const red = (rgb >> 16) & 0xff;
+        const green = (rgb >> 8) & 0xff;
+        const blue = (rgb >> 0) & 0xff;
+        luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue; // Per ITU-R BT.709
+        return luma;
     }
 
     validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {

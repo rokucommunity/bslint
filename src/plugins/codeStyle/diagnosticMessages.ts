@@ -19,7 +19,11 @@ export enum CodeStyleError {
     NoStop = 'LINT3016',
     EolLastMissing = 'LINT3017',
     EolLastFound = 'LINT3018',
-    ColorFormat = 'LINT3019'
+    ColorFormat = 'LINT3019',
+    ColorCase = 'LINT3020',
+    ColorAlpha = 'LINT3021',
+    ColorAlphaDefaults = 'LINT3022',
+    ColorCertCompliant = 'LINT3023'
 }
 
 const CS = 'Code style:';
@@ -166,6 +170,34 @@ export const messages = {
         code: CodeStyleError.ColorFormat,
         source: 'bslint',
         message: `${CS} File should follow color format`,
+        range
+    }),
+    expectedColorCase: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.ColorCase,
+        source: 'bslint',
+        message: `${CS} File should follow color case`,
+        range
+    }),
+    expectedColorAlpha: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.ColorAlpha,
+        source: 'bslint',
+        message: `${CS} File should follow color alpha rule`,
+        range
+    }),
+    expectedColorAlphaDefaults: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.ColorAlphaDefaults,
+        source: 'bslint',
+        message: `${CS} File should follow color alpha defaults rule`,
+        range
+    }),
+    colorCertCompliance: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.ColorCertCompliant,
+        source: 'bslint',
+        message: `${ST} File should follow Roku broadcast safe color cert requirement`,
         range
     })
 };
