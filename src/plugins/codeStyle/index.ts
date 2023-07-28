@@ -266,7 +266,6 @@ export default class CodeStyle {
 
     getColorLuma(value: string) {
         let luma = -1;
-        // TODO: do we need to check value has alpha?
         const rgb = parseInt(value, 16); // Convert rrggbb to decimal
         const red = (rgb >> 16) & 0xff;
         const green = (rgb >> 8) & 0xff;
