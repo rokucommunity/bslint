@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, isXmlFile } from 'brighterscript';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext, validateColorStyle } from '../../util';
@@ -18,7 +18,7 @@ export default class CodeStyle {
     }
 
     afterFileValidate(file: BscFile) {
-        if ((!isBrsFile(file) && !isXmlFile(file)) || this.lintContext.ignores(file)) {
+        if ((!isBrsFile(file)) || this.lintContext.ignores(file)) {
             return;
         }
 
