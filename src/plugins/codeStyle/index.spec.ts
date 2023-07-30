@@ -828,7 +828,7 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
 
-        it('color format is zero-x and case is uppercase', async () => {
+        it('BRS file color format is zero-x and case is uppercase', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-zero-x-and-mixed-case.brs'],
@@ -845,7 +845,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is hash and case is lowercase', async () => {
+        it('BRS file color format is hash and case is lowercase', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-hash-and-mixed-case.brs'],
@@ -860,7 +860,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is none - no color values found', async () => {
+        it('BRS file color format is none - no color values found', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-none.brs'],
@@ -874,7 +874,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is none - color values found', async () => {
+        it('BRS file color format is none - color values found', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-hash-and-mixed-case.brs'],
@@ -892,7 +892,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+        it('BRS file color format is zero-x and Roku broadcast safe certification rules apply', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-broadcast-safe.brs'],
@@ -909,7 +909,8 @@ describe('codeStyle', () => {
             ];
             expect(actual).deep.equal(expected);
         });
-        it('color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+
+        it('BRS file color format is zero-x and Roku broadcast safe certification rules apply', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-broadcast-safe.brs'],
@@ -924,7 +925,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is zero-x, alpha values are allowed and alpha defaults are not allowed', async () => {
+        it('BRS file color format is zero-x, alpha values are allowed and alpha defaults are not allowed', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
@@ -943,7 +944,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is zero-x, alpha values are allowed and only hidden alpha (00) defaults are allowed', async () => {
+        it('BRS file color format is zero-x, alpha values are allowed and only hidden alpha (00) defaults are allowed', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
@@ -959,7 +960,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is zero-x and alpha values are not allowed', async () => {
+        it('BRS file color format is zero-x and alpha values are not allowed', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
@@ -978,7 +979,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('color format is zero-x and alpha values are required', async () => {
+        it('BRS file color format is zero-x and alpha values are required', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
