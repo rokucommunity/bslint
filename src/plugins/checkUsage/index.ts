@@ -1,5 +1,5 @@
 import { BscFile, CallableContainerMap, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Program, Range, Scope, TokenKind, WalkMode, XmlFile } from 'brighterscript';
-import { SGNode } from 'brighterscript/dist/parser/SGTypes';
+import { SGNode, SGAttribute } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 
 const isWin = process.platform === 'win32';
@@ -40,12 +40,13 @@ export default class CheckUsage {
     private walkChildren(v: Vertice, children: SGNode[], file: BscFile) {
         children.forEach(node => {
             const name = node.tag?.text;
+            const attributes = node?.attributes;
             if (name) {
-                v.edges.push(createComponentEdge(name, node.tag.range, file));
+                v.edges.push(createComponentEdge(name, attributes, node.tag.range, file));
             }
             const itemComponentName = node.getAttribute('itemcomponentname');
             if (itemComponentName) {
-                v.edges.push(createComponentEdge(itemComponentName.value.text, itemComponentName.value.range, file));
+                v.edges.push(createComponentEdge(itemComponentName.value.text, [], itemComponentName.value.range, file));
             }
             if (node.children) {
                 this.walkChildren(v, node.children, file);
@@ -79,7 +80,7 @@ export default class CheckUsage {
             if (!text) {
                 return;
             }
-            const edge = createComponentEdge(text, range, file);
+            const edge = createComponentEdge(text, [], range, file);
 
             let v: Vertice;
             if (this.map.has(edge.name)) {
@@ -97,7 +98,7 @@ export default class CheckUsage {
 
             if (file.parentComponentName) {
                 const { text, range } = file.parentComponentName;
-                v.edges.push(createComponentEdge(text, range, file));
+                v.edges.push(createComponentEdge(text, [], range, file));
             }
 
             const children = file.ast.component?.children;
@@ -132,7 +133,7 @@ export default class CheckUsage {
             }
         }
         scope.getOwnFiles().forEach(file => {
-            if (!isBrsFile(file)) {
+            if (!isBrsFile(file) && !isXmlFile(file)) {
                 return;
             }
             const pkgPath = normalizePath(file.pkgPath);
@@ -156,6 +157,18 @@ export default class CheckUsage {
             if (pkgPath === 'source/main.brs' || pkgPath === 'source/main.bs') {
                 this.main = fv;
             }
+            // find all node color attributes
+            v.edges.forEach(i => {
+                const attributes = i.attributes;
+                for (let e = attributes.length - 1; e >= 0; e--) {
+                    const attribute = attributes[e];
+                    if (attribute.key.text === 'color') {
+                        // attribute.value.text, attribute.value.range
+                        debugger;
+                    }
+                }
+            });
+
             // find strings that look like referring to component names
             file.parser.references.functionExpressions.forEach(fun => {
                 fun.body.walk(createVisitor({
@@ -217,9 +230,10 @@ function normalizePath(s: string) {
     return p;
 }
 
-function createComponentEdge(name: string, range: Range = null, file: BscFile = null) {
+function createComponentEdge(name: string, attributes: SGAttribute[], range: Range = null, file: BscFile = null) {
     return {
         name: `"${name.toLowerCase()}"`,
+        attributes,
         range,
         file
     };

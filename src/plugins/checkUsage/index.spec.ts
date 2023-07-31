@@ -62,10 +62,27 @@ describe('checkUsage', () => {
             }
         });
         const actual = fmtDiagnostics(diagnostics);
+        // debugger;
         const expected = [
             `01:LINT4002:Script 'components/child2.brs' does not seem to be used`,
             `02:LINT4001:Component 'components/child2.xml' does not seem to be used`
         ];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('XML file color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['components/colors/color-broadcast-safe.xml'],
+            rules: {
+                'color-format': 'hash',
+                'color-cert': 'always'
+            },
+            fix: false
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        // debugger;
+        const expected = [];
         expect(actual).deep.equal(expected);
     });
 });
