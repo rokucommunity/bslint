@@ -72,7 +72,7 @@ describe('trackCodeFlow', () => {
                 'consistent-return': 'off',
                 'unused-variable': 'off'
             },
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
