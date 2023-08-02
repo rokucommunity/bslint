@@ -45,7 +45,7 @@ export default class CheckUsage {
             }
             const itemComponentName = node.getAttribute('itemcomponentname');
             if (itemComponentName) {
-                v.edges.push(createComponentEdge(itemComponentName.value.text, [], itemComponentName.value.range, file));
+                v.edges.push(createComponentEdge(itemComponentName.value.text, itemComponentName.value.range, file));
             }
             if (node.children) {
                 this.walkChildren(v, node.children, file);
@@ -157,35 +157,10 @@ export default class CheckUsage {
                 this.main = fv;
             }
 
-            // const { component } = file.parser.ast;
-            // if (component) {
-            //     const colorAttr = component.getAttribute('color');
-            //     debugger;
-            // }
-
-            // find all node color attributes
-            // v.edges.forEach(i => {
-            //     const attributes = i.attributes;
-            //     for (let e = attributes.length - 1; e >= 0; e--) {
-            //         const attribute = attributes[e];
-            //         if (attribute.key.text === 'color') {
-            //             // attribute.value.text, attribute.value.range
-            //             debugger;
-            //         }
-            //     }
-            // });
-
-            // file.ast.walk(createVisitor({
-
-            // }), { walkMode: WalkMode.visitExpressions });
-
-
-
             // find strings that look like referring to component names
             file.parser.references.functionExpressions.forEach(fun => {
                 fun.body.walk(createVisitor({
                     LiteralExpression: (e) => {
-                        // debugger;
                         const { kind } = e.token;
                         if (kind === TokenKind.StringLiteral) {
                             const { text } = e.token;

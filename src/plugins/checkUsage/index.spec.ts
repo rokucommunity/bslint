@@ -62,7 +62,6 @@ describe('checkUsage', () => {
             }
         });
         const actual = fmtDiagnostics(diagnostics);
-        // debugger;
         const expected = [
             `01:LINT4002:Script 'components/child2.brs' does not seem to be used`,
             `02:LINT4001:Component 'components/child2.xml' does not seem to be used`
