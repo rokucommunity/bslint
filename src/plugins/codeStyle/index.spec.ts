@@ -903,7 +903,6 @@ describe('codeStyle', () => {
                 fix: false
             });
             const actual = fmtDiagnostics(diagnostics);
-            debugger;
             const expected = [
                 '02:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
                 '05:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'

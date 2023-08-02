@@ -273,7 +273,8 @@ export default class CodeStyle {
         children.forEach(node => {
             const colorAttr = node.getAttribute('color');
             if (colorAttr) {
-                validateColorStyle(colorAttr.value.text, colorAttr.range, diagnostics, colorFormat, colorCase, alpha, alphaDefaults, certCompliant);
+                // debugger;
+                validateColorStyle(colorAttr.value.text, node.tag.range, diagnostics, colorFormat, colorCase, alpha, alphaDefaults, certCompliant);
             }
         });
     }
