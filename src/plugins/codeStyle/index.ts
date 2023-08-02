@@ -1,5 +1,6 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
-import { RuleAAComma } from '../..';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, isXmlFile } from 'brighterscript';
+import { RuleAAComma, RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorAlphaDefaults, RuleColorCertCompliant } from '../..';
+import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext, validateColorStyle } from '../../util';
 import { messages } from './diagnosticMessages';
@@ -18,7 +19,7 @@ export default class CodeStyle {
     }
 
     afterFileValidate(file: BscFile) {
-        if ((!isBrsFile(file)) || this.lintContext.ignores(file)) {
+        if ((!isBrsFile(file) && !isXmlFile(file)) || this.lintContext.ignores(file)) {
             return;
         }
 
@@ -51,6 +52,13 @@ export default class CodeStyle {
                 tokens[i].kind !== TokenKind.Newline) {
                 isFileEmpty = false;
                 break;
+            }
+        }
+
+        if (isXmlFile(file)) {
+            const children = file.ast.component?.children;
+            if (children) {
+                this.walkChildren(children.children, diagnostics, colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant);
             }
         }
 
@@ -129,7 +137,7 @@ export default class CodeStyle {
             },
             LiteralExpression: e => {
                 if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
-                    validateColorStyle(e.token, diagnostics, colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant);
+                    validateColorStyle(e.token.text, e.token.range, diagnostics, colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant);
                 }
             },
             AALiteralExpression: e => {
@@ -259,6 +267,16 @@ export default class CodeStyle {
             }), { walkMode: WalkMode.visitStatements, cancel: cancel.token });
         }
         return hasReturnedValue;
+    }
+
+    walkChildren(children: SGNode[], diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat, colorCase: RuleColorCase, alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults, certCompliant: RuleColorCertCompliant) {
+        children.forEach(node => {
+            const colorAttr = node.getAttribute('color');
+            if (colorAttr) {
+                // debugger;
+                validateColorStyle(colorAttr.value.text, colorAttr.range, diagnostics, colorFormat, colorCase, alpha, alphaDefaults, certCompliant);
+            }
+        });
     }
 }
 

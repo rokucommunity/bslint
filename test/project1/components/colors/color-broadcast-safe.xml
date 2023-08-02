@@ -2,8 +2,8 @@
 <component name="ColorBroadcastSafe" extends="Group">
     <children>
         <Rectangle color="#DBDBDC"/>
-        <Label color="#161616"/>
-        <SimpleLabel color="#DBDBDBFF"/>
+        <Label color="#161616FF"/>
+        <SimpleLabel color="#DBDBDB"/>
         <Rectangle color="#161615"/>
     </children>
 </component>

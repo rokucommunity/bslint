@@ -903,6 +903,7 @@ describe('codeStyle', () => {
                 fix: false
             });
             const actual = fmtDiagnostics(diagnostics);
+            debugger;
             const expected = [
                 '02:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
                 '05:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'
@@ -994,6 +995,22 @@ describe('codeStyle', () => {
                 '02:LINT3021:Code style: File should follow color alpha rule',
                 '04:LINT3021:Code style: File should follow color alpha rule'
             ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('XML file color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['components/colors/color-broadcast-safe.xml'],
+                rules: {
+                    'color-format': 'hash',
+                    'color-cert': 'always'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            debugger;
+            const expected = [];
             expect(actual).deep.equal(expected);
         });
 
