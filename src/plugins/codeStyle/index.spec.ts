@@ -1008,7 +1008,7 @@ describe('codeStyle', () => {
                 fix: false
             });
             const actual = fmtDiagnostics(diagnostics);
-            debugger;
+            // debugger;
             const expected = [];
             expect(actual).deep.equal(expected);
         });

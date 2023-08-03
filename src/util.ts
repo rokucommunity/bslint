@@ -43,7 +43,7 @@ export function normalizeConfig(options: BsLintConfig) {
     return mergeConfigs(baseConfig, projectConfig);
 }
 
-export function validateColorStyle(text: string, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat, colorCase: RuleColorCase, alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults, certCompliant: RuleColorCertCompliant) {
+export function validateColorStyle(text: string, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
     const colorHashRegex = /#[0-9A-Fa-f]{6}/g;
     const colorHashAlphaRegex = /#[0-9A-Fa-f]{8}/g;
     const colorZeroXRegex = /0x[0-9A-Fa-f]{6}/g;
