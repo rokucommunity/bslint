@@ -1,8 +1,9 @@
 import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, isXmlFile } from 'brighterscript';
-import { RuleAAComma, RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorAlphaDefaults, RuleColorCertCompliant } from '../..';
+import { RuleAAComma } from '../..';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { addFixesToEvent } from '../../textEdit';
-import { PluginContext, validateColorStyle } from '../../util';
+import { PluginContext } from '../../util';
+import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
 
@@ -26,12 +27,12 @@ export default class CodeStyle {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast } = severity;
-        const { colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant } = severity;
+        const { colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
-        const validateColorFormat = (colorFormat === 'hash' || colorFormat === 'zero-x' || colorFormat === 'never');
+        const validateColorFormat = (colorFormat === 'hashHex' || colorFormat === 'quotedNumericHex' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
         const validateBlockIf = blockIfStyle !== 'off';
@@ -42,6 +43,7 @@ export default class CodeStyle {
         const walkExpressions = validateAAStyle;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
+        const validateColorStyle = createColorValidator(this.lintContext);
 
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
@@ -56,10 +58,10 @@ export default class CodeStyle {
         }
 
         // if (isXmlFile(file)) {
-        const children = file.ast.component?.children;
-        if (children) {
-            this.walkChildren(children.children, diagnostics);
-        }
+        // const children = file.ast.component?.children;
+        // if (children) {
+        //     this.walkChildren(children.children, diagnostics);
+        // }
         // }
 
         // Validate `eol-last` on non-empty files
@@ -137,7 +139,8 @@ export default class CodeStyle {
             },
             LiteralExpression: e => {
                 if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
-                    validateColorStyle(e.token.text, e.token.range, diagnostics, colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant);
+                    // debugger;
+                    validateColorStyle(e.token.text, e.token.range, diagnostics);
                 }
             },
             AALiteralExpression: e => {
@@ -269,13 +272,12 @@ export default class CodeStyle {
         return hasReturnedValue;
     }
 
-
     walkChildren(children: SGNode[], diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
         children.forEach(node => {
             const colorAttr = node.getAttribute('color');
             if (colorAttr) {
-                debugger;
-                // validateColorStyle(colorAttr.value.text, node.tag.range, diagnostics);
+                // debugger;
+                // this.validateColorStyle(colorAttr.value.text, node.tag.range);
             }
         });
     }

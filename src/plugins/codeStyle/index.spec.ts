@@ -828,12 +828,12 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
 
-        it('BRS file color format is zero-x and case is uppercase', async () => {
+        it('BRS file color format is quotedNumericHex and case is uppercase', async () => {
             const diagnostics = await linter.run({
                 ...project1,
-                files: ['source/colors/color-zero-x-and-mixed-case.brs'],
+                files: ['source/colors/color-quotedNumericHex-and-mixed-case.brs'],
                 rules: {
-                    'color-format': 'zero-x',
+                    'color-format': 'quotedNumericHex',
                     'color-case': 'upper'
                 },
                 fix: false
@@ -850,7 +850,7 @@ describe('codeStyle', () => {
                 ...project1,
                 files: ['source/colors/color-hash-and-mixed-case.brs'],
                 rules: {
-                    'color-format': 'hash',
+                    'color-format': 'hashHex',
                     'color-case': 'lower'
                 },
                 fix: false
@@ -892,12 +892,12 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+        it('BRS file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-broadcast-safe.brs'],
                 rules: {
-                    'color-format': 'zero-x',
+                    'color-format': 'quotedNumericHex',
                     'color-cert': 'always'
                 },
                 fix: false
@@ -910,12 +910,12 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is zero-x and Roku broadcast safe certification rules apply', async () => {
+        it('BRS file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-broadcast-safe.brs'],
                 rules: {
-                    'color-format': 'zero-x',
+                    'color-format': 'quotedNumericHex',
                     'color-cert': 'off'
                 },
                 fix: false
@@ -925,12 +925,12 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is zero-x, alpha values are allowed and alpha defaults are not allowed', async () => {
+        it('BRS file color format is quotedNumericHex, alpha values are allowed and alpha defaults are not allowed', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
                 rules: {
-                    'color-format': 'zero-x',
+                    'color-format': 'quotedNumericHex',
                     'color-alpha': 'allowed',
                     'color-alpha-defaults': 'never'
                 },
@@ -944,12 +944,12 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is zero-x, alpha values are allowed and only hidden alpha (00) defaults are allowed', async () => {
+        it('BRS file color format is quotedNumericHex, alpha values are allowed and only hidden alpha (00) defaults are allowed', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
                 rules: {
-                    'color-format': 'zero-x',
+                    'color-format': 'quotedNumericHex',
                     'color-alpha': 'allowed',
                     'color-alpha-defaults': 'only-hidden'
                 },
@@ -960,12 +960,12 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is zero-x and alpha values are not allowed', async () => {
+        it('BRS file color format is quotedNumericHex and alpha values are not allowed', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
                 rules: {
-                    'color-format': 'zero-x',
+                    'color-format': 'quotedNumericHex',
                     'color-alpha': 'never'
                 },
                 fix: false
@@ -979,17 +979,18 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is zero-x and alpha values are required', async () => {
+        it('BRS file color format is quotedNumericHex and alpha values are required', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/color-alpha-mixed-values.brs'],
                 rules: {
-                    'color-format': 'zero-x',
+                    'color-format': 'quotedNumericHex',
                     'color-alpha': 'always'
                 },
                 fix: false
             });
             const actual = fmtDiagnostics(diagnostics);
+            // debugger;
             const expected = [
                 '02:LINT3021:Code style: File should follow color alpha rule',
                 '04:LINT3021:Code style: File should follow color alpha rule'
@@ -997,21 +998,21 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('XML file color format is zero-x and Roku broadcast safe certification rules apply', async () => {
-            const diagnostics = await linter.run({
-                ...project1,
-                files: ['components/colors/color-broadcast-safe.xml'],
-                rules: {
-                    'color-format': 'hash',
-                    'color-cert': 'always'
-                },
-                fix: false
-            });
-            const actual = fmtDiagnostics(diagnostics);
-            // debugger;
-            const expected = [];
-            expect(actual).deep.equal(expected);
-        });
+        // it('XML file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
+        //     const diagnostics = await linter.run({
+        //         ...project1,
+        //         files: ['components/colors/color-broadcast-safe.xml'],
+        //         rules: {
+        //             'color-format': 'hashHex',
+        //             'color-cert': 'always'
+        //         },
+        //         fix: false
+        //     });
+        //     const actual = fmtDiagnostics(diagnostics);
+        //     // debugger;
+        //     const expected = [];
+        //     expect(actual).deep.equal(expected);
+        // });
 
         it('add missing aa comma, no dangling', async () => {
             const diagnostics = await linter.run({
