@@ -1,63 +1,67 @@
-import { PluginContext } from './util';
 import { BsDiagnostic, Range } from 'brighterscript';
 import { messages } from './plugins/codeStyle/diagnosticMessages';
-import { RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorAlphaDefaults, RuleColorCertCompliant } from './index';
+import { BsLintRules, RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorAlphaDefaults, RuleColorCertCompliant } from './index';
 
-export function createColorValidator(lintContext: PluginContext) {
-    const { severity } = lintContext;
+export function createColorValidator(severity: Readonly<BsLintRules>) {
     const { colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant } = severity;
-    const hashHexRegex = /#[0-9A-Fa-f]{6}/g;
-    const hashHexAlphaRegex = /#[0-9A-Fa-f]{8}/g;
-    const quotedNumericHexRegex = /0x[0-9A-Fa-f]{6}/g;
-    const quotedNumericHexAlphaRegex = /0x[0-9A-Fa-f]{8}/g;
-    return (token, range, diagnostics) => {
-        const { text } = token;
+    return (text, range, diagnostics) => {
+        // remove quotes if any exist
+        text = text.replace(/['"]+/g, '');
         const len = text.length;
-        if (len < 7 || len > 9) {
-            // We're only interested in strings 6 to 8 chars long
+        if (len < 7 || len > 10) {
+            // we're only interested in string length is between 7 (#DBDBDB) to 10 (0xDBDBDBff) chars long
             return;
         }
+
+        const hashHexRegex = /#[0-9A-Fa-f]{6}/g;
+        const quotedNumericHexRegex = /0x[0-9A-Fa-f]{6}/g;
         const hashHexMatches = text.match(hashHexRegex);
         const quotedNumericHexMatches = text.match(quotedNumericHexRegex);
-        if (colorFormat === 'hashHex') {
-            if (quotedNumericHexMatches !== null) {
+
+        if (colorFormat === 'never') {
+            if (quotedNumericHexMatches || hashHexMatches) {
                 diagnostics.push(messages.expectedColorFormat(range));
             }
-            validateColorCase(hashHexMatches, range, diagnostics, colorCase, colorFormat);
-            validateColorAlpha(text.match(hashHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
-            validateColorCertCompliance(hashHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
+        } else {
+            const hashHexAlphaRegex = /#[0-9A-Fa-f]{8}/g;
+            const quotedNumericHexAlphaRegex = /0x[0-9A-Fa-f]{8}/g;
 
-        } else if (colorFormat === 'quotedNumericHex') {
-            if (hashHexMatches !== null) {
-                diagnostics.push(messages.expectedColorFormat(range));
-            }
-            validateColorCase(quotedNumericHexMatches, range, diagnostics, colorCase, colorFormat);
-            validateColorAlpha(text.match(quotedNumericHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
-            validateColorCertCompliance(quotedNumericHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
+            if (text.startsWith('#') && colorFormat === 'hashHex') {
+                if (quotedNumericHexMatches) {
+                    diagnostics.push(messages.expectedColorFormat(range));
+                }
+                validateColorCase(hashHexMatches, range, diagnostics, colorCase, colorFormat);
+                validateColorAlpha(text.match(hashHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
+                validateColorCertCompliance(hashHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
 
-        } else if (colorFormat === 'never') {
-            if (quotedNumericHexMatches !== null || hashHexMatches !== null) {
-                diagnostics.push(messages.expectedColorFormat(range));
+            } else if (text.startsWith('0x') && colorFormat === 'quotedNumericHex') {
+                if (hashHexMatches) {
+                    diagnostics.push(messages.expectedColorFormat(range));
+                }
+                validateColorCase(quotedNumericHexMatches, range, diagnostics, colorCase, colorFormat);
+                validateColorAlpha(text.match(quotedNumericHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
+                validateColorCertCompliance(quotedNumericHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
             }
         }
     };
 }
 
-function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpMatchArray, zeroXMatches: RegExpMatchArray, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults) {
+function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpMatchArray, quotedNumericHexMatches: RegExpMatchArray, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults) {
     const validateColorAlpha = (alpha === 'never' || alpha === 'always' || alpha === 'allowed');
     if (validateColorAlpha) {
-        if (alpha === 'never' && alphaMatches !== null) {
+        if (alpha === 'never' && alphaMatches) {
             diagnostics.push(messages.expectedColorAlpha(range));
         }
-        if ((alpha === 'always' && alphaMatches === null) && (hashMatches !== null || zeroXMatches !== null)) {
+        if ((alpha === 'always' && alphaMatches === null) && (hashMatches || quotedNumericHexMatches)) {
             diagnostics.push(messages.expectedColorAlpha(range));
         }
-        if ((alphaDefaults === 'never' || alphaDefaults === 'only-hidden') && alphaMatches !== null) {
+        if ((alphaDefaults === 'never' || alphaDefaults === 'only-hidden') && alphaMatches) {
             for (let i = 0; i < alphaMatches.length; i++) {
                 const colorHashAlpha = alphaMatches[i];
                 const alphaValue = colorHashAlpha.slice(-2).toLowerCase();
                 if (alphaValue === 'ff' || (alphaDefaults === 'never' && alphaValue === '00')) {
                     diagnostics.push(messages.expectedColorAlphaDefaults(range));
+                    debugger;
                 }
             }
         }
@@ -66,7 +70,7 @@ function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpM
 
 function validateColorCase(matches: RegExpMatchArray, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorCase: RuleColorCase, colorFormat: RuleColorFormat) {
     const validateColorCase = colorCase === 'upper' || colorCase === 'lower';
-    if (validateColorCase && matches !== null) {
+    if (validateColorCase && matches) {
         let colorValue = matches[0];
         const charsToStrip = (colorFormat === 'hashHex') ? 1 : 2;
         colorValue = colorValue.substring(charsToStrip);
@@ -86,7 +90,7 @@ function validateColorCase(matches: RegExpMatchArray, range: Range, diagnostics:
 
 function validateColorCertCompliance(matches: RegExpMatchArray, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat, certCompliant: RuleColorCertCompliant) {
     const validateCertCompliant = certCompliant === 'always';
-    if (validateCertCompliant && matches !== null) {
+    if (validateCertCompliant && matches) {
         const BROADCAST_SAFE_BLACK = '161616';
         const BROADCAST_SAFE_WHITE = 'DBDBDB';
         const MAX_BLACK_LUMA = getColorLuma(BROADCAST_SAFE_BLACK);

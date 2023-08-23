@@ -156,7 +156,6 @@ export default class CheckUsage {
             if (pkgPath === 'source/main.brs' || pkgPath === 'source/main.bs') {
                 this.main = fv;
             }
-
             // find strings that look like referring to component names
             file.parser.references.functionExpressions.forEach(fun => {
                 fun.body.walk(createVisitor({

@@ -1,5 +1,5 @@
 import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, isXmlFile } from 'brighterscript';
-import { RuleAAComma } from '../..';
+import { RuleAAComma, BsLintRules } from '../..';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
@@ -43,7 +43,7 @@ export default class CodeStyle {
         const walkExpressions = validateAAStyle;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
-        const validateColorStyle = createColorValidator(this.lintContext);
+        const validateColorStyle = createColorValidator(severity);
 
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
@@ -57,12 +57,12 @@ export default class CodeStyle {
             }
         }
 
-        // if (isXmlFile(file)) {
-        // const children = file.ast.component?.children;
-        // if (children) {
-        //     this.walkChildren(children.children, diagnostics);
-        // }
-        // }
+        if (isXmlFile(file)) {
+            const children = file.ast.component?.children;
+            if (children) {
+                this.walkChildren(severity, children.children, diagnostics);
+            }
+        }
 
         // Validate `eol-last` on non-empty files
         if (validateEolLast && !isFileEmpty) {
@@ -139,7 +139,7 @@ export default class CodeStyle {
             },
             LiteralExpression: e => {
                 if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
-                    // debugger;
+                    debugger;
                     validateColorStyle(e.token.text, e.token.range, diagnostics);
                 }
             },
@@ -272,12 +272,13 @@ export default class CodeStyle {
         return hasReturnedValue;
     }
 
-    walkChildren(children: SGNode[], diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+    walkChildren(severity: Readonly<BsLintRules>, children: SGNode[], diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
         children.forEach(node => {
             const colorAttr = node.getAttribute('color');
             if (colorAttr) {
-                // debugger;
-                // this.validateColorStyle(colorAttr.value.text, node.tag.range);
+                debugger;
+                const validateColorStyle = createColorValidator(severity);
+                validateColorStyle(colorAttr.value.text, node.tag.range, diagnostics);
             }
         });
     }

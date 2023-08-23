@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ColorAlphaMixedValues" extends="Group">
+    <children>
+        <Rectangle color="0xf00000"/>
+        <Label color="0xff0000cc"/>
+        <SimpleLabel color="0xfff000"/>
+        <Rectangle color="0xffff0000"/>
+        <Rectangle color="0xfffff0FF"/>
+    </children>
+</component>
