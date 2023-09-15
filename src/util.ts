@@ -38,8 +38,8 @@ export function normalizeConfig(options: BsLintConfig) {
     const baseConfig = {
         rules: getDefaultRules()
     };
-    const projectConfig = mergeConfigs(loadConfig(options), { rules: options.rules });
-    return mergeConfigs(baseConfig, projectConfig);
+    const projectConfig = mergeConfigs(loadConfig(options), { rules: options.rules } as any);
+    return mergeConfigs(baseConfig as any, projectConfig);
 }
 
 export function mergeConfigs(a: BsLintConfig, b: BsLintConfig): BsLintConfig {

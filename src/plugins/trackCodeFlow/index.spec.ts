@@ -1,11 +1,18 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { BsDiagnostic, Program } from 'brighterscript';
+import { BsDiagnostic, Program, standardizePath as s } from 'brighterscript';
+import * as fsExtra from 'fs-extra';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
+import { BsLintConfig } from '../..';
 
+const tempDir = s`${__dirname}/../../../.tmp`;
+const testFile = {
+    src: s`${tempDir}/test.brs`,
+    dest: 'source/test.brs'
+};
 function pad(n: number) {
     return n > 9 ? `${n}` : `0${n}`;
 }
@@ -25,7 +32,12 @@ describe('trackCodeFlow', () => {
         rootDir: 'test/project1'
     };
 
+    function run(config: Partial<BsLintConfig>) {
+        return linter.run(config as any);
+    }
+
     beforeEach(() => {
+        fsExtra.emptyDirSync(tempDir);
         linter = new Linter();
         program = new Program({});
         program.plugins.add(bslintFactory());
@@ -64,7 +76,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('detects use of uninitialized vars', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/uninitialized-vars.brs'],
             rules: {
@@ -99,7 +111,7 @@ describe('trackCodeFlow', () => {
 
     describe('does not mark enums as uninitialised vars', () => {
         it('in a regular file', async () => {
-            const diagnostics = await linter.run({
+            const diagnostics = await run({
                 ...project1,
                 files: ['source/enums.bs'],
                 rules: {
@@ -111,7 +123,7 @@ describe('trackCodeFlow', () => {
             expect(actual).deep.equal(expected);
         });
         it('inside a class', async () => {
-            const diagnostics = await linter.run({
+            const diagnostics = await run({
                 ...project1,
                 files: ['source/enum-in-class.bs'],
                 rules: {
@@ -125,7 +137,7 @@ describe('trackCodeFlow', () => {
             expect(actual).deep.equal(expected);
         });
         it('inside a namespace', async () => {
-            const diagnostics = await linter.run({
+            const diagnostics = await run({
                 ...project1,
                 files: ['source/enum-in-namespace.bs'],
                 rules: {
@@ -140,7 +152,7 @@ describe('trackCodeFlow', () => {
 
     describe('namespaced functions', () => {
         it('does not mark as uninitialised vars when used within namespace', async () => {
-            const diagnostics = await linter.run({
+            const diagnostics = await run({
                 ...project1,
                 files: ['source/namespace-functions.bs'],
                 rules: {
@@ -153,7 +165,7 @@ describe('trackCodeFlow', () => {
         });
 
         it('does not mark as uninitialised vars when used in a class within namespace', async () => {
-            const diagnostics = await linter.run({
+            const diagnostics = await run({
                 ...project1,
                 files: ['source/namespace-functions-in-class.bs'],
                 rules: {
@@ -166,7 +178,7 @@ describe('trackCodeFlow', () => {
         });
 
         it('does mark as uninitialised vars when used outside of namespace', async () => {
-            const diagnostics = await linter.run({
+            const diagnostics = await run({
                 ...project1,
                 files: ['source/namespace-functions-outside-namespace.bs'],
                 rules: {
@@ -180,10 +192,36 @@ describe('trackCodeFlow', () => {
             ];
             expect(actual).deep.equal(expected);
         });
+
+        it('does not mark local vars with leading underscores as unused', async () => {
+            fsExtra.outputFileSync(testFile.src, `
+                sub test(_param1 = invalid)
+                    _localVar1 = true
+                    for _i = 0 to 10
+                    end for
+                    for each _item in []
+                    end for
+                    try
+                        print "crash"
+                    catch _e
+                    end try
+                end sub
+            `);
+            const diagnostics = await run({
+                ...project1,
+                files: [testFile],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            expect(
+                fmtDiagnostics(diagnostics)
+            ).deep.equal([]);
+        });
     });
 
     it('implements assign-all-paths', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/assign-all-paths.brs'],
             rules: {
@@ -209,7 +247,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('report errors for classes', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/class-methods.bs'],
             rules: {
@@ -228,7 +266,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('implements unsafe-path-loop', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/unsafe-path-loop.brs'],
             rules: {
@@ -246,7 +284,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('implements unsafe-iterators', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/unsafe-iterators.brs'],
             rules: {
@@ -264,7 +302,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('supports catch error variable within catch branch', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/catch-statement.brs'],
             rules: {
@@ -281,7 +319,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('implements unreachable-code', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/unreachable-code.brs'],
             rules: {
@@ -302,7 +340,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('implements case-sensitivity', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/case-sensitivity.brs'],
             rules: {
@@ -324,7 +362,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('implements consistent-return', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/consistent-return.brs'],
             rules: {
@@ -349,7 +387,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('implements unused-variable', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/unused-variable.brs'],
             rules: {
@@ -367,7 +405,7 @@ describe('trackCodeFlow', () => {
     });
 
     it('implements globals', async () => {
-        const diagnostics = await linter.run({
+        const diagnostics = await run({
             ...project1,
             files: ['source/uninitialized-vars.brs'],
             rules: {
@@ -396,7 +434,7 @@ describe('trackCodeFlow', () => {
         });
 
         it('fixes inconsistent case', async () => {
-            const diagnostics = await linter.run({
+            const diagnostics = await run({
                 ...project1,
                 files: ['source/case-sensitivity-temp.brs'],
                 rules: {
