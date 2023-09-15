@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, isXmlFile } from 'brighterscript';
+import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
 import { RuleAAComma, BsLintRules } from '../..';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { addFixesToEvent } from '../../textEdit';
@@ -20,7 +20,7 @@ export default class CodeStyle {
     }
 
     afterFileValidate(file: BscFile) {
-        if ((!isBrsFile(file) && !isXmlFile(file)) || this.lintContext.ignores(file)) {
+        if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
 
@@ -57,12 +57,12 @@ export default class CodeStyle {
             }
         }
 
-        if (isXmlFile(file)) {
-            const children = file.ast.component?.children;
-            if (children) {
-                this.walkChildren(severity, children.children, diagnostics);
-            }
-        }
+        // if (isXmlFile(file)) {
+        //     const children = file.ast.component?.children;
+        //     if (children) {
+        //         this.walkChildren(severity, children.children, diagnostics);
+        //     }
+        // }
 
         // Validate `eol-last` on non-empty files
         if (validateEolLast && !isFileEmpty) {
@@ -139,7 +139,7 @@ export default class CodeStyle {
             },
             LiteralExpression: e => {
                 if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
-                    debugger;
+                    // debugger;
                     validateColorStyle(e.token.text, e.token.range, diagnostics);
                 }
             },
@@ -276,7 +276,7 @@ export default class CodeStyle {
         children.forEach(node => {
             const colorAttr = node.getAttribute('color');
             if (colorAttr) {
-                debugger;
+                // debugger;
                 const validateColorStyle = createColorValidator(severity);
                 validateColorStyle(colorAttr.value.text, node.tag.range, diagnostics);
             }

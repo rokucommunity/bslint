@@ -941,7 +941,7 @@ describe('codeStyle', () => {
                 '05:LINT3022:Code style: File should follow color alpha defaults rule',
                 '06:LINT3022:Code style: File should follow color alpha defaults rule'
             ];
-            debugger;
+            // debugger;
             expect(actual).deep.equal(expected);
         });
 
@@ -1013,25 +1013,25 @@ describe('codeStyle', () => {
         //     expect(actual).deep.equal(expected);
         // });
 
-        it('XML file color format is quotedNumericHex, alpha values are allowed and alpha defaults are not allowed', async () => {
-            const diagnostics = await linter.run({
-                ...project1,
-                files: ['components/colors/color-alpha-mixed-values.xml'],
-                rules: {
-                    'color-format': 'quotedNumericHex',
-                    'color-alpha': 'allowed',
-                    'color-alpha-defaults': 'never'
-                },
-                fix: false
-            });
-            const actual = fmtDiagnostics(diagnostics);
-            const expected = [
-                '05:LINT3022:Code style: File should follow color alpha defaults rule',
-                '06:LINT3022:Code style: File should follow color alpha defaults rule'
-            ];
-            debugger;
-            expect(actual).deep.equal(expected);
-        });
+        // it('XML file color format is quotedNumericHex, alpha values are allowed and alpha defaults are not allowed', async () => {
+        //     const diagnostics = await linter.run({
+        //         ...project1,
+        //         files: ['components/colors/color-alpha-mixed-values.xml'],
+        //         rules: {
+        //             'color-format': 'quotedNumericHex',
+        //             'color-alpha': 'allowed',
+        //             'color-alpha-defaults': 'never'
+        //         },
+        //         fix: false
+        //     });
+        //     const actual = fmtDiagnostics(diagnostics);
+        //     const expected = [
+        //         '05:LINT3022:Code style: File should follow color alpha defaults rule',
+        //         '06:LINT3022:Code style: File should follow color alpha defaults rule'
+        //     ];
+        //     // debugger;
+        //     expect(actual).deep.equal(expected);
+        // });
 
         it('add missing aa comma, no dangling', async () => {
             const diagnostics = await linter.run({

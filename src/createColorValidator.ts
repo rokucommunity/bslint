@@ -61,7 +61,7 @@ function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpM
                 const alphaValue = colorHashAlpha.slice(-2).toLowerCase();
                 if (alphaValue === 'ff' || (alphaDefaults === 'never' && alphaValue === '00')) {
                     diagnostics.push(messages.expectedColorAlphaDefaults(range));
-                    debugger;
+                    // debugger;
                 }
             }
         }
@@ -107,8 +107,9 @@ function validateColorCertCompliance(matches: RegExpMatchArray, range: Range, di
 
 function getColorLuma(value: string) {
     const rgb = parseInt(value, 16); // Convert rrggbb to decimal
-    const red = (rgb >> 16) & 0xff;
-    const green = (rgb >> 8) & 0xff;
-    const blue = (rgb >> 0) & 0xff;
-    return 0.2126 * red + 0.7152 * green + 0.0722 * blue; // Per ITU-R BT.709
+    const red = (rgb >> 16) & 0xff; // eslint-disable-line no-bitwise
+    const green = (rgb >> 8) & 0xff; // eslint-disable-line no-bitwise
+    const blue = (rgb >> 0) & 0xff; // eslint-disable-line no-bitwise
+    // Per ITU-R BT.709
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue; // eslint-disable-line
 }
