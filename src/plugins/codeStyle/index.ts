@@ -57,13 +57,6 @@ export default class CodeStyle {
             }
         }
 
-        // if (isXmlFile(file)) {
-        //     const children = file.ast.component?.children;
-        //     if (children) {
-        //         this.walkChildren(severity, children.children, diagnostics);
-        //     }
-        // }
-
         // Validate `eol-last` on non-empty files
         if (validateEolLast && !isFileEmpty) {
             const penultimateToken = tokens[tokens.length - 2];
@@ -142,6 +135,9 @@ export default class CodeStyle {
                     // debugger;
                     validateColorStyle(e.token.text, e.token.range, diagnostics);
                 }
+            },
+            TemplateStringExpression: e => {
+                // debugger;
             },
             AALiteralExpression: e => {
                 if (validateAAStyle) {
@@ -270,17 +266,6 @@ export default class CodeStyle {
             }), { walkMode: WalkMode.visitStatements, cancel: cancel.token });
         }
         return hasReturnedValue;
-    }
-
-    walkChildren(severity: Readonly<BsLintRules>, children: SGNode[], diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
-        children.forEach(node => {
-            const colorAttr = node.getAttribute('color');
-            if (colorAttr) {
-                // debugger;
-                const validateColorStyle = createColorValidator(severity);
-                validateColorStyle(colorAttr.value.text, node.tag.range, diagnostics);
-            }
-        });
     }
 }
 

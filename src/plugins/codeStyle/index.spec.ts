@@ -828,102 +828,102 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
 
-        // it('BRS file color format is quotedNumericHex and case is uppercase', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-quoted-numeric-hex-and-mixed-case.brs'],
-        //         rules: {
-        //             'color-format': 'quotedNumericHex',
-        //             'color-case': 'upper'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [
-        //         '02:LINT3020:Code style: File should follow color case'
-        //     ];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is quotedNumericHex and case is uppercase', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-quoted-numeric-hex-and-mixed-case.brs'],
+                rules: {
+                    'color-format': 'quotedNumericHex',
+                    'color-case': 'upper'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '02:LINT3020:Code style: File should follow color case'
+            ];
+            expect(actual).deep.equal(expected);
+        });
 
-        // it('BRS file color format is hash and case is lowercase', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-hash-and-mixed-case.brs'],
-        //         rules: {
-        //             'color-format': 'hashHex',
-        //             'color-case': 'lower'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = ['04:LINT3020:Code style: File should follow color case'];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is hash and case is lowercase', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-hash-and-mixed-case.brs'],
+                rules: {
+                    'color-format': 'hashHex',
+                    'color-case': 'lower'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = ['04:LINT3020:Code style: File should follow color case'];
+            expect(actual).deep.equal(expected);
+        });
 
-        // it('BRS file color format is none - no color values found', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-none.brs'],
-        //         rules: {
-        //             'color-format': 'never'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is none - no color values found', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-none.brs'],
+                rules: {
+                    'color-format': 'never'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
 
-        // it('BRS file color format is none - color values found', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-hash-and-mixed-case.brs'],
-        //         rules: {
-        //             'color-format': 'never'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [
-        //         '03:LINT3019:Code style: File should follow color format',
-        //         '04:LINT3019:Code style: File should follow color format',
-        //         '05:LINT3019:Code style: File should follow color format'
-        //     ];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is none - color values found', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-hash-and-mixed-case.brs'],
+                rules: {
+                    'color-format': 'never'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '03:LINT3019:Code style: File should follow color format',
+                '04:LINT3019:Code style: File should follow color format',
+                '05:LINT3019:Code style: File should follow color format'
+            ];
+            expect(actual).deep.equal(expected);
+        });
 
-        // it('BRS file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-broadcast-safe.brs'],
-        //         rules: {
-        //             'color-format': 'quotedNumericHex',
-        //             'color-cert': 'always'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [
-        //         '02:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
-        //         '05:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'
-        //     ];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-broadcast-safe.brs'],
+                rules: {
+                    'color-format': 'quotedNumericHex',
+                    'color-cert': 'always'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '02:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
+                '05:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'
+            ];
+            expect(actual).deep.equal(expected);
+        });
 
-        // it('BRS file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-broadcast-safe.brs'],
-        //         rules: {
-        //             'color-format': 'quotedNumericHex',
-        //             'color-cert': 'off'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-broadcast-safe.brs'],
+                rules: {
+                    'color-format': 'quotedNumericHex',
+                    'color-cert': 'off'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
 
         it('BRS file color format is quotedNumericHex, alpha values are allowed and alpha defaults are not allowed', async () => {
             const diagnostics = await linter.run({
@@ -941,97 +941,61 @@ describe('codeStyle', () => {
                 '05:LINT3022:Code style: File should follow color alpha defaults rule',
                 '06:LINT3022:Code style: File should follow color alpha defaults rule'
             ];
-            // debugger;
             expect(actual).deep.equal(expected);
         });
 
-        // it('BRS file color format is quotedNumericHex, alpha values are allowed and only hidden alpha (00) defaults are allowed', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-alpha-mixed-values.brs'],
-        //         rules: {
-        //             'color-format': 'quotedNumericHex',
-        //             'color-alpha': 'allowed',
-        //             'color-alpha-defaults': 'only-hidden'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = ['06:LINT3022:Code style: File should follow color alpha defaults rule'];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is quotedNumericHex, alpha values are allowed and only hidden alpha (00) defaults are allowed', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-alpha-mixed-values.brs'],
+                rules: {
+                    'color-format': 'quotedNumericHex',
+                    'color-alpha': 'allowed',
+                    'color-alpha-defaults': 'only-hidden'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = ['06:LINT3022:Code style: File should follow color alpha defaults rule'];
+            expect(actual).deep.equal(expected);
+        });
 
-        // it('BRS file color format is quotedNumericHex and alpha values are not allowed', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-alpha-mixed-values.brs'],
-        //         rules: {
-        //             'color-format': 'quotedNumericHex',
-        //             'color-alpha': 'never'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [
-        //         '03:LINT3021:Code style: File should follow color alpha rule',
-        //         '05:LINT3021:Code style: File should follow color alpha rule',
-        //         '06:LINT3021:Code style: File should follow color alpha rule'
-        //     ];
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is quotedNumericHex and alpha values are not allowed', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-alpha-mixed-values.brs'],
+                rules: {
+                    'color-format': 'quotedNumericHex',
+                    'color-alpha': 'never'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '03:LINT3021:Code style: File should follow color alpha rule',
+                '05:LINT3021:Code style: File should follow color alpha rule',
+                '06:LINT3021:Code style: File should follow color alpha rule'
+            ];
+            expect(actual).deep.equal(expected);
+        });
 
-        // it('BRS file color format is quotedNumericHex and alpha values are required', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['source/colors/color-alpha-mixed-values.brs'],
-        //         rules: {
-        //             'color-format': 'quotedNumericHex',
-        //             'color-alpha': 'always'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [
-        //         '02:LINT3021:Code style: File should follow color alpha rule',
-        //         '04:LINT3021:Code style: File should follow color alpha rule'
-        //     ];
-        //     expect(actual).deep.equal(expected);
-        // });
-
-        // it('XML file color format is quotedNumericHex and Roku broadcast safe certification rules apply', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['components/colors/color-broadcast-safe.xml'],
-        //         rules: {
-        //             'color-format': 'hashHex',
-        //             'color-cert': 'always'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [];
-        //     expect(actual).deep.equal(expected);
-        // });
-
-        // it('XML file color format is quotedNumericHex, alpha values are allowed and alpha defaults are not allowed', async () => {
-        //     const diagnostics = await linter.run({
-        //         ...project1,
-        //         files: ['components/colors/color-alpha-mixed-values.xml'],
-        //         rules: {
-        //             'color-format': 'quotedNumericHex',
-        //             'color-alpha': 'allowed',
-        //             'color-alpha-defaults': 'never'
-        //         },
-        //         fix: false
-        //     });
-        //     const actual = fmtDiagnostics(diagnostics);
-        //     const expected = [
-        //         '05:LINT3022:Code style: File should follow color alpha defaults rule',
-        //         '06:LINT3022:Code style: File should follow color alpha defaults rule'
-        //     ];
-        //     // debugger;
-        //     expect(actual).deep.equal(expected);
-        // });
+        it('BRS file color format is quotedNumericHex and alpha values are required', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/color-alpha-mixed-values.brs'],
+                rules: {
+                    'color-format': 'quotedNumericHex',
+                    'color-alpha': 'always'
+                },
+                fix: false
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                '02:LINT3021:Code style: File should follow color alpha rule',
+                '04:LINT3021:Code style: File should follow color alpha rule'
+            ];
+            expect(actual).deep.equal(expected);
+        });
 
         it('add missing aa comma, no dangling', async () => {
             const diagnostics = await linter.run({
