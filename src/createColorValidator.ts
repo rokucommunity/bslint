@@ -18,30 +18,28 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
         const hashHexMatches = text.match(hashHexRegex);
         const quotedNumericHexMatches = text.match(quotedNumericHexRegex);
 
-        if (colorFormat === 'never') {
-            if (quotedNumericHexMatches || hashHexMatches) {
+        if ((colorFormat === 'never') && (quotedNumericHexMatches || hashHexMatches)) {
+            diagnostics.push(messages.expectedColorFormat(range));
+        }
+
+        const hashHexAlphaRegex = /#[0-9A-Fa-f]{8}/g;
+        const quotedNumericHexAlphaRegex = /0x[0-9A-Fa-f]{8}/g;
+
+        if (text.startsWith('#') && colorFormat === 'hash-hex') {
+            if (quotedNumericHexMatches) {
                 diagnostics.push(messages.expectedColorFormat(range));
             }
-        } else {
-            const hashHexAlphaRegex = /#[0-9A-Fa-f]{8}/g;
-            const quotedNumericHexAlphaRegex = /0x[0-9A-Fa-f]{8}/g;
+            validateColorCase(hashHexMatches, range, diagnostics, colorCase, colorFormat);
+            validateColorAlpha(text.match(hashHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
+            validateColorCertCompliance(hashHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
 
-            if (text.startsWith('#') && colorFormat === 'hashHex') {
-                if (quotedNumericHexMatches) {
-                    diagnostics.push(messages.expectedColorFormat(range));
-                }
-                validateColorCase(hashHexMatches, range, diagnostics, colorCase, colorFormat);
-                validateColorAlpha(text.match(hashHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
-                validateColorCertCompliance(hashHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
-
-            } else if (text.startsWith('0x') && colorFormat === 'quotedNumericHex') {
-                if (hashHexMatches) {
-                    diagnostics.push(messages.expectedColorFormat(range));
-                }
-                validateColorCase(quotedNumericHexMatches, range, diagnostics, colorCase, colorFormat);
-                validateColorAlpha(text.match(quotedNumericHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
-                validateColorCertCompliance(quotedNumericHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
+        } else if (text.startsWith('0x') && colorFormat === 'quoted-numeric-hex') {
+            if (hashHexMatches) {
+                diagnostics.push(messages.expectedColorFormat(range));
             }
+            validateColorCase(quotedNumericHexMatches, range, diagnostics, colorCase, colorFormat);
+            validateColorAlpha(text.match(quotedNumericHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
+            validateColorCertCompliance(quotedNumericHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
         }
     };
 }
@@ -72,7 +70,7 @@ function validateColorCase(matches: RegExpMatchArray, range: Range, diagnostics:
     const validateColorCase = colorCase === 'upper' || colorCase === 'lower';
     if (validateColorCase && matches) {
         let colorValue = matches[0];
-        const charsToStrip = (colorFormat === 'hashHex') ? 1 : 2;
+        const charsToStrip = (colorFormat === 'hash-hex') ? 1 : 2;
         colorValue = colorValue.substring(charsToStrip);
         for (let i = 0; i < colorValue.length; i++) {
             const char = colorValue.charAt(i);
@@ -96,7 +94,7 @@ function validateColorCertCompliance(matches: RegExpMatchArray, range: Range, di
         const MAX_BLACK_LUMA = getColorLuma(BROADCAST_SAFE_BLACK);
         const MAX_WHITE_LUMA = getColorLuma(BROADCAST_SAFE_WHITE);
         let colorValue = matches[0];
-        const charsToStrip = (colorFormat === 'hashHex') ? 1 : 2;
+        const charsToStrip = (colorFormat === 'hash-hex') ? 1 : 2;
         colorValue = colorValue.substring(charsToStrip);
         const colorLuma = getColorLuma(colorValue);
         if (colorLuma > MAX_WHITE_LUMA || colorLuma < MAX_BLACK_LUMA) {

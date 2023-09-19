@@ -26,13 +26,12 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast } = severity;
-        const { colorFormat } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
-        const validateColorFormat = (colorFormat === 'hashHex' || colorFormat === 'quotedNumericHex' || colorFormat === 'never');
+        const validateColorFormat = (colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
         const validateBlockIf = blockIfStyle !== 'off';
@@ -43,7 +42,7 @@ export default class CodeStyle {
         const walkExpressions = validateAAStyle;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
-        const validateColorStyle = createColorValidator(severity);
+        const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
 
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
@@ -131,13 +130,13 @@ export default class CodeStyle {
                 }
             },
             LiteralExpression: e => {
-                if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
+                if (validateColorStyle && e.token.kind === TokenKind.StringLiteral) {
                     validateColorStyle(e.token.text, e.token.range, diagnostics);
                 }
             },
             TemplateStringExpression: e => {
                 const token = e.quasis[0].expressions[0].token;
-                if (validateColorFormat && token.kind === TokenKind.TemplateStringQuasi) {
+                if (validateColorStyle && token.kind === TokenKind.TemplateStringQuasi) {
                     validateColorStyle(token.text, token.range, diagnostics);
                 }
             },
