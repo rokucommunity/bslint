@@ -218,22 +218,22 @@ Default rules:
 
 - `color-format`: ensures that all the color values follow the same prefix formatting. Can also use to prevent any colors values from being defined in the code-base, except for values in a stand-alone file (ie. theme file).
 
-    - `hashHex`: enforces all color values are type string and use a `#` prefix
-    - `quotedNumericHex`: enforces all color values are type string and use a `0x` prefix
+    - `hashHex`: enforces all color values are type string or template string and use a `#` prefix
+    - `quotedNumericHex`: enforces all color values are type string or template string and use a `0x` prefix
     - `never`: enforces that no color values can be defined in the code-base. Useful if you define colors in a separate stand-alone file. To use this option you would list your stand-alone file in the `ignore` list or `diagnosticFilters`.
     - `off`: do not validate (**default**)
 
 - `color-case`: ensures that all color values follow the same case. Requires that `color-format` is set to `hashHex` or `quotedNumericHex`.
 
-    - `lower`: enforces all color values that are type string are all lowercase. ie. `#11bbdd`
-    - `upper`: enforces all color values that are type string are all uppercase. ie. `#EEAA44`
+    - `lower`: enforces all color values that are type string or template string and all lowercase. ie. `#11bbdd`
+    - `upper`: enforces all color values that are type string or template string and all uppercase. ie. `#EEAA44`
     - `off`: do not validate (**default**)
 
 - `color-alpha`: defines the usage of the color alpha value. ie. `#xxxxxxFF`. Requires that `color-format` is set to `hashHex` or `quotedNumericHex`.
 
-    - `always`: enforces all color values that are type string define an alpha value
-    - `allowed`: allows color values that are type string to define an alpha value
-    - `never`: enforces that none of the color values that are type string define an alpha value
+    - `always`: enforces all color values that are type string or template string define an alpha value
+    - `allowed`: allows color values that are type string or template string to define an alpha value
+    - `never`: enforces that none of the color values that are type string or template string define an alpha value
     - `off`: do not validate (**default**)
 
 - `color-alpha-defaults`: enforces default color-alpha values. ie. `#xxxxxxFF` or `#xxxxxx00`. Requires that `color-alpha` is not set to `off` and `color-format` is set to `hashHex` or `quotedNumericHex`.

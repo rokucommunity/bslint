@@ -132,12 +132,14 @@ export default class CodeStyle {
             },
             LiteralExpression: e => {
                 if (validateColorFormat && e.token.kind === TokenKind.StringLiteral) {
-                    // debugger;
                     validateColorStyle(e.token.text, e.token.range, diagnostics);
                 }
             },
             TemplateStringExpression: e => {
-                // debugger;
+                const token = e.quasis[0].expressions[0].token;
+                if (validateColorFormat && token.kind === TokenKind.TemplateStringQuasi) {
+                    validateColorStyle(token.text, token.range, diagnostics);
+                }
             },
             AALiteralExpression: e => {
                 if (validateAAStyle) {

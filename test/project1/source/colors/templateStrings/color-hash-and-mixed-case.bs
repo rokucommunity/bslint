@@ -1,0 +1,8 @@
+sub init()
+    colors = {
+        value1: `#00FFff`,
+        value2: `#0000ff`,
+        value3: `#ff0000`,
+        value4: `#ff00FF`
+    }
+end sub

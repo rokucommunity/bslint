@@ -1,0 +1,7 @@
+sub init()
+    colors = [
+        `0x00FF00`,
+        `0x00ffff`,
+        `0xff0000`
+    ]
+end sub
