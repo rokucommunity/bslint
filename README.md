@@ -216,11 +216,11 @@ Default rules:
     - `never` enforces that files do not end with a newline
     - `off`: do not validate
 
-- `color-format`: ensures that all the color values follow the same prefix formatting. Can also use to prevent any colors values from being defined in the code-base, except for values in a stand-alone file (ie. theme file).
+- `color-format`: ensures that all the color values follow the same prefix formatting. Can also use to prevent any colors values from being defined in the code-base (brs or bs files), except for values in a stand-alone file (ie. theme file).
 
     - `hash-hex`: enforces all color values are type string or template string and use a `#` prefix
     - `quoted-numeric-hex`: enforces all color values are type string or template string and use a `0x` prefix
-    - `never`: enforces that no color values can be defined in the code-base. Useful if you define colors in a separate stand-alone file. To use this option you would list your stand-alone file in the `ignore` list or `diagnosticFilters`.
+    - `never`: enforces that no color values can be defined in the code-base (brs or bs files). Useful if you define colors in a separate stand-alone file. To use this option you would list your stand-alone file in the `ignore` list or `diagnosticFilters`.
     - `off`: do not validate (**default**)
 
 - `color-case`: ensures that all color values follow the same case. Requires that `color-format` is set to `hash-hex` or `quoted-numeric-hex`.
