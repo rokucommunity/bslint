@@ -5,27 +5,24 @@ import { BsLintRules, RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorA
 export function createColorValidator(severity: Readonly<BsLintRules>) {
     const { colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant } = severity;
     return (text, range, diagnostics) => {
-        // remove quotes if any exist
-        text = text.replace(/['"]+/g, '');
         const len = text.length;
-        if (len < 7 || len > 10) {
-            // we're only interested in string length is between 7 (#DBDBDB) to 10 (0xDBDBDBff) chars long
+        if (len < 7 || len > 12) {
+            // we're only interested in string length is between 7 (#DBDBDB) to 12 (0xDBDBDBff) chars long
             return;
         }
 
         const hashHexRegex = /#[0-9A-Fa-f]{6}/g;
         const quotedNumericHexRegex = /0x[0-9A-Fa-f]{6}/g;
-        const hashHexMatches = text.match(hashHexRegex);
-        const quotedNumericHexMatches = text.match(quotedNumericHexRegex);
+        const hashHexMatches = (text.startsWith('#') || text.startsWith('"#')) ? text.match(hashHexRegex) : undefined;
+        const quotedNumericHexMatches = (text.startsWith('0x') || text.startsWith('"0x')) ? text.match(quotedNumericHexRegex) : undefined;
 
         if ((colorFormat === 'never') && (quotedNumericHexMatches || hashHexMatches)) {
             diagnostics.push(messages.expectedColorFormat(range));
         }
-
         const hashHexAlphaRegex = /#[0-9A-Fa-f]{8}/g;
         const quotedNumericHexAlphaRegex = /0x[0-9A-Fa-f]{8}/g;
 
-        if (text.startsWith('#') && colorFormat === 'hash-hex') {
+        if (colorFormat === 'hash-hex' && (text.startsWith('#') || text.startsWith('"#'))) {
             if (quotedNumericHexMatches) {
                 diagnostics.push(messages.expectedColorFormat(range));
             }
@@ -33,7 +30,7 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
             validateColorAlpha(text.match(hashHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
             validateColorCertCompliance(hashHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
 
-        } else if (text.startsWith('0x') && colorFormat === 'quoted-numeric-hex') {
+        } else if (colorFormat === 'quoted-numeric-hex' && (text.startsWith('0x') || text.startsWith('"0x'))) {
             if (hashHexMatches) {
                 diagnostics.push(messages.expectedColorFormat(range));
             }
@@ -47,6 +44,7 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
 function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpMatchArray, quotedNumericHexMatches: RegExpMatchArray, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults) {
     const validateColorAlpha = (alpha === 'never' || alpha === 'always' || alpha === 'allowed');
     if (validateColorAlpha) {
+        // debugger
         if (alpha === 'never' && alphaMatches) {
             diagnostics.push(messages.expectedColorAlpha(range));
         }
@@ -59,7 +57,6 @@ function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpM
                 const alphaValue = colorHashAlpha.slice(-2).toLowerCase();
                 if (alphaValue === 'ff' || (alphaDefaults === 'never' && alphaValue === '00')) {
                     diagnostics.push(messages.expectedColorAlphaDefaults(range));
-                    // debugger;
                 }
             }
         }
@@ -72,16 +69,11 @@ function validateColorCase(matches: RegExpMatchArray, range: Range, diagnostics:
         let colorValue = matches[0];
         const charsToStrip = (colorFormat === 'hash-hex') ? 1 : 2;
         colorValue = colorValue.substring(charsToStrip);
-        for (let i = 0; i < colorValue.length; i++) {
-            const char = colorValue.charAt(i);
-            if (colorCase === 'lower' && char === char.toUpperCase() && char !== char.toLowerCase()) {
-                diagnostics.push(messages.expectedColorCase(range));
-                break;
-            }
-            if (colorCase === 'upper' && char === char.toLowerCase() && char !== char.toUpperCase()) {
-                diagnostics.push(messages.expectedColorCase(range));
-                break;
-            }
+        if (colorCase === 'lower' && colorValue !== colorValue.toLowerCase()) {
+            diagnostics.push(messages.expectedColorCase(range));
+        }
+        if (colorCase === 'upper' && colorValue !== colorValue.toUpperCase()) {
+            diagnostics.push(messages.expectedColorCase(range));
         }
     }
 }
