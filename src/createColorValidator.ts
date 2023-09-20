@@ -7,7 +7,7 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
     return (text, range, diagnostics) => {
         const len = text.length;
         if (len < 7 || len > 12) {
-            // we're only interested in string length is between 7 (#DBDBDB) to 12 (0xDBDBDBff) chars long
+            // we're only interested in string length is between 7 (#DBDBDB) to 12 ("0xDBDBDBff") chars long
             return;
         }
 
