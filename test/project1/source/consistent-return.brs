@@ -22,14 +22,14 @@ function error5()
     return ' error
 end function
 
-sub error6() as string ' error
+sub error6() as integer ' error
     a = 1
     if a > 0
         return a
     end if
 end sub
 
-sub error7() as string ' error
+sub error7() as integer ' error
     for i = 0 to 10
         return i
     end for
@@ -62,11 +62,11 @@ end sub
 function ok2()
 end function
 
-sub ok3() as string
+sub ok3() as dynamic
     return 1
 end sub
 
-sub ok4() as string
+sub ok4() as dynamic
     a = 1
     if a > 0
         return 1

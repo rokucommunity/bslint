@@ -270,8 +270,9 @@ describe('codeStyle', () => {
                     'named-function-style': 'auto',
                     'anon-function-style': 'auto',
                     'no-print': 'off'
-                }
-            });
+                },
+                diagnosticFilters: [1142]
+            } as any);
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
                 `22:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,

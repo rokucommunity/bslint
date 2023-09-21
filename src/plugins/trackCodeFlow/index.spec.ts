@@ -331,8 +331,9 @@ describe('trackCodeFlow', () => {
             rules: {
                 'consistent-return': 'error',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1142]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `04:LINT2002:Sub as void should not return a value`,
@@ -375,7 +376,7 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             globals: ['a'],
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
