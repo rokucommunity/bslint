@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.10](https://github.com/rokucommunity/bslint/compare/v0.8.9...v0.8.10) - 2023-09-11
+### Changed
+ - upgrade to [brighterscript@0.65.5](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0655---2023-09-06). Notable changes since 0.65.4:
+     - support bs_const in bsconfig.json ([brighterscript#887](https://github.com/rokucommunity/brighterscript/pull/887))
+     - allow optionally specifying bslib destination directory ([brighterscript#871](https://github.com/rokucommunity/brighterscript/pull/871))
+     - ensure consistent insertion of bslib.brs ([brighterscript#870](https://github.com/rokucommunity/brighterscript/pull/870))
+     - Fix crashes in util for null ranges ([brighterscript#869](https://github.com/rokucommunity/brighterscript/pull/869))
+     - Print diagnostic related information ([brighterscript#867](https://github.com/rokucommunity/brighterscript/pull/867))
+     - Fix tab issue when printing diagnostics ([brighterscript#865](https://github.com/rokucommunity/brighterscript/pull/865))
+
+
+
 ## [0.9.0-alpha.0](https://github.com/rokucommunity/bslint/compare/v0.8.9...v0.9.0-alpha.0) - 2023-07-27
 ### Changed
 - fixes for brighterscript v0.66.0-alpha.0 through v0.66.0-alpha.4
