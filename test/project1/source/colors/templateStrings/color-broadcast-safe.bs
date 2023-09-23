@@ -3,4 +3,5 @@ sub init()
     color = `0xDBDBDC`
     color = `0x161615`
     color = `0xDBDBDBFF`
+    longStringWithColors = `Long string value with 0x161615 non broadcast safe color values defined`
 end sub

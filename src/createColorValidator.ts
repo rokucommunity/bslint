@@ -22,7 +22,7 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
         const hashHexAlphaRegex = /#[0-9A-Fa-f]{8}/g;
         const quotedNumericHexAlphaRegex = /0x[0-9A-Fa-f]{8}/g;
 
-        if (colorFormat === 'hash-hex' && (text.startsWith('#') || text.startsWith('"#'))) {
+        if (colorFormat === 'hash-hex') {
             if (quotedNumericHexMatches) {
                 diagnostics.push(messages.expectedColorFormat(range));
             }
@@ -30,7 +30,7 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
             validateColorAlpha(text.match(hashHexAlphaRegex), hashHexMatches, quotedNumericHexMatches, range, diagnostics, colorAlpha, colorAlphaDefaults);
             validateColorCertCompliance(hashHexMatches, range, diagnostics, colorFormat, colorCertCompliant);
 
-        } else if (colorFormat === 'quoted-numeric-hex' && (text.startsWith('0x') || text.startsWith('"0x'))) {
+        } else if (colorFormat === 'quoted-numeric-hex') {
             if (hashHexMatches) {
                 diagnostics.push(messages.expectedColorFormat(range));
             }

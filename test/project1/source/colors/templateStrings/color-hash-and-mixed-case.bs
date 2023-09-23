@@ -3,6 +3,7 @@ sub init()
         value1: `#00FFff`,
         value2: `#0000ff`,
         value3: `#ff0000`,
-        value4: `#ff00FF`
+        value4: `#ff00FF`,
+        shortFormColorHash: `#f0F`
     }
 end sub

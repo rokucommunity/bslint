@@ -4,4 +4,7 @@ sub init()
         `0x00ffff`,
         `0xff0000`
     ]
+    nonValidColorsWrongColorFormat = [
+        `#xxffff`
+    ]
 end sub
