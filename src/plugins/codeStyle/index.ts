@@ -1,6 +1,5 @@
 import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
-import { RuleAAComma, BsLintRules } from '../..';
-import { SGNode } from 'brighterscript/dist/parser/SGTypes';
+import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { createColorValidator } from '../../createColorValidator';
