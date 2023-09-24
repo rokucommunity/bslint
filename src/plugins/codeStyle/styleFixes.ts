@@ -41,12 +41,6 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return addEolLast(diagnostic);
         case CodeStyleError.EolLastFound:
             return removeEolLast(diagnostic);
-        case CodeStyleError.ColorFormat:
-        case CodeStyleError.ColorCase:
-        case CodeStyleError.ColorAlpha:
-        case CodeStyleError.ColorAlphaDefaults:
-        case CodeStyleError.ColorCertCompliant:
-            return expectedColorStyle(diagnostic);
         default:
             return null;
     }
@@ -169,15 +163,6 @@ function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
 }
 
 function removeEolLast(diagnostic: BsDiagnostic): ChangeEntry {
-    return {
-        diagnostic,
-        changes: [
-            replaceText(diagnostic.range, '')
-        ]
-    };
-}
-
-function expectedColorStyle(diagnostic: BsDiagnostic): ChangeEntry {
     return {
         diagnostic,
         changes: [
