@@ -835,8 +835,7 @@ describe('codeStyle', () => {
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-case': 'upper'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -845,15 +844,14 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is quoted-numeric-hex and case is uppercase', async () => {
+        it('BrighterScript file color format is quoted-numeric-hex and case is uppercase', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/templateStrings/color-quoted-numeric-hex-and-mixed-case.bs'],
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-case': 'upper'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -870,23 +868,21 @@ describe('codeStyle', () => {
                 rules: {
                     'color-format': 'hash-hex',
                     'color-case': 'lower'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = ['04:LINT3020:Code style: File should follow color case'];
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is hash and case is lowercase', async () => {
+        it('BrighterScript file color format is hash and case is lowercase', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/templateStrings/color-hash-and-mixed-case.bs'],
                 rules: {
                     'color-format': 'hash-hex',
                     'color-case': 'lower'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -902,8 +898,20 @@ describe('codeStyle', () => {
                 files: ['source/colors/literals/color-none.brs'],
                 rules: {
                     'color-format': 'never'
-                },
-                fix: false
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('BrighterScript file color format is none - no color values found', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/colors/literals/color-none.bs'],
+                rules: {
+                    'color-format': 'never'
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [];
@@ -916,8 +924,7 @@ describe('codeStyle', () => {
                 files: ['source/colors/literals/color-hash-and-mixed-case.brs'],
                 rules: {
                     'color-format': 'never'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -935,8 +942,7 @@ describe('codeStyle', () => {
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-cert': 'always'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -946,15 +952,14 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is quoted-numeric-hex and Roku broadcast safe certification rules apply', async () => {
+        it('BrighterScript file color format is quoted-numeric-hex and Roku broadcast safe certification rules apply', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/templateStrings/color-broadcast-safe.bs'],
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-cert': 'always'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -971,8 +976,7 @@ describe('codeStyle', () => {
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-cert': 'always'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -989,8 +993,7 @@ describe('codeStyle', () => {
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-cert': 'off'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [];
@@ -1005,8 +1008,7 @@ describe('codeStyle', () => {
                     'color-format': 'quoted-numeric-hex',
                     'color-alpha': 'allowed',
                     'color-alpha-defaults': 'never'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -1016,7 +1018,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('BRS file color format is quoted-numeric-hex, alpha values are allowed and alpha defaults are not allowed', async () => {
+        it('BrighterScript file color format is quoted-numeric-hex, alpha values are allowed and alpha defaults are not allowed', async () => {
             const diagnostics = await linter.run({
                 ...project1,
                 files: ['source/colors/templateStrings/color-alpha-mixed-values.bs'],
@@ -1024,8 +1026,7 @@ describe('codeStyle', () => {
                     'color-format': 'quoted-numeric-hex',
                     'color-alpha': 'allowed',
                     'color-alpha-defaults': 'never'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -1043,8 +1044,7 @@ describe('codeStyle', () => {
                     'color-format': 'quoted-numeric-hex',
                     'color-alpha': 'allowed',
                     'color-alpha-defaults': 'only-hidden'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = ['06:LINT3022:Code style: File should follow color alpha defaults rule'];
@@ -1058,8 +1058,7 @@ describe('codeStyle', () => {
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-alpha': 'never'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
@@ -1077,8 +1076,7 @@ describe('codeStyle', () => {
                 rules: {
                     'color-format': 'quoted-numeric-hex',
                     'color-alpha': 'always'
-                },
-                fix: false
+                }
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
