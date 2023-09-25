@@ -38,7 +38,7 @@ export default class CodeStyle {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
-        const walkExpressions = validateAAStyle;
+        const walkExpressions = validateAAStyle || validateColorFormat;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
