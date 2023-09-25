@@ -45,7 +45,6 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
 function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpMatchArray, quotedNumericHexMatches: RegExpMatchArray, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults) {
     const validateColorAlpha = (alpha === 'never' || alpha === 'always' || alpha === 'allowed');
     if (validateColorAlpha) {
-        // debugger
         if (alpha === 'never' && alphaMatches) {
             diagnostics.push(messages.expectedColorAlpha(range));
         }
