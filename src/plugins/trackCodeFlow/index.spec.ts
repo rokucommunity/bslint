@@ -1,21 +1,12 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { BsDiagnostic, Program } from 'brighterscript';
+import { Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
-
-function pad(n: number) {
-    return n > 9 ? `${n}` : `0${n}`;
-}
-
-function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
-    return diagnostics
-        .filter((d) => d.severity && d.severity < 4)
-        .sort((a, b) => a.range.start.line - b.range.start.line)
-        .map((d) => `${pad(d.range.start.line + 1)}:${d.code}:${d.message}`);
-}
+import { expectDiagnostics, fmtDiagnostics } from '../../testHelpers.spec';
+import { VarLintError } from './varTracking';
 
 describe('trackCodeFlow', () => {
     let linter: Linter;
@@ -56,11 +47,11 @@ describe('trackCodeFlow', () => {
         `);
         program.validate();
 
-        expect(
-            fmtDiagnostics(program.getDiagnostics())
-        ).to.eql([
-            `10:LINT1003:Not all the code paths assign 'text2'`
-        ]);
+        expectDiagnostics(program, [{
+            code: VarLintError.UnsafeInitialization,
+            message: `Not all the code paths assign 'text2'`,
+            range: util.createRange(9, 22, 9, 27)
+        }]);
     });
 
     it('detects use of uninitialized vars', async () => {
