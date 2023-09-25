@@ -1,20 +1,10 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AssignmentStatement, BsDiagnostic, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import { createContext, PluginWrapperContext } from '../../util';
-
-function pad(n: number) {
-    return n > 9 ? `${n}` : `0${n}`;
-}
-
-function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
-    return diagnostics
-        .filter((d) => d.severity && d.severity < 4)
-        .sort((a, b) => a.range.start.line - b.range.start.line)
-        .map((d) => `${pad(d.range.start.line + 1)}:${d.code}:${d.message}`);
-}
+import { fmtDiagnostics } from '../../testHelpers.spec';
 
 describe('codeStyle', () => {
     let linter: Linter;
