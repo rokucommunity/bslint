@@ -134,9 +134,10 @@ export default class CodeStyle {
                 }
             },
             TemplateStringExpression: e => {
-                const token = e.quasis[0].expressions[0].token;
-                if (validateColorStyle && token.kind === TokenKind.TemplateStringQuasi) {
-                    validateColorStyle(token.text, token.range, diagnostics);
+                if (validateColorStyle) {
+                    for (const quasi of e.quasis.map(x => x.expressions).flat()) {
+                        validateColorStyle(quasi.token.text, quasi.token.range, diagnostics);
+                    }
                 }
             },
             AALiteralExpression: e => {

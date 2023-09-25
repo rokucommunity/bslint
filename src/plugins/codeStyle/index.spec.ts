@@ -5,7 +5,8 @@ import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
-import { fmtDiagnostics } from '../../testHelpers.spec';
+import { expectDiagnostics, expectDiagnosticsFmt, fmtDiagnostics } from '../../testHelpers.spec';
+import { messages } from './diagnosticMessages';
 
 describe('codeStyle', () => {
     let linter: Linter;
@@ -52,16 +53,6 @@ describe('codeStyle', () => {
         program.plugins.add(bslintFactory());
         program.plugins.emit('afterProgramCreate', program);
         return program;
-    }
-
-    function expectDiagnostics(expectedDiagnostics: string[]) {
-        program.validate();
-        const formatted = fmtDiagnostics(program.getDiagnostics());
-        expect(
-            formatted
-        ).eql(
-            expectedDiagnostics
-        );
     }
 
     beforeEach(() => {
@@ -644,6 +635,34 @@ describe('codeStyle', () => {
     });
 
     describe('color-format', () => {
+        it('finds colors in various templateString expression styles', () => {
+            /* eslint-disable no-template-curly-in-string */
+
+            doTest('print `0xffffff`', [7, 15]); // string-like
+            doTest('print `${"0xffffff"}`', [9, 19]); // expression with a string in it
+            doTest('print `0xffffff${"0xffffff"}`', [7, 15], [17, 27]); // color then expression
+            doTest('print `${"0xffffff"}0xffffff`', [9, 19], [19, 27]); // expression then color
+            doTest('print `${"0xffffff"}0xffffff${"0xffffff"}`', [9, 19], [19, 27], [29, 39]); // expression then color then expression
+            doTest('print `0xffffff${"0xffffff"}0xffffff`', [7, 15], [17, 27], [27, 35]); // color then expression then color
+
+            function doTest(code: string, ...diagnosticCharLocations: Array<[startChar: number, endChar: number]>) {
+                init({
+                    'color-format': 'quoted-numeric-hex',
+                    'color-case': 'upper'
+                });
+                program.setFile(
+                    'source/main.bs',
+                    `sub init()\n${code}\nend sub`
+                );
+                program.validate();
+                expectDiagnostics(
+                    program,
+                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createRange(1, x[0], 1, x[1])))
+                );
+            }
+            /* eslint-enable no-template-curly-in-string */
+        });
+
         it('quoted-numeric-hex & uppercase', () => {
             init({
                 'color-format': 'quoted-numeric-hex',
@@ -657,7 +676,8 @@ describe('codeStyle', () => {
                     ]
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '03:LINT3020:Code style: File should follow color case'
             ]);
         });
@@ -677,7 +697,8 @@ describe('codeStyle', () => {
                     }
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '05:LINT3020:Code style: File should follow color case'
             ]);
         });
@@ -698,7 +719,8 @@ describe('codeStyle', () => {
                     }
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '04:LINT3020:Code style: File should follow color case',
                 '07:LINT3020:Code style: File should follow color case'
             ]);
@@ -721,7 +743,7 @@ describe('codeStyle', () => {
                     shortFormColorQuoteNumeric = \`0xf00\`
                 end sub
             `);
-            expectDiagnostics([]);
+            expectDiagnosticsFmt(program, []);
         });
 
         it('color-format:never but color values found', () => {
@@ -738,7 +760,8 @@ describe('codeStyle', () => {
                     }
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '04:LINT3019:Code style: File should follow color format',
                 '05:LINT3019:Code style: File should follow color format',
                 '06:LINT3019:Code style: File should follow color format'
@@ -759,7 +782,8 @@ describe('codeStyle', () => {
                     longStringWithColors = "Long string value with 0x161615 non broadcast safe color values defined"
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '03:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
                 '06:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'
             ]);
@@ -779,7 +803,8 @@ describe('codeStyle', () => {
                     longStringWithColors = "Long string value with 0x161615 non broadcast safe color values defined"
                 end sub
             `);
-            expectDiagnostics([]);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
         });
 
         it('quoted-numeric-hex, color-alpha:allowed, color-alpha-defaults:never', () => {
@@ -801,7 +826,8 @@ describe('codeStyle', () => {
                     shortFormColorQuoteNumeric = "0xf00"
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '06:LINT3022:Code style: File should follow color alpha defaults rule',
                 '07:LINT3022:Code style: File should follow color alpha defaults rule'
             ]);
@@ -826,7 +852,8 @@ describe('codeStyle', () => {
                     shortFormColorQuoteNumeric = "0xf00"
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '07:LINT3022:Code style: File should follow color alpha defaults rule'
             ]);
         });
@@ -849,7 +876,8 @@ describe('codeStyle', () => {
                     shortFormColorQuoteNumeric = "0xf00"
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '04:LINT3021:Code style: File should follow color alpha rule',
                 '06:LINT3021:Code style: File should follow color alpha rule',
                 '07:LINT3021:Code style: File should follow color alpha rule'
@@ -874,7 +902,8 @@ describe('codeStyle', () => {
                     shortFormColorQuoteNumeric = "0xf00"
                 end sub
             `);
-            expectDiagnostics([
+            program.validate();
+            expectDiagnosticsFmt(program, [
                 '03:LINT3021:Code style: File should follow color alpha rule',
                 '05:LINT3021:Code style: File should follow color alpha rule'
             ]);
