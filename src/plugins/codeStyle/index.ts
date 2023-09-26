@@ -134,10 +134,9 @@ export default class CodeStyle {
                 }
             },
             TemplateStringExpression: e => {
-                if (validateColorStyle) {
-                    for (const quasi of e.quasis.map(x => x.expressions).flat()) {
-                        validateColorStyle(quasi.token.text, quasi.token.range, diagnostics);
-                    }
+                // only validate template strings that look like regular strings (i.e. `0xAABBCC`)
+                if (validateColorStyle && e.quasis.length === 1 && e.quasis[0].expressions.length === 1) {
+                    validateColorStyle(e.quasis[0].expressions[0].token.text, e.quasis[0].expressions[0].token.range, diagnostics);
                 }
             },
             AALiteralExpression: e => {

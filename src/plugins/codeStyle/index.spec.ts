@@ -640,10 +640,10 @@ describe('codeStyle', () => {
 
             doTest('print `0xffffff`', [7, 15]); // string-like
             doTest('print `${"0xffffff"}`', [9, 19]); // expression with a string in it
-            doTest('print `0xffffff${"0xffffff"}`', [7, 15], [17, 27]); // color then expression
-            doTest('print `${"0xffffff"}0xffffff`', [9, 19], [19, 27]); // expression then color
-            doTest('print `${"0xffffff"}0xffffff${"0xffffff"}`', [9, 19], [19, 27], [29, 39]); // expression then color then expression
-            doTest('print `0xffffff${"0xffffff"}0xffffff`', [7, 15], [17, 27], [27, 35]); // color then expression then color
+            doTest('print `0xffffff${"0xffffff"}`', [17, 27]); // color then expression
+            doTest('print `${"0xffffff"}0xffffff`', [9, 19]); // expression then color
+            doTest('print `${"0xffffff"}0xffffff${"0xffffff"}`', [9, 19], [29, 39]); // expression then color then expression
+            doTest('print `0xffffff${"0xffffff"}0xffffff`', [17, 27]); // color then expression then color
 
             function doTest(code: string, ...diagnosticCharLocations: Array<[startChar: number, endChar: number]>) {
                 init({
