@@ -3,19 +3,62 @@ import { expect } from 'chai';
 import { AALiteralExpression, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
+import bslintFactory, { BsLintConfig } from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
-import { fmtDiagnostics } from '../../testHelpers.spec';
+import { expectDiagnostics, expectDiagnosticsFmt, fmtDiagnostics } from '../../testHelpers.spec';
+import { messages } from './diagnosticMessages';
 
 describe('codeStyle', () => {
     let linter: Linter;
     let lintContext: PluginWrapperContext;
+    let program: Program;
 
     const project1 = {
         rootDir: 'test/project1'
     };
 
+    /**
+     * By default, all rules are off. So turn on the ones you care about for this test
+     */
+    function init(rules?: BsLintConfig['rules']) {
+        program = new Program({
+            rules: {
+                'assign-all-paths': 'off',
+                'unsafe-path-loop': 'off',
+                'unsafe-iterators': 'off',
+                'unreachable-code': 'off',
+                'case-sensitivity': 'off',
+                'unused-variable': 'off',
+                'consistent-return': 'off',
+                'no-stop': 'off',
+                'inline-if-style': 'off',
+                'block-if-style': 'off',
+                'condition-style': 'off',
+                'named-function-style': 'off',
+                'anon-function-style': 'off',
+                'aa-comma-style': 'off',
+                'type-annotations': 'off',
+                'no-print': 'off',
+                'no-todo': 'off',
+                'todo-pattern': 'off',
+                'eol-last': 'off',
+                'color-format': 'off',
+                'color-case': 'off',
+                'color-alpha': 'off',
+                'color-alpha-defaults': 'off',
+                'color-cert': 'off',
+                ...(rules ?? {})
+            }
+        } as BsLintConfig);
+        program.plugins.add(bslintFactory());
+        program.plugins.emit('afterProgramCreate', program);
+        return program;
+    }
+
     beforeEach(() => {
         linter = new Linter();
+        init();
+
         linter.builder.plugins.add({
             name: 'test',
             afterProgramCreate: (program: Program) => {
@@ -588,6 +631,282 @@ describe('codeStyle', () => {
                 `31:LINT3013:Remove optional comma`
             ];
             expect(actual).deep.equal(expected);
+        });
+    });
+
+    describe('color-format', () => {
+        it('finds colors in various templateString expression styles', () => {
+            /* eslint-disable no-template-curly-in-string */
+
+            doTest('print `0xffffff`', [7, 15]); // string-like
+            doTest('print `${"0xffffff"}`', [9, 19]); // expression with a string in it
+            doTest('print `0xffffff${"0xffffff"}`', [17, 27]); // color then expression
+            doTest('print `${"0xffffff"}0xffffff`', [9, 19]); // expression then color
+            doTest('print `${"0xffffff"}0xffffff${"0xffffff"}`', [9, 19], [29, 39]); // expression then color then expression
+            doTest('print `0xffffff${"0xffffff"}0xffffff`', [17, 27]); // color then expression then color
+
+            function doTest(code: string, ...diagnosticCharLocations: Array<[startChar: number, endChar: number]>) {
+                init({
+                    'color-format': 'quoted-numeric-hex',
+                    'color-case': 'upper'
+                });
+                program.setFile(
+                    'source/main.bs',
+                    `sub init()\n${code}\nend sub`
+                );
+                program.validate();
+                expectDiagnostics(
+                    program,
+                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createRange(1, x[0], 1, x[1])))
+                );
+            }
+            /* eslint-enable no-template-curly-in-string */
+        });
+
+        it('quoted-numeric-hex & uppercase', () => {
+            init({
+                'color-format': 'quoted-numeric-hex',
+                'color-case': 'upper'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                    colors = ["0xff0000", "0x00FF00"]
+                    nonValidColorsWrongColorFormat = [
+                        "#xxffff" ' this string is skipped because xx is not valid hex
+                    ]
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '03:LINT3020:Code style: File should follow color case'
+            ]);
+        });
+
+        it('hash-hex & lowercase', () => {
+            init({
+                'color-format': 'hash-hex',
+                'color-case': 'lower'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                    colors = {
+                        value1: "#0000ff",
+                        value2: "#00FFff",
+                        value3: "#ff0000",
+                        shortFormColorHash: "#f0F"
+                    }
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '05:LINT3020:Code style: File should follow color case'
+            ]);
+        });
+
+        it('has-hex & lowercase & template strings', () => {
+            init({
+                'color-format': 'hash-hex',
+                'color-case': 'lower'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    colors = {
+                        value1: \`#00FFff\`,
+                        value2: \`#0000ff\`,
+                        value3: \`#ff0000\`,
+                        value4: \`#ff00FF\`,
+                        shortFormColorHash: \`#f0F\`
+                    }
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '04:LINT3020:Code style: File should follow color case',
+                '07:LINT3020:Code style: File should follow color case'
+            ]);
+        });
+
+        it('BRS file color format is none - no color values found', () => {
+            init({
+                'color-format': 'never'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    colorLengthStringNoColorValues = "abcdefg"
+                    colorLengthStringInvalidColorValues = "0xxx0000"
+                    shortFormColorHash = "#f00"
+                    shortFormColorQuoteNumeric = "0xf00"
+
+                    colorLengthStringNoColorValues = \`abcdefg\`
+                    colorLengthStringInvalidColorValues = \`0xxx0000\`
+                    shortFormColorHash = \`#f00\`
+                    shortFormColorQuoteNumeric = \`0xf00\`
+                end sub
+            `);
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('color-format:never but color values found', () => {
+            init({
+                'color-format': 'never'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    colors = {
+                        value1: "#0000ff",
+                        value2: "#00FFff",
+                        value3: "#ff0000",
+                        shortFormColorHash: "#f0F"
+                    }
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '04:LINT3019:Code style: File should follow color format',
+                '05:LINT3019:Code style: File should follow color format',
+                '06:LINT3019:Code style: File should follow color format'
+            ]);
+        });
+
+        it('quoted-numeric-hex & color-cert:always', () => {
+            init({
+                'color-format': 'quoted-numeric-hex',
+                'color-cert': 'always'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    color = "0xDBDBDC"
+                    color = "0x161616"
+                    color = "0xDBDBDBFF"
+                    color = "0x161615"
+                    longStringWithColors = "Long string value with 0x161615 non broadcast safe color values defined"
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '03:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
+                '06:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'
+            ]);
+        });
+
+        it('quoted-numeric-hex & color-cert:off', () => {
+            init({
+                'color-format': 'quoted-numeric-hex',
+                'color-cert': 'off'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    color = "0xDBDBDC"
+                    color = "0x161616"
+                    color = "0xDBDBDBFF"
+                    color = "0x161615"
+                    longStringWithColors = "Long string value with 0x161615 non broadcast safe color values defined"
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('quoted-numeric-hex, color-alpha:allowed, color-alpha-defaults:never', () => {
+            init({
+                'color-format': 'quoted-numeric-hex',
+                'color-alpha': 'allowed',
+                'color-alpha-defaults': 'never'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    color = "0xf00000"
+                    color = "0xff0000cc"
+                    color = "0xfff000"
+                    color = "0xffff0000"
+                    color = "0xfffff0FF"
+                    colorLengthStringNoColorValues = "abcdefg"
+                    colorLengthStringInvalidColorValues = "0xxx0000"
+                    shortFormColorHash = "#f00"
+                    shortFormColorQuoteNumeric = "0xf00"
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '06:LINT3022:Code style: File should follow color alpha defaults rule',
+                '07:LINT3022:Code style: File should follow color alpha defaults rule'
+            ]);
+        });
+
+        it('quoted-numeric-hex, alpha values are allowed and only hidden alpha (00) defaults are allowed', () => {
+            init({
+                'color-format': 'quoted-numeric-hex',
+                'color-alpha': 'allowed',
+                'color-alpha-defaults': 'only-hidden'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    color = "0xf00000"
+                    color = "0xff0000cc"
+                    color = "0xfff000"
+                    color = "0xffff0000"
+                    color = "0xfffff0FF"
+                    colorLengthStringNoColorValues = "abcdefg"
+                    colorLengthStringInvalidColorValues = "0xxx0000"
+                    shortFormColorHash = "#f00"
+                    shortFormColorQuoteNumeric = "0xf00"
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '07:LINT3022:Code style: File should follow color alpha defaults rule'
+            ]);
+        });
+
+        it('quoted-numeric-hex and alpha values are not allowed', () => {
+            init({
+                'color-format': 'quoted-numeric-hex',
+                'color-alpha': 'never'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    color = "0xf00000"
+                    color = "0xff0000cc"
+                    color = "0xfff000"
+                    color = "0xffff0000"
+                    color = "0xfffff0FF"
+                    colorLengthStringNoColorValues = "abcdefg"
+                    colorLengthStringInvalidColorValues = "0xxx0000"
+                    shortFormColorHash = "#f00"
+                    shortFormColorQuoteNumeric = "0xf00"
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '04:LINT3021:Code style: File should follow color alpha rule',
+                '06:LINT3021:Code style: File should follow color alpha rule',
+                '07:LINT3021:Code style: File should follow color alpha rule'
+            ]);
+        });
+
+        it('quoted-numeric-hex and alpha values are required', () => {
+            init({
+                'color-format': 'quoted-numeric-hex',
+                'color-alpha': 'always'
+            });
+            program.setFile('source/main.bs', `
+                sub init()
+                    color = "0xf00000"
+                    color = "0xff0000cc"
+                    color = "0xfff000"
+                    color = "0xffff0000"
+                    color = "0xfffff0FF"
+                    colorLengthStringNoColorValues = "abcdefg"
+                    colorLengthStringInvalidColorValues = "0xxx0000"
+                    shortFormColorHash = "#f00"
+                    shortFormColorQuoteNumeric = "0xf00"
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '03:LINT3021:Code style: File should follow color alpha rule',
+                '05:LINT3021:Code style: File should follow color alpha rule'
+            ]);
         });
     });
 

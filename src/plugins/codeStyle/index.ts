@@ -2,6 +2,7 @@ import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, is
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
+import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
 
@@ -24,11 +25,12 @@ export default class CodeStyle {
 
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
+        const validateColorFormat = (colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
         const requireInlineIfThen = inlineIfStyle === 'then';
         const validateBlockIf = blockIfStyle !== 'off';
@@ -36,9 +38,10 @@ export default class CodeStyle {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
-        const walkExpressions = validateAAStyle;
+        const walkExpressions = validateAAStyle || validateColorFormat;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
+        const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
 
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
@@ -123,6 +126,17 @@ export default class CodeStyle {
             PrintStatement: s => {
                 if (validatePrint) {
                     diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
+                }
+            },
+            LiteralExpression: e => {
+                if (validateColorStyle && e.token.kind === TokenKind.StringLiteral) {
+                    validateColorStyle(e.token.text, e.token.range, diagnostics);
+                }
+            },
+            TemplateStringExpression: e => {
+                // only validate template strings that look like regular strings (i.e. `0xAABBCC`)
+                if (validateColorStyle && e.quasis.length === 1 && e.quasis[0].expressions.length === 1) {
+                    validateColorStyle(e.quasis[0].expressions[0].token.text, e.quasis[0].expressions[0].token.range, diagnostics);
                 }
             },
             AALiteralExpression: e => {

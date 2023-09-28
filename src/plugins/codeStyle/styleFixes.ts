@@ -79,7 +79,7 @@ function addConditionGroup(diagnostic: BsDiagnostic) {
 }
 
 function removeConditionGroup(diagnostic: BsDiagnostic) {
-    const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression} = diagnostic.data;
+    const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression } = diagnostic.data;
     const { left, right } = stat.condition.tokens;
     const spaceBefore = left.leadingWhitespace?.length > 0 ? '' : ' ';
     let spaceAfter = '';
