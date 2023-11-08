@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.12](https://github.com/rokucommunity/bslint/compare/v0.8.11...v0.8.12) - 2023-11-08
+### Changed
+ - upgrade to [brighterscript@0.65.9](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0659---2023-11-06). Notable changes since 0.65.8:
+     - Fix issue with unary expression parsing ([brighterscript#938](https://github.com/rokucommunity/brighterscript/pull/938))
+
+
+
 ## [0.8.11](https://github.com/rokucommunity/bslint/compare/v0.8.10...v0.8.11) - 2023-10-08
 ### Added
  - color format checking for bslint ([#94](https://github.com/rokucommunity/bslint/pull/94))
