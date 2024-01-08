@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.14](https://github.com/rokucommunity/bslint/compare/v0.8.13...v0.8.14) - 2024-01-08
+### Changed
+ - upgrade to [brighterscript@0.65.16](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06516---2024-01-08). Notable changes since 0.65.12:
+     - Prevent publishing of empty files ([brighterscript#997](https://github.com/rokucommunity/brighterscript/pull/997))
+     - Improve null safety ([brighterscript#996](https://github.com/rokucommunity/brighterscript/pull/996))
+     - Prevent errors when using enums in a file that's not included in any scopes ([brighterscript#995](https://github.com/rokucommunity/brighterscript/pull/995))
+     - Fix multi-namespace class inheritance transpile bug ([brighterscript#990](https://github.com/rokucommunity/brighterscript/pull/990))
+     - Add check for onChange function ([brighterscript#941](https://github.com/rokucommunity/brighterscript/pull/941))
+     - Fix broken enum transpiling ([brighterscript#985](https://github.com/rokucommunity/brighterscript/pull/985))
+
+
+
 ## [0.8.13](https://github.com/rokucommunity/bslint/compare/v0.8.12...v0.8.13) - 2023-12-07
 ### Changed
  - upgrade to [brighterscript@0.65.12](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06512---2023-12-07). Notable changes since 0.65.9:
