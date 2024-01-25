@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.16](https://github.com/rokucommunity/bslint/compare/v0.8.15...v0.8.16) - 2024-01-25
+### Changed
+ - upgrade to [brighterscript@0.65.18](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06518---2024-01-25). Notable changes since 0.65.17:
+     - Prevent overwriting the Program._manifest if already set on startup ([brighterscript#1027](https://github.com/rokucommunity/brighterscript/pull/1027))
+     - Improving null safety: Add FinalizedBsConfig and tweak plugin events ([brighterscript#1000](https://github.com/rokucommunity/brighterscript/pull/1000))
+
+
+
 ## [0.8.15](https://github.com/rokucommunity/bslint/compare/v0.8.14...v0.8.15) - 2024-01-16
 ### Changed
  - upgrade to [brighterscript@0.65.17](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06517---2024-01-16). Notable changes since 0.65.16:
