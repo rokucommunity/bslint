@@ -1,9 +1,9 @@
-import { File, BsDiagnostic, Range } from 'brighterscript';
+import { BscFile, BsDiagnostic, Range } from 'brighterscript';
 import { ChangeEntry, replaceText } from '../../textEdit';
 import { VarLintError } from './varTracking';
 
 export function extractFixes(
-    addFixes: (file: File, changes: ChangeEntry) => void,
+    addFixes: (file: BscFile, changes: ChangeEntry) => void,
     diagnostics: BsDiagnostic[]
 ): BsDiagnostic[] {
     return diagnostics.filter(diagnostic => {

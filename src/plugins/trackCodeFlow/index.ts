@@ -1,4 +1,4 @@
-import { BsDiagnostic, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterScopeValidateEvent, AfterFileValidateEvent, util } from 'brighterscript';
+import { BsDiagnostic, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterScopeValidateEvent, AfterFileValidateEvent, util, isFunctionExpression } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -78,7 +78,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
 
         resetVarContext(file);
 
-        file.parser.references.functionExpressions.forEach((fun) => {
+        for (const fun of file.parser.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive })) {
             const state: LintState = {
                 file: file,
                 fun: fun,
@@ -170,7 +170,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
                     varLinter.closeBlock(block);
                 }
             }
-        });
+        }
 
         if (this.lintContext.fix) {
             diagnostics = extractFixes(this.lintContext.addFixes, diagnostics);
