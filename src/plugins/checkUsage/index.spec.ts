@@ -1,19 +1,9 @@
-import { expect } from 'chai';
-import { AfterProgramCreateEvent, BsDiagnostic } from 'brighterscript';
+import { AfterProgramCreateEvent } from 'brighterscript';
+import * as path from 'path';
 import Linter from '../../Linter';
 import { createContext, PluginWrapperContext } from '../../util';
 import CheckUsage from './index';
-
-function pad(n: number) {
-    return n > 9 ? `${n}` : `0${n}`;
-}
-
-function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
-    return diagnostics
-        .filter((d) => d.severity && d.severity < 4)
-        .sort((a, b) => a.range.start.line - b.range.start.line)
-        .map((d) => `${pad(d.range.start.line + 1)}:${d.code}:${d.message}`.replace('\\', '/')); // Win to nix path
-}
+import { expectDiagnosticsFmt } from '../../testHelpers.spec';
 
 describe('checkUsage', () => {
     let linter: Linter;
@@ -45,9 +35,7 @@ describe('checkUsage', () => {
             rules: {
             }
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [];
-        expect(actual).deep.equal(expected);
+        expectDiagnosticsFmt(diagnostics, []);
     });
 
     it('detects component refered as child', async () => {
@@ -62,11 +50,9 @@ describe('checkUsage', () => {
             rules: {
             }
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `01:LINT4002:Script 'components/child2.brs' does not seem to be used`,
-            `02:LINT4001:Component 'components/child2.xml' does not seem to be used`
-        ];
-        expect(actual).deep.equal(expected);
+        expectDiagnosticsFmt(diagnostics, [
+            `01:LINT4002:Script 'components${path.sep}child2.brs' does not seem to be used`,
+            `02:LINT4001:Component 'components${path.sep}child2.xml' does not seem to be used`
+        ]);
     });
 });

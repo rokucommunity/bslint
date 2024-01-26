@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement } from 'brighterscript';
+import { File, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -26,17 +26,17 @@ interface ValidationInfo {
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
-function getDeferred(file: BscFile) {
+function getDeferred(file: File) {
     return deferredValidation.get(file.srcPath);
 }
 
-export function resetVarContext(file: BscFile) {
+export function resetVarContext(file: File) {
     deferredValidation.set(file.srcPath, []);
 }
 
 export function createVarLinter(
     lintContext: PluginContext,
-    file: BscFile,
+    file: File,
     fun: FunctionExpression,
     state: LintState,
     diagnostics: BsDiagnostic[]
@@ -376,7 +376,7 @@ export function createVarLinter(
 export function runDeferredValidation(
     lintContext: PluginContext,
     scope: Scope,
-    files: BscFile[],
+    files: File[],
     callables: CallableContainerMap
 ) {
     const topLevelVars = buildTopLevelVars(scope, lintContext.globals);
@@ -415,7 +415,7 @@ function buildTopLevelVars(scope: Scope, globals: string[]) {
 
 function deferredVarLinter(
     scope: Scope,
-    file: BscFile,
+    file: File,
     callables: CallableContainerMap,
     toplevel: Set<string>,
     deferred: ValidationInfo[],

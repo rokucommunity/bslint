@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag } from 'brighterscript';
+import { File, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -23,7 +23,7 @@ enum ReturnLintError {
 
 export function createReturnLinter(
     lintContext: PluginContext,
-    file: BscFile,
+    file: File,
     fun: FunctionExpression,
     state: LintState,
     diagnostics: BsDiagnostic[]

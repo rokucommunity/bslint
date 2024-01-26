@@ -1,4 +1,4 @@
-import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, BscFile, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile } from 'brighterscript';
+import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, File, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 
@@ -37,7 +37,7 @@ export default class CheckUsage implements CompilerPlugin {
         this.walked = walked;
     }
 
-    private walkChildren(v: Vertice, children: SGNode[], file: BscFile) {
+    private walkChildren(v: Vertice, children: SGNode[], file: File) {
         children.forEach(node => {
             const name = node.tagName;
             if (name) {
@@ -198,7 +198,7 @@ export default class CheckUsage implements CompilerPlugin {
                         range: Range.create(0, 0, 1, 0),
                         file: v.file
                     }]);
-                } else if (v.file.componentName?.range) {
+                } else if (isXmlFile(v.file) && v.file.componentName?.range) {
                     v.file.addDiagnostics([{
                         severity: DiagnosticSeverity.Warning,
                         code: UnusedCode.UnusedComponent,
@@ -220,7 +220,7 @@ function normalizePath(s: string) {
     return p;
 }
 
-function createComponentEdge(name: string, range: Range = null, file: BscFile = null) {
+function createComponentEdge(name: string, range: Range = null, file: File = null) {
     return {
         name: `"${name.toLowerCase()}"`,
         range,
@@ -230,13 +230,13 @@ function createComponentEdge(name: string, range: Range = null, file: BscFile = 
 
 interface Vertice {
     name: string;
-    file: BscFile;
+    file: File;
     edges: Edge[];
     used?: boolean;
 }
 
 interface Edge {
     name: string;
-    file?: BscFile;
+    file?: File;
     range?: Range;
 }

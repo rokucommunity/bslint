@@ -13,6 +13,11 @@ export type RuleFunction = 'no-function' | 'no-sub' | 'auto' | 'off';
 export type RuleAAComma = 'always' | 'no-dangling' | 'never' | 'off';
 export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off';
 export type RuleEolLast = 'always' | 'never' | 'off';
+export type RuleColorFormat = 'hash-hex' | 'quoted-numeric-hex' | 'never' | 'off';
+export type RuleColorCase = 'upper' | 'lower' | 'off';
+export type RuleColorAlpha = 'always' | 'allowed' | 'never' | 'off';
+export type RuleColorAlphaDefaults = 'allowed' | 'only-hidden' | 'never' | 'off';
+export type RuleColorCertCompliant = 'always' | 'off'; // Roku cert requirement for broadcast safe colors. 6.4
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
     lintConfig?: string;
@@ -39,6 +44,11 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         // Will be transformed to RegExp type when program context is created.
         'todo-pattern'?: string;
         'eol-last'?: RuleEolLast;
+        'color-format'?: RuleColorFormat;
+        'color-case'?: RuleColorCase;
+        'color-alpha'?: RuleColorAlpha;
+        'color-alpha-defaults'?: RuleColorAlphaDefaults;
+        'color-cert'?: RuleColorCertCompliant;
     };
     globals?: string[];
     ignores?: string[];
@@ -67,6 +77,11 @@ export interface BsLintRules {
     noTodo: BsLintSeverity;
     noStop: BsLintSeverity;
     eolLast: RuleEolLast;
+    colorFormat: RuleColorFormat;
+    colorCase: RuleColorCase;
+    colorAlpha: RuleColorAlpha;
+    colorAlphaDefaults: RuleColorAlphaDefaults;
+    colorCertCompliant: RuleColorCertCompliant;
 }
 
 export { Linter };

@@ -66,7 +66,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         const { scope } = event;
         const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
         const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
-        scope.addDiagnostics(diagnostics);
+        scope.addDiagnostics(diagnostics as any);
     }
 
     afterFileValidate(event: AfterFileValidateEvent) {

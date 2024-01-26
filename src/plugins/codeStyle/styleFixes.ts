@@ -1,10 +1,10 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, SymbolTypeFlag, VoidType, WhileStatement } from 'brighterscript';
+import { File, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, SymbolTypeFlag, VoidType, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
 
 export function extractFixes(
-    addFixes: (file: BscFile, changes: ChangeEntry) => void,
+    addFixes: (file: File, changes: ChangeEntry) => void,
     diagnostics: BsDiagnostic[]
 ): BsDiagnostic[] {
     return diagnostics.filter(diagnostic => {
