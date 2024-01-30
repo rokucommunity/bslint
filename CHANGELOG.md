@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.17](https://github.com/rokucommunity/bslint/compare/v0.8.16...v0.8.17) - 2024-01-30
+### Changed
+ - upgrade to [brighterscript@0.65.19](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06519---2024-01-30). Notable changes since 0.65.18:
+     - Backport v1 syntax changes ([brighterscript#1034](https://github.com/rokucommunity/brighterscript/pull/1034))
+
+
+
 ## [0.8.16](https://github.com/rokucommunity/bslint/compare/v0.8.15...v0.8.16) - 2024-01-25
 ### Changed
  - upgrade to [brighterscript@0.65.18](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06518---2024-01-25). Notable changes since 0.65.17:
