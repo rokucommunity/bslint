@@ -1,4 +1,4 @@
-import { BsDiagnostic, File, DiagnosticSeverity, DiagnosticTag, Range } from 'brighterscript';
+import { BsDiagnostic, BscFile, DiagnosticSeverity, DiagnosticTag, Range } from 'brighterscript';
 import { CodeDescription, DiagnosticRelatedInformation, Diagnostic } from 'vscode-languageserver-types';
 import { expect } from 'chai';
 import { firstBy } from 'thenby';
@@ -50,7 +50,7 @@ interface PartialDiagnostic {
     tags?: Partial<DiagnosticTag>[];
     relatedInformation?: Partial<DiagnosticRelatedInformation>[];
     data?: unknown;
-    file?: Partial<File>;
+    file?: Partial<BscFile>;
 }
 
 /**

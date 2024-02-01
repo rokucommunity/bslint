@@ -3,7 +3,7 @@ import * as minimatch from 'minimatch';
 import { BsLintConfig, BsLintRules, RuleSeverity, BsLintSeverity } from './index';
 import { readFileSync, existsSync } from 'fs';
 import * as path from 'path';
-import { Program, File, DiagnosticSeverity } from 'brighterscript';
+import { Program, BscFile, DiagnosticSeverity } from 'brighterscript';
 import { applyFixes, ChangeEntry, TextEdit } from './textEdit';
 import { addJob } from './Linter';
 
@@ -99,10 +99,10 @@ export interface PluginContext {
     severity: Readonly<BsLintRules>;
     todoPattern: Readonly<RegExp>;
     globals: string[];
-    ignores: (file: File) => boolean;
+    ignores: (file: BscFile) => boolean;
     fix: Readonly<boolean>;
     checkUsage: Readonly<boolean>;
-    addFixes: (file: File, entry: ChangeEntry) => void;
+    addFixes: (file: BscFile, entry: ChangeEntry) => void;
 }
 
 export interface PluginWrapperContext extends PluginContext {
@@ -121,12 +121,12 @@ export function createContext(program: Program): PluginWrapperContext {
         severity: rulesToSeverity(rules),
         todoPattern: rules['todo-pattern'] ? new RegExp(rules['todo-pattern']) : /TODO|todo|FIXME/,
         globals,
-        ignores: (file: File) => {
+        ignores: (file: BscFile) => {
             return !file || ignorePatterns.some(pattern => minimatch(file.srcPath, pattern));
         },
         fix,
         checkUsage,
-        addFixes: (file: File, entry: ChangeEntry) => {
+        addFixes: (file: BscFile, entry: ChangeEntry) => {
             if (!pendingFixes.has(file.srcPath)) {
                 pendingFixes.set(file.srcPath, entry.changes);
             } else {

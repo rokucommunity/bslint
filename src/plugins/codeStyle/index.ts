@@ -39,7 +39,6 @@ export default class CodeStyle implements CompilerPlugin {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
-        const walkExpressions = validateAAStyle || validateColorFormat;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
@@ -85,6 +84,10 @@ export default class CodeStyle implements CompilerPlugin {
         }
 
         file.ast.walk(createVisitor({
+            // validate function style (`function` or `sub`)
+            FunctionExpression: (func) => {
+                this.validateFunctionStyle(func, diagnostics);
+            },
             IfStatement: s => {
                 const hasThenToken = !!s.tokens.then;
                 if (!s.isInline && validateBlockIf) {
@@ -157,12 +160,7 @@ export default class CodeStyle implements CompilerPlugin {
                     diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
                 }
             }
-        }), { walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive });
-
-        // validate function style (`function` or `sub`)
-        for (const fun of file.parser.references.functionExpressions) {
-            this.validateFunctionStyle(fun, diagnostics);
-        }
+        }), { walkMode: WalkMode.visitAllRecursive });
 
         // add file reference
         let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({

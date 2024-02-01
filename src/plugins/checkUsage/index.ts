@@ -1,4 +1,4 @@
-import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, File, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile } from 'brighterscript';
+import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 
@@ -37,7 +37,7 @@ export default class CheckUsage implements CompilerPlugin {
         this.walked = walked;
     }
 
-    private walkChildren(v: Vertice, children: SGNode[], file: File) {
+    private walkChildren(v: Vertice, children: SGNode[], file: BscFile) {
         children.forEach(node => {
             const name = node.tagName;
             if (name) {
@@ -108,6 +108,12 @@ export default class CheckUsage implements CompilerPlugin {
         }
     }
 
+    private functionExpressionCache = new Cache<BscFile, FunctionExpression[]>();
+
+    beforeProgramValidate() {
+        this.functionExpressionCache.clear();
+    }
+
     afterScopeValidate(event: AfterScopeValidateEvent) {
         const { scope } = event;
         const files = scope.getAllFiles();
@@ -159,9 +165,16 @@ export default class CheckUsage implements CompilerPlugin {
             if (pkgPath === 'source/main.brs' || pkgPath === 'source/main.bs') {
                 this.main = fv;
             }
+
+            // look up all function expressions exactly 1 time for this file, even if it's used across many scopes
+            const functionExpressions = this.functionExpressionCache.getOrAdd(file, () => {
+                return file.parser.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive });
+            });
+
+
             // find strings that look like referring to component names
-            file.parser.references.functionExpressions.forEach(fun => {
-                fun.body.walk(createVisitor({
+            for (const func of functionExpressions) {
+                func.body.walk(createVisitor({
                     LiteralExpression: (e) => {
                         const { kind } = e.token;
                         if (kind === TokenKind.StringLiteral) {
@@ -179,7 +192,7 @@ export default class CheckUsage implements CompilerPlugin {
                         }
                     }
                 }), { walkMode: WalkMode.visitExpressions });
-            });
+            }
         });
     }
 
@@ -220,7 +233,7 @@ function normalizePath(s: string) {
     return p;
 }
 
-function createComponentEdge(name: string, range: Range = null, file: File = null) {
+function createComponentEdge(name: string, range: Range = null, file: BscFile = null) {
     return {
         name: `"${name.toLowerCase()}"`,
         range,
@@ -230,13 +243,13 @@ function createComponentEdge(name: string, range: Range = null, file: File = nul
 
 interface Vertice {
     name: string;
-    file: File;
+    file: BscFile;
     edges: Edge[];
     used?: boolean;
 }
 
 interface Edge {
     name: string;
-    file?: File;
+    file?: BscFile;
     range?: Range;
 }
