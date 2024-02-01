@@ -80,8 +80,8 @@ function addConditionGroup(diagnostic: BsDiagnostic) {
 
 function removeConditionGroup(diagnostic: BsDiagnostic) {
     const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression } = diagnostic.data;
-    const { left, right } = stat.condition.tokens;
-    const spaceBefore = left.leadingWhitespace?.length > 0 ? '' : ' ';
+    const { leftParen, rightParen } = stat.condition.tokens;
+    const spaceBefore = leftParen.leadingWhitespace?.length > 0 ? '' : ' ';
     let spaceAfter = '';
     if (isIfStatement(stat)) {
         spaceAfter = stat.isInline ? ' ' : '';
@@ -92,8 +92,8 @@ function removeConditionGroup(diagnostic: BsDiagnostic) {
     return {
         diagnostic,
         changes: [
-            replaceText(left.range, spaceBefore),
-            replaceText(right.range, spaceAfter)
+            replaceText(leftParen.range, spaceBefore),
+            replaceText(rightParen.range, spaceAfter)
         ]
     };
 }
@@ -129,16 +129,16 @@ function removeThenToken(diagnostic: BsDiagnostic) {
 
 function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
     const fun: FunctionExpression = diagnostic.data;
-    const space = fun.end?.text.indexOf(' ') > 0 ? ' ' : '';
+    const space = fun.tokens.endFunctionType?.text.indexOf(' ') > 0 ? ' ' : '';
     // sub/function keyword
     const keywordChanges = [
-        replaceText(fun.functionType.range, token),
-        replaceText(fun.end?.range, `end${space}${token}`)
+        replaceText(fun.tokens.functionType.range, token),
+        replaceText(fun.tokens.endFunctionType?.range, `end${space}${token}`)
     ];
     // remove `as void` in case of `sub`
     const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime }) ?? VoidType.instance;
     const returnChanges = token === 'sub' && fun.returnTypeExpression && isVoidType(returnType) ? [
-        replaceText(Range.create(fun.rightParen.range.end, fun.returnTypeExpression.range.end), '')
+        replaceText(Range.create(fun.tokens.rightParen.range.end, fun.returnTypeExpression.range.end), '')
     ] : [];
     return {
         diagnostic,

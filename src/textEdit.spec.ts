@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Range } from 'vscode-languageserver';
+import { Range } from 'brighterscript';
 import { applyEdits, compareRanges, getLineOffsets } from './textEdit';
 
 describe('sortByRange', () => {

@@ -89,12 +89,12 @@ export function createReturnLinter(
 
     function finalize(last: StatementInfo) {
         const { consistentReturn } = severity;
-        const kind = fun.functionType?.kind === TokenKind.Sub ? 'Sub' : 'Function';
+        const kind = fun.tokens.functionType?.kind === TokenKind.Sub ? 'Sub' : 'Function';
         const returnedValues = returns.filter((r) => r.hasValue);
         const hasReturnedValue = returnedValues.length > 0;
         // Function range only includes the function signature
-        const funRangeStart = (fun.functionType ?? fun.leftParen).range.start;
-        const funRangeEnd = (fun.returnTypeExpression ?? fun.rightParen).range.end;
+        const funRangeStart = (fun.tokens.functionType ?? fun.tokens.leftParen).range.start;
+        const funRangeEnd = (fun.returnTypeExpression ?? fun.tokens.rightParen).range.end;
         const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
 
         // Explicit `as void` or `sub` without return type should never return a value

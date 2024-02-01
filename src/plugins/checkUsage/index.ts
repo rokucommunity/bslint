@@ -176,15 +176,15 @@ export default class CheckUsage implements CompilerPlugin {
             for (const func of functionExpressions) {
                 func.body.walk(createVisitor({
                     LiteralExpression: (e) => {
-                        const { kind } = e.token;
+                        const { kind } = e.tokens.value;
                         if (kind === TokenKind.StringLiteral) {
-                            const { text } = e.token;
+                            const { text } = e.tokens.value;
                             if (text !== '""') {
                                 const name = text.toLowerCase();
                                 if (map.has(name)) {
                                     fv.edges.push({
                                         name,
-                                        range: e.token.range,
+                                        range: e.tokens.value.range,
                                         file
                                     });
                                 }

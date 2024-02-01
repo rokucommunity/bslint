@@ -133,14 +133,14 @@ export default class CodeStyle implements CompilerPlugin {
                 }
             },
             LiteralExpression: e => {
-                if (validateColorStyle && e.token.kind === TokenKind.StringLiteral) {
-                    validateColorStyle(e.token.text, e.token.range, diagnostics);
+                if (validateColorStyle && e.tokens.value.kind === TokenKind.StringLiteral) {
+                    validateColorStyle(e.tokens.value.text, e.tokens.value.range, diagnostics);
                 }
             },
             TemplateStringExpression: e => {
                 // only validate template strings that look like regular strings (i.e. `0xAABBCC`)
                 if (validateColorStyle && e.quasis.length === 1 && e.quasis[0].expressions.length === 1) {
-                    validateColorStyle(e.quasis[0].expressions[0].token.text, e.quasis[0].expressions[0].token.range, diagnostics);
+                    validateColorStyle(e.quasis[0].expressions[0].tokens.value.text, e.quasis[0].expressions[0].tokens.value.range, diagnostics);
                 }
             },
             AALiteralExpression: e => {
@@ -181,15 +181,15 @@ export default class CodeStyle implements CompilerPlugin {
         const indexes = collectWrappingAAMembersIndexes(aa);
         const last = indexes.length - 1;
         const isSingleLine = (aa: AALiteralExpression): boolean => {
-            return aa.open.range.start.line === aa.close.range.end.line;
+            return aa.tokens.open.range.start.line === aa.tokens.close.range.end.line;
         };
 
         indexes.forEach((index, i) => {
             const member = aa.elements[index] as AAMemberExpression;
-            const hasComma = !!member.commaToken;
+            const hasComma = !!member.tokens.comma;
             if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
                 if (hasComma) {
-                    diagnostics.push(messages.removeAAComma(member.commaToken.range));
+                    diagnostics.push(messages.removeAAComma(member.tokens.comma.range));
                 }
             } else if (!hasComma) {
                 diagnostics.push(messages.addAAComma(member.value.range));
@@ -201,7 +201,7 @@ export default class CodeStyle implements CompilerPlugin {
         const { severity } = this.lintContext;
         const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = severity;
         const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
-        const kind = fun.functionType.kind;
+        const kind = fun.tokens.functionType.kind;
         const hasReturnedValue = style === 'auto' || typeAnnotations !== 'off' ? this.getFunctionReturns(fun) : false;
 
         // type annotations
@@ -210,7 +210,7 @@ export default class CodeStyle implements CompilerPlugin {
                 if (hasReturnedValue && !fun.returnTypeExpression) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
                         // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
-                        fun.functionType?.range ?? fun.range
+                        fun.tokens.functionType?.range ?? fun.range
                     ));
                 }
             }
