@@ -1,10 +1,11 @@
-import { BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, SymbolTypeFlag, isVoidType, CompilerPlugin, AfterFileValidateEvent } from 'brighterscript';
+import { BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, isVoidType, CompilerPlugin, AfterFileValidateEvent } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
+import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTableFlag';
 
 export default class CodeStyle implements CompilerPlugin {
 

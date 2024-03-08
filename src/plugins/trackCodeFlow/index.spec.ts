@@ -214,7 +214,8 @@ describe('trackCodeFlow', () => {
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
-            `27:LINT1003:Not all the code paths assign 'b'`
+            `27:LINT1003:Not all the code paths assign 'b'`,
+            `64:1031:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`
         ];
         expect(actual).deep.equal(expected);
     });

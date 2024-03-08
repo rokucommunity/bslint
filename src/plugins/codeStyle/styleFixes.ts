@@ -1,7 +1,8 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, SymbolTypeFlag, VoidType, WhileStatement } from 'brighterscript';
+import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, VoidType, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
+import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTableFlag';
 
 export function extractFixes(
     addFixes: (file: BscFile, changes: ChangeEntry) => void,

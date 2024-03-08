@@ -1,6 +1,7 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
+import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTableFlag';
 
 interface ReturnInfo {
     stat: ReturnStatement;
