@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, NamespacedVariableNameExpression, ParseMode, util, isMethodStatement, isTryCatchStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 
@@ -21,17 +21,17 @@ interface ValidationInfo {
     name: string;
     local?: VarInfo;
     range: Range;
-    namespace?: NamespacedVariableNameExpression;
+    namespace?: NamespaceStatement;
 }
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
 function getDeferred(file: BscFile) {
-    return deferredValidation.get(file.pathAbsolute);
+    return deferredValidation.get(file.srcPath);
 }
 
 export function resetVarContext(file: BscFile) {
-    deferredValidation.set(file.pathAbsolute, []);
+    deferredValidation.set(file.srcPath, []);
 }
 
 export function createVarLinter(
@@ -48,8 +48,8 @@ export function createVarLinter(
     const args: Map<string, VarInfo> = new Map();
     args.set('m', { name: 'm', range: Range.create(0, 0, 0, 0), isParam: true, isUnsafe: false, isUsed: true });
     fun.parameters.forEach((p) => {
-        const name = p.name.text;
-        args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false, isUsed: false });
+        const name = p.tokens.name.text;
+        args.set(name.toLowerCase(), { name: name, range: p.tokens.name.range, isParam: true, isUnsafe: false, isUsed: false });
     });
 
     if (isMethodStatement(fun.functionStatement)) {
@@ -154,7 +154,7 @@ export function createVarLinter(
             // for iterator will be declared by the next assignement statement
         } else if (isForEachStatement(stat)) {
             // declare `for each` iterator variable
-            setLocal(block, stat.item, VarRestriction.Iterator);
+            setLocal(block, stat.tokens.item, VarRestriction.Iterator);
         } else if (state.parent?.narrows) {
             narrowBlock(block);
         }
@@ -186,9 +186,9 @@ export function createVarLinter(
         const { stat } = curr;
         if (isAssignmentStatement(stat) && state.parent) {
             // value = stat.value;
-            setLocal(state.parent, stat.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
+            setLocal(state.parent, stat.tokens.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
         } else if (isCatchStatement(stat) && state.parent) {
-            setLocal(curr, stat.exceptionVariable, VarRestriction.CatchedError);
+            setLocal(curr, stat.tokens.exceptionVariable, VarRestriction.CatchedError);
         } else if (isLabelStatement(stat) && !foundLabelAt) {
             foundLabelAt = stat.range.start.line;
         } else if (foundLabelAt && isGotoStatement(stat) && state.parent) {
@@ -280,7 +280,7 @@ export function createVarLinter(
 
     function visitExpression(expr: Expression, parent: Expression, curr: StatementInfo) {
         if (isVariableExpression(expr)) {
-            const name = expr.name.text;
+            const name = expr.tokens.name.text;
             if (name === 'm') {
                 return;
             }
@@ -291,12 +291,12 @@ export function createVarLinter(
                     kind: ValidationKind.UninitializedVar,
                     name: name,
                     range: expr.range,
-                    namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)?.nameExpression
+                    namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)
                 });
                 return;
             } else {
                 local.isUsed = true;
-                verifyVarCasing(local, expr.name);
+                verifyVarCasing(local, expr.tokens.name);
             }
 
             if (local.isUnsafe && !findSafeLocal(name)) {
@@ -334,7 +334,7 @@ export function createVarLinter(
             // e.g. 2nd condition in: if x <> invalid and x.y = z
             return curr.narrows?.some(narrow => narrow.text === local.name);
         }
-        const operator = parent.operator.kind;
+        const operator = parent.tokens.operator.kind;
         if (operator !== TokenKind.Equal && operator !== TokenKind.LessGreater) {
             return false;
         }
@@ -382,7 +382,7 @@ export function runDeferredValidation(
     const topLevelVars = buildTopLevelVars(scope, lintContext.globals);
     const diagnostics: BsDiagnostic[] = [];
     files.forEach((file) => {
-        const deferred = deferredValidation.get(file.pathAbsolute);
+        const deferred = deferredValidation.get(file.srcPath);
         if (deferred) {
             deferredVarLinter(scope, file, callables, topLevelVars, deferred, diagnostics);
         }
@@ -402,7 +402,7 @@ function buildTopLevelVars(scope: Scope, globals: string[]) {
         toplevel.add(getRootNamespaceName(namespace).toLowerCase()); // keep root of namespace
     }
     for (const [, cls] of scope.getClassMap()) {
-        toplevel.add(cls.item.name.text.toLowerCase());
+        toplevel.add(cls.item.tokens.name.text.toLowerCase());
     }
     for (const [, enm] of scope.getEnumMap()) {
         toplevel.add(enm.item.name.toLowerCase());
@@ -465,7 +465,7 @@ export function getRootNamespaceName(namespace: NamespaceStatement) {
             break;
         }
     }
-    const result = util.getDottedGetPath(namespace.nameExpression)[0]?.name?.text;
+    const result = util.getDottedGetPath(namespace.nameExpression)[0]?.tokens.name?.text;
     // const name = namespace.getName(ParseMode.BrighterScript).toLowerCase();
     // if (name.includes('imigx')) {
     //     console.log([name, result]);

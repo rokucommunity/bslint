@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { Program, util } from 'brighterscript';
+import { AfterProgramCreateEvent, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
@@ -20,11 +20,12 @@ describe('trackCodeFlow', () => {
         linter = new Linter();
         program = new Program({});
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProgramCreate', { builder: undefined, program: program });
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const trackCodeFlow = new TrackCodeFlow(lintContext);
                 program.plugins.add(trackCodeFlow);
@@ -62,7 +63,7 @@ describe('trackCodeFlow', () => {
                 'consistent-return': 'off',
                 'unused-variable': 'off'
             },
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
@@ -213,7 +214,8 @@ describe('trackCodeFlow', () => {
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
-            `27:LINT1003:Not all the code paths assign 'b'`
+            `27:LINT1003:Not all the code paths assign 'b'`,
+            `64:1031:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -321,8 +323,9 @@ describe('trackCodeFlow', () => {
             rules: {
                 'consistent-return': 'error',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1142]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `04:LINT2002:Sub as void should not return a value`,
@@ -365,7 +368,7 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             globals: ['a'],
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [

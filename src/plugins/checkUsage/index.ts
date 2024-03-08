@@ -1,4 +1,4 @@
-import { BscFile, CallableContainerMap, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Program, Range, Scope, TokenKind, WalkMode, XmlFile } from 'brighterscript';
+import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 
@@ -9,7 +9,7 @@ export enum UnusedCode {
     UnusedScript = 'LINT4002'
 }
 
-export default class CheckUsage {
+export default class CheckUsage implements CompilerPlugin {
 
     name = 'checkUsage';
 
@@ -39,16 +39,16 @@ export default class CheckUsage {
 
     private walkChildren(v: Vertice, children: SGNode[], file: BscFile) {
         children.forEach(node => {
-            const name = node.tag?.text;
+            const name = node.tagName;
             if (name) {
-                v.edges.push(createComponentEdge(name, node.tag.range, file));
+                v.edges.push(createComponentEdge(name, node.tokens.startTagName.range, file));
             }
             const itemComponentName = node.getAttribute('itemcomponentname');
             if (itemComponentName) {
-                v.edges.push(createComponentEdge(itemComponentName.value.text, itemComponentName.value.range, file));
+                v.edges.push(createComponentEdge(itemComponentName.value, itemComponentName.range, file));
             }
-            if (node.children) {
-                this.walkChildren(v, node.children, file);
+            if (node.elements) {
+                this.walkChildren(v, node.elements, file);
             }
         });
     }
@@ -69,7 +69,8 @@ export default class CheckUsage {
         });
     }
 
-    afterFileValidate(file: BscFile) {
+    afterFileValidate(event: AfterFileValidateEvent) {
+        const { file } = event;
         // collect all XML components
         if (isXmlFile(file)) {
             if (!file.componentName) {
@@ -100,14 +101,22 @@ export default class CheckUsage {
                 v.edges.push(createComponentEdge(text, range, file));
             }
 
-            const children = file.ast.component?.children;
+            const children = file.ast.componentElement?.childrenElement;
             if (children) {
-                this.walkChildren(v, children.children, file);
+                this.walkChildren(v, children.elements, file);
             }
         }
     }
 
-    afterScopeValidate(scope: Scope, files: BscFile[], _: CallableContainerMap) {
+    private functionExpressionCache = new Cache<BscFile, FunctionExpression[]>();
+
+    beforeProgramValidate() {
+        this.functionExpressionCache.clear();
+    }
+
+    afterScopeValidate(event: AfterScopeValidateEvent) {
+        const { scope } = event;
+        const files = scope.getAllFiles();
         const pkgPath = scope.name.toLowerCase();
         let v: Vertice;
         if (scope.name === 'global') {
@@ -156,19 +165,26 @@ export default class CheckUsage {
             if (pkgPath === 'source/main.brs' || pkgPath === 'source/main.bs') {
                 this.main = fv;
             }
+
+            // look up all function expressions exactly 1 time for this file, even if it's used across many scopes
+            const functionExpressions = this.functionExpressionCache.getOrAdd(file, () => {
+                return file.parser.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive });
+            });
+
+
             // find strings that look like referring to component names
-            file.parser.references.functionExpressions.forEach(fun => {
-                fun.body.walk(createVisitor({
+            for (const func of functionExpressions) {
+                func.body.walk(createVisitor({
                     LiteralExpression: (e) => {
-                        const { kind } = e.token;
+                        const { kind } = e.tokens.value;
                         if (kind === TokenKind.StringLiteral) {
-                            const { text } = e.token;
+                            const { text } = e.tokens.value;
                             if (text !== '""') {
                                 const name = text.toLowerCase();
                                 if (map.has(name)) {
                                     fv.edges.push({
                                         name,
-                                        range: e.token.range,
+                                        range: e.tokens.value.range,
                                         file
                                     });
                                 }
@@ -176,11 +192,11 @@ export default class CheckUsage {
                         }
                     }
                 }), { walkMode: WalkMode.visitExpressions });
-            });
+            }
         });
     }
 
-    afterProgramValidate(_: Program) {
+    afterProgramValidate(_: AfterProgramValidateEvent) {
         if (!this.main) {
             throw new Error('No `main.brs`');
         }
@@ -195,7 +211,7 @@ export default class CheckUsage {
                         range: Range.create(0, 0, 1, 0),
                         file: v.file
                     }]);
-                } else if (v.file.componentName?.range) {
+                } else if (isXmlFile(v.file) && v.file.componentName?.range) {
                     v.file.addDiagnostics([{
                         severity: DiagnosticSeverity.Warning,
                         code: UnusedCode.UnusedComponent,

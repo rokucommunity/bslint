@@ -6,6 +6,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.27](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.26...v1.0.0-alpha.27) - 2024-02-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.27](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha27---2024-02-27)
+
+
+
+## [1.0.0-alpha.26](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.25...v1.0.0-alpha.26) - 2024-02-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.26](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha26---2024-02-01)
+
+
+
+## [1.0.0-alpha.25](https://github.com/rokucommunity/bslint/compare/v0.9.0-alpha.1...v1.0.0-alpha.25) - 2024-02-01
+### Changed
+ - Align with the brighterscript alpha prerelease numbers
+ - upgrade to [brighterscript@1.0.0-alpha.25](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha25---2024-01-25)
+
+
+
+## [0.9.0-alpha.1](https://github.com/rokucommunity/bslint/compare/v0.9.0-alpha.0...v0.9.0-alpha.1) - 2023-09-21
+### Changed
+- fixes for brighterscript v0.66.0-alpha.5 through v0.66.0-alpha.6
+## [0.8.16](https://github.com/rokucommunity/bslint/compare/v0.8.15...v0.8.16) - 2024-01-25
+### Changed
+ - upgrade to [brighterscript@0.65.18](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06518---2024-01-25). Notable changes since 0.65.17:
+     - Prevent overwriting the Program._manifest if already set on startup ([brighterscript#1027](https://github.com/rokucommunity/brighterscript/pull/1027))
+     - Improving null safety: Add FinalizedBsConfig and tweak plugin events ([brighterscript#1000](https://github.com/rokucommunity/brighterscript/pull/1000))
 ## [0.8.19](https://github.com/rokucommunity/bslint/compare/v0.8.18...v0.8.19) - 2024-03-07
 ### Changed
  - upgrade to [brighterscript@0.65.25](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06525---2024-03-07). Notable changes since 0.65.23:
@@ -109,6 +136,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.9.0-alpha.0](https://github.com/rokucommunity/bslint/compare/v0.8.9...v0.9.0-alpha.0) - 2023-07-27
+### Changed
+- fixes for brighterscript v0.66.0-alpha.0 through v0.66.0-alpha.4
+
+
+
 ## [0.8.9](https://github.com/rokucommunity/bslint/compare/v0.8.8...v0.8.9) - 2023-07-24
 ### Changed
  - upgrade to [brighterscript@0.65.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0654---2023-07-24). Notable changes since 0.65.2:
@@ -161,7 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      - Fix namespace-relative items ([brighterscript#789](https://github.com/rokucommunity/brighterscript/pull/789))
      - Wrap transpiled template strings in parens ([brighterscript#788](https://github.com/rokucommunity/brighterscript/pull/788))
      - Simplify the ast range logic ([brighterscript#784](https://github.com/rokucommunity/brighterscript/pull/784))
-### Fixed 
+### Fixed
  - do not consider consts as unused variables ([#85](https://github.com/rokucommunity/bslint/pull/85))
 
 

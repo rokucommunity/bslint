@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProgramCreateEvent, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -51,7 +51,7 @@ describe('codeStyle', () => {
             }
         } as BsLintConfig);
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProgramCreate', { builder: {} as any, program: program });
         return program;
     }
 
@@ -61,7 +61,8 @@ describe('codeStyle', () => {
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const codeStyle = new CodeStyle(lintContext);
                 program.plugins.add(codeStyle);
@@ -302,8 +303,9 @@ describe('codeStyle', () => {
                     'named-function-style': 'auto',
                     'anon-function-style': 'auto',
                     'no-print': 'off'
-                }
-            });
+                },
+                diagnosticFilters: [1142]
+            } as any);
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
                 `22:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,

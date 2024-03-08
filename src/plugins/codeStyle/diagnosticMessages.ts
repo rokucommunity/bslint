@@ -90,7 +90,7 @@ export const messages = {
         code: CodeStyleError.SubKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'sub' keyword ${reason}`,
-        range: fun.functionType.range,
+        range: fun.tokens.functionType.range,
         data: fun
     }),
     expectedFunctionKeyword: (fun: FunctionExpression, reason: string) => ({
@@ -98,7 +98,7 @@ export const messages = {
         code: CodeStyleError.FunctionKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'function' keyword ${reason}`,
-        range: fun.functionType.range,
+        range: fun.tokens.functionType.range,
         data: fun
     }),
     expectedReturnTypeAnnotation: (range: Range) => ({
