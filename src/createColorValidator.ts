@@ -7,7 +7,7 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
     return (text, range, diagnostics) => {
         const len = text.length;
         if (len < 7 || len > 12) {
-            // we're only interested in string length is between 7 (#DBDBDB) to 12 ("0xDBDBDBff") chars long
+            // we're only interested in string length is between 7 (#EBEBEB) to 12 ("0xEBEBEBFF") chars long
             return;
         }
 
@@ -82,7 +82,7 @@ function validateColorCertCompliance(matches: RegExpMatchArray, range: Range, di
     const validateCertCompliant = certCompliant === 'always';
     if (validateCertCompliant && matches) {
         const BROADCAST_SAFE_BLACK = '161616';
-        const BROADCAST_SAFE_WHITE = 'DBDBDB';
+        const BROADCAST_SAFE_WHITE = 'EBEBEB';
         const MAX_BLACK_LUMA = getColorLuma(BROADCAST_SAFE_BLACK);
         const MAX_WHITE_LUMA = getColorLuma(BROADCAST_SAFE_WHITE);
         let colorValue = matches[0];
