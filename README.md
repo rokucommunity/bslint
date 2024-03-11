@@ -245,7 +245,7 @@ Default rules:
 
 - `color-cert`: enforces Roku's [broadcast safe color 6.4 certification requirement](https://developer.roku.com/en-gb/docs/developer-program/certification/certification.md). Requires that `color-format` is set to `hash-hex` or `quoted-numeric-hex`.
 
-    - `always`: ensures all white and black color-format values either match or are darker/ lighter than the minimum recommended values. For white the minimum value is `#EBEBEB` and for black the minimum value is `#161616`
+    - `always`: ensures all white and black color-format values either match or are darker/ lighter than the minimum recommended values. For white the maximum value is `#EBEBEB` and for black the minimum value is `#161616`
     - `off`: do not validate (**default**)
 
 ### Strictness rules
