@@ -166,7 +166,7 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `11:1001:Cannot find name 'one'`,
+                `11:1140:Cannot find function 'one'`,
                 `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`
             ];
             expect(actual).deep.equal(expected);
