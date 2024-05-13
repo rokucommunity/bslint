@@ -161,7 +161,6 @@
         },
         "rules-code-style": {
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "inline-if-style": {
                     "$ref": "#/definitions/rule-inline-if-style",
@@ -248,7 +247,6 @@
         },
         "rules-strictness": {
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "type-annotations": {
                     "$ref": "#/definitions/rule-type-annotations",
@@ -260,7 +258,6 @@
         },
         "rules-code-flow": {
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "assign-all-paths": {
                      "$ref": "#/definitions/rule",
