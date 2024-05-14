@@ -2,7 +2,7 @@ import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatem
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
-import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTableFlag';
+import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTypeFlag';
 
 export function extractFixes(
     addFixes: (file: BscFile, changes: ChangeEntry) => void,

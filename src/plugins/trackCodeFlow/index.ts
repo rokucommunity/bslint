@@ -4,6 +4,7 @@ import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
 import { extractFixes } from './trackFixes';
 import { addFixesToEvent } from '../../textEdit';
+import { BsLintDiagnosticContext } from '../../Linter';
 
 export interface NarrowingInfo {
     text: string;
@@ -66,7 +67,10 @@ export default class TrackCodeFlow implements CompilerPlugin {
         const { scope } = event;
         const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
         const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
-        scope.addDiagnostics(diagnostics as any);
+        event.program.diagnostics.register(diagnostics as any, {
+            ...BsLintDiagnosticContext,
+            scope: scope
+        });
     }
 
     afterFileValidate(event: AfterFileValidateEvent) {
@@ -175,8 +179,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         if (this.lintContext.fix) {
             diagnostics = extractFixes(this.lintContext.addFixes, diagnostics);
         }
-
-        file.addDiagnostics(diagnostics);
+        event.program.diagnostics.register(diagnostics, BsLintDiagnosticContext);
     }
 }
 

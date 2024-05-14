@@ -1,7 +1,7 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
-import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTableFlag';
+import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTypeFlag';
 
 interface ReturnInfo {
     stat: ReturnStatement;
@@ -36,21 +36,19 @@ export function createReturnLinter(
     function visitStatement(curr: StatementInfo) {
         const { parent } = state;
         if (parent?.returns) {
-            if (!isCommentStatement(curr.stat)) {
-                diagnostics.push({
-                    severity: severity.unreachableCode,
-                    code: ReturnLintError.UnreachableCode,
-                    message: 'Unreachable code',
-                    range: curr.stat.range,
-                    file: file,
-                    tags: [DiagnosticTag.Unnecessary]
-                });
-            }
+            diagnostics.push({
+                severity: severity.unreachableCode,
+                code: ReturnLintError.UnreachableCode,
+                message: 'Unreachable code',
+                range: curr.stat.range,
+                file: file,
+                tags: [DiagnosticTag.Unnecessary]
+            });
         } else if (isReturnStatement(curr.stat)) {
             const { ifs, trys, branch, parent } = state;
             returns.push({
                 stat: curr.stat,
-                hasValue: !!curr.stat.value && !isCommentStatement(curr.stat.value)
+                hasValue: !!curr.stat.value
             });
             // flag parent branch to return
             const returnBlock = (ifs || trys) ? branch : parent;

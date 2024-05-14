@@ -1,11 +1,11 @@
-import { BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression, isVoidType, CompilerPlugin, AfterFileValidateEvent } from 'brighterscript';
+import { BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, AALiteralExpression, isVoidType, CompilerPlugin, AfterFileValidateEvent, Expression, Statement, SymbolTypeFlag } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
-import { SymbolTypeFlag } from 'brighterscript/dist/SymbolTableFlag';
+import { BsLintDiagnosticContext } from '../../Linter';
 
 export default class CodeStyle implements CompilerPlugin {
 
@@ -149,16 +149,19 @@ export default class CodeStyle implements CompilerPlugin {
                     this.validateAAStyle(e, aaCommaStyle, diagnostics);
                 }
             },
-            CommentStatement: e => {
-                if (validateTodo) {
-                    if (this.lintContext.todoPattern.test(e.text)) {
-                        diagnostics.push(messages.noTodo(e.range, noTodo));
-                    }
-                }
-            },
             StopStatement: s => {
                 if (validateNoStop) {
                     diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
+                }
+            },
+            AstNode: (node: Statement | Expression) => {
+                const comments = [...node.getLeadingTrivia(), ...node.getEndTrivia()].filter(t => t.kind === TokenKind.Comment);
+                if (validateTodo && comments.length > 0) {
+                    for (const e of comments) {
+                        if (this.lintContext.todoPattern.test(e.text)) {
+                            diagnostics.push(messages.noTodo(e.range, noTodo));
+                        }
+                    }
                 }
             }
         }), { walkMode: WalkMode.visitAllRecursive });
@@ -175,7 +178,7 @@ export default class CodeStyle implements CompilerPlugin {
         }
 
         // append diagnostics
-        file.addDiagnostics(bsDiagnostics);
+        event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
     }
 
     validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
@@ -186,7 +189,7 @@ export default class CodeStyle implements CompilerPlugin {
         };
 
         indexes.forEach((index, i) => {
-            const member = aa.elements[index] as AAMemberExpression;
+            const member = aa.elements[index];
             const hasComma = !!member.tokens.comma;
             if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
                 if (hasComma) {
@@ -278,17 +281,15 @@ export function collectWrappingAAMembersIndexes(aa: AALiteralExpression): number
     const lastIndex = elements.length - 1;
     for (let i = 0; i < lastIndex; i++) {
         const e = elements[i];
-        if (isCommentStatement(e)) {
-            continue;
-        }
+
         const ne = elements[i + 1];
-        const hasNL = isCommentStatement(ne) || ne.range.start.line > e.range.end.line;
+        const hasNL = ne.range.start.line > e.range.end.line;
         if (hasNL) {
             indexes.push(i);
         }
     }
     const last = elements[lastIndex];
-    if (last && !isCommentStatement(last)) {
+    if (last) {
         indexes.push(lastIndex);
     }
     return indexes;

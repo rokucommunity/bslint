@@ -1,6 +1,10 @@
 import { BsLintConfig } from './index';
 import { ProgramBuilder, BsConfig } from 'brighterscript';
 
+export const BsLintDiagnosticTag = 'BSLint';
+export const BsLintDiagnosticContext = { tags: [BsLintDiagnosticTag] };
+
+
 const pendingJobs: Promise<void>[] = [];
 
 // allow some asynchronous jobs to run after the compiler has finished its work
