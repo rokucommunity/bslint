@@ -570,8 +570,8 @@ describe('codeStyle', () => {
                 [],
                 [0],
                 [0, 1],
-                [1, 3],
-                [0, 2],
+                [0, 1],
+                [0, 1],
                 [0],
                 [1],
                 [1]
@@ -777,9 +777,9 @@ describe('codeStyle', () => {
             });
             program.setFile('source/main.bs', `
                 sub init()
-                    color = "0xDBDBDC"
+                    color = "0xEBEBEC"
                     color = "0x161616"
-                    color = "0xDBDBDBFF"
+                    color = "0xEBEBEBFF"
                     color = "0x161615"
                     longStringWithColors = "Long string value with 0x161615 non broadcast safe color values defined"
                 end sub
@@ -800,7 +800,7 @@ describe('codeStyle', () => {
                 sub init()
                     color = "0xDBDBDC"
                     color = "0x161616"
-                    color = "0xDBDBDBFF"
+                    color = "0xEBEBEBFF"
                     color = "0x161615"
                     longStringWithColors = "Long string value with 0x161615 non broadcast safe color values defined"
                 end sub

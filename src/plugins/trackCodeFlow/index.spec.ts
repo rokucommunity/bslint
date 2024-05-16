@@ -167,7 +167,7 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `11:1001:Cannot find name 'one'`,
+                `11:1140:Cannot find function 'one'`,
                 `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`
             ];
             expect(actual).deep.equal(expected);
@@ -215,7 +215,8 @@ describe('trackCodeFlow', () => {
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
             `27:LINT1003:Not all the code paths assign 'b'`,
-            `64:1031:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`
+            `67:1031:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`,
+            `67:1140:Cannot find function 'Bar'`
         ];
         expect(actual).deep.equal(expected);
     });
