@@ -1,10 +1,10 @@
 import { parse } from 'jsonc-parser';
-import * as minimatch from 'minimatch';
 import { BsLintConfig, BsLintRules, RuleSeverity, BsLintSeverity } from './index';
 import { readFileSync, existsSync } from 'fs';
-import * as path from 'path';
 import { Program, BscFile, DiagnosticSeverity } from 'brighterscript';
 import { applyFixes, ChangeEntry, TextEdit } from './textEdit';
+import minimatch from 'minimatch';
+import path from 'path';
 import { addJob } from './Linter';
 
 export function getDefaultRules(): BsLintConfig['rules'] {
