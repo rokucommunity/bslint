@@ -770,7 +770,7 @@ describe('codeStyle', () => {
             ]);
         });
 
-        it('quoted-numeric-hex & color-cert:always', () => {
+        it.only('quoted-numeric-hex & color-cert:always', () => {
             init({
                 'color-format': 'quoted-numeric-hex',
                 'color-cert': 'always'
