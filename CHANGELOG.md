@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.31](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.30...v1.0.0-alpha.31) - 2024-06-04
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.31](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha31---2024-06-04)
 
 
 ## [1.0.0-alpha.30](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.27...v1.0.0-alpha.30) - 2024-05-16
