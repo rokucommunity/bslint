@@ -42,11 +42,11 @@ export default class CheckUsage implements CompilerPlugin {
         children.forEach(node => {
             const name = node.tagName;
             if (name) {
-                v.edges.push(createComponentEdge(name, node.tokens.startTagName.range, file));
+                v.edges.push(createComponentEdge(name, node.tokens.startTagName.location.range, file));
             }
             const itemComponentName = node.getAttribute('itemcomponentname');
             if (itemComponentName) {
-                v.edges.push(createComponentEdge(itemComponentName.value, itemComponentName.range, file));
+                v.edges.push(createComponentEdge(itemComponentName.value, itemComponentName.location.range, file));
             }
             if (node.elements) {
                 this.walkChildren(v, node.elements, file);
@@ -77,11 +77,11 @@ export default class CheckUsage implements CompilerPlugin {
             if (!file.componentName) {
                 return;
             }
-            const { text, range } = file.componentName;
+            const { text, location } = file.componentName;
             if (!text) {
                 return;
             }
-            const edge = createComponentEdge(text, range, file);
+            const edge = createComponentEdge(text, location?.range, file);
 
             let v: Vertice;
             if (this.map.has(edge.name)) {
@@ -98,8 +98,8 @@ export default class CheckUsage implements CompilerPlugin {
             }
 
             if (file.parentComponentName) {
-                const { text, range } = file.parentComponentName;
-                v.edges.push(createComponentEdge(text, range, file));
+                const { text, location } = file.parentComponentName;
+                v.edges.push(createComponentEdge(text, location?.range, file));
             }
 
             const children = file.ast.componentElement?.childrenElement;
@@ -185,7 +185,7 @@ export default class CheckUsage implements CompilerPlugin {
                                 if (map.has(name)) {
                                     fv.edges.push({
                                         name,
-                                        range: e.tokens.value.range,
+                                        range: e.tokens.value.location.range,
                                         file
                                     });
                                 }
@@ -212,12 +212,12 @@ export default class CheckUsage implements CompilerPlugin {
                         range: Range.create(0, 0, 1, 0),
                         file: v.file
                     }, BsLintDiagnosticContext);
-                } else if (isXmlFile(v.file) && v.file.componentName?.range) {
+                } else if (isXmlFile(v.file) && v.file.componentName?.location.range) {
                     v.file.program.diagnostics.register({
                         severity: DiagnosticSeverity.Warning,
                         code: UnusedCode.UnusedComponent,
                         message: `Component '${v.file.pkgPath}' does not seem to be used`,
-                        range: v.file.componentName.range,
+                        range: v.file.componentName.location.range,
                         file: v.file
                     }, BsLintDiagnosticContext);
                 }

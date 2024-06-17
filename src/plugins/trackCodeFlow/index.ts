@@ -5,10 +5,11 @@ import { createVarLinter, resetVarContext, runDeferredValidation } from './varTr
 import { extractFixes } from './trackFixes';
 import { addFixesToEvent } from '../../textEdit';
 import { BsLintDiagnosticContext } from '../../Linter';
+import type { Location } from 'vscode-languageserver-types';
 
 export interface NarrowingInfo {
     text: string;
-    range: Range;
+    location: Location;
     type: 'valid' | 'invalid';
     block: Statement;
 }
@@ -29,7 +30,7 @@ export enum VarRestriction {
 
 export interface VarInfo {
     name: string;
-    range: Range;
+    location: Location;
     isGlobal?: boolean;
     isParam?: boolean;
     isUnsafe: boolean;
