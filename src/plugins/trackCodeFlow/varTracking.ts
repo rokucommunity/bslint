@@ -1,6 +1,7 @@
 import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
+import { Location } from 'vscode-languageserver-types';
 
 export enum VarLintError {
     UninitializedVar = 'LINT1001',
@@ -46,33 +47,33 @@ export function createVarLinter(
     let foundLabelAt = 0;
 
     const args: Map<string, VarInfo> = new Map();
-    args.set('m', { name: 'm', range: Range.create(0, 0, 0, 0), isParam: true, isUnsafe: false, isUsed: true });
+    args.set('m', { name: 'm', location: Location.create('', Range.create(0, 0, 0, 0)), isParam: true, isUnsafe: false, isUsed: true });
     fun.parameters.forEach((p) => {
         const name = p.tokens.name.text;
-        args.set(name.toLowerCase(), { name: name, range: p.tokens.name.range, isParam: true, isUnsafe: false, isUsed: false });
+        args.set(name.toLowerCase(), { name: name, location: p.tokens.name.location, isParam: true, isUnsafe: false, isUsed: false });
     });
 
     if (isMethodStatement(fun.functionStatement)) {
-        args.set('super', { name: 'super', range: null, isParam: true, isUnsafe: false, isUsed: true });
+        args.set('super', { name: 'super', location: null, isParam: true, isUnsafe: false, isUsed: true });
     }
 
-    function verifyVarCasing(curr: VarInfo, name: { text: string; range: Range }) {
+    function verifyVarCasing(curr: VarInfo, name: { text: string; location: Location }) {
         if (curr && curr.name !== name.text) {
             diagnostics.push({
                 severity: severity.caseSensitivity,
                 code: VarLintError.CaseMismatch,
                 message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
-                range: name.range,
+                range: name.location.range,
                 file: file,
                 data: {
                     name: curr.name,
-                    range: name.range
+                    range: name.location.range
                 }
             });
         }
     }
 
-    function setLocal(parent: StatementInfo, name: { text: string; range: Range }, restriction?: VarRestriction): VarInfo {
+    function setLocal(parent: StatementInfo, name: { text: string; location: Location }, restriction?: VarRestriction): VarInfo {
         if (!name) {
             return;
         }
@@ -80,7 +81,7 @@ export function createVarLinter(
         const arg = args.get(key);
         const local = {
             name: name.text,
-            range: name.range,
+            location: name.location,
             parent: parent,
             restriction: restriction,
             metBranches: 1,
@@ -103,7 +104,7 @@ export function createVarLinter(
             kind: ValidationKind.Assignment,
             name: name.text,
             local: local,
-            range: name.range
+            range: name.location.range
         });
 
         return local;
@@ -190,7 +191,7 @@ export function createVarLinter(
         } else if (isCatchStatement(stat) && state.parent) {
             setLocal(curr, stat.tokens.exceptionVariable, VarRestriction.CatchedError);
         } else if (isLabelStatement(stat) && !foundLabelAt) {
-            foundLabelAt = stat.range.start.line;
+            foundLabelAt = stat.location.range.start.line;
         } else if (foundLabelAt && isGotoStatement(stat) && state.parent) {
             // To avoid false positives when finding a goto statement,
             // very generously mark as used all unused variables after 1st found label line.
@@ -200,7 +201,7 @@ export function createVarLinter(
             for (let i = state.stack.length - 1; i >= 0; i--) {
                 const block = blocks.get(stack[i]);
                 block?.locals?.forEach(local => {
-                    if (local.range?.start.line > labelLine) {
+                    if (local.location.range?.start.line > labelLine) {
                         local.isUsed = true;
                     }
                 });
@@ -290,7 +291,7 @@ export function createVarLinter(
                 deferred.push({
                     kind: ValidationKind.UninitializedVar,
                     name: name,
-                    range: expr.range,
+                    range: expr.location.range,
                     namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)
                 });
                 return;
@@ -305,7 +306,7 @@ export function createVarLinter(
                         severity: severity.unsafeIterators,
                         code: VarLintError.UnsafeIteratorVar,
                         message: `Using iterator variable '${name}' outside loop`,
-                        range: expr.range,
+                        range: expr.location.range,
                         file: file
                     });
                 } else if (!isNarrowing(local, expr, parent, curr)) {
@@ -313,7 +314,7 @@ export function createVarLinter(
                         severity: severity.unsafePathLoop,
                         code: VarLintError.UnsafeInitialization,
                         message: `Not all the code paths assign '${name}'`,
-                        range: expr.range,
+                        range: expr.location.range,
                         file: file
                     });
                 }
@@ -340,7 +341,7 @@ export function createVarLinter(
         }
         const narrow: NarrowingInfo = {
             text: local.name,
-            range: local.range,
+            location: local.location,
             type: operator === TokenKind.Equal ? 'invalid' : 'valid',
             block
         };
@@ -358,7 +359,7 @@ export function createVarLinter(
                     severity: severity.unusedVariable,
                     code: VarLintError.UnusedVariable,
                     message: `Variable '${local.name}' is set but value is never used`,
-                    range: local.range,
+                    range: local.location.range,
                     file: file
                 });
             }

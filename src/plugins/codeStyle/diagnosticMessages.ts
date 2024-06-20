@@ -35,7 +35,7 @@ export const messages = {
         code: CodeStyleError.BlockIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        range: stat.tokens.if.range,
+        range: stat.tokens.if.location.range,
         data: stat
     }),
     removeBlockIfThenKeyword: (stat: IfStatement) => ({
@@ -43,7 +43,7 @@ export const messages = {
         code: CodeStyleError.BlockIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        range: stat.tokens.then.range,
+        range: stat.tokens.then.location.range,
         data: stat
     }),
     inlineIfNotAllowed: (range: Range) => ({
@@ -58,7 +58,7 @@ export const messages = {
         code: CodeStyleError.InlineIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        range: stat.tokens.if.range,
+        range: stat.tokens.if.location.range,
         data: stat
     }),
     removeInlineIfThenKeyword: (stat: IfStatement) => ({
@@ -66,7 +66,7 @@ export const messages = {
         code: CodeStyleError.InlineIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        range: stat.tokens.then.range,
+        range: stat.tokens.then.location.range,
         data: stat
     }),
     addParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
@@ -74,7 +74,7 @@ export const messages = {
         code: CodeStyleError.ConditionGroupMissing,
         source: 'bslint',
         message: `${CS} add parenthesis around condition`,
-        range: stat.condition.range,
+        range: stat.condition.location.range,
         data: stat
     }),
     removeParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
@@ -82,7 +82,7 @@ export const messages = {
         code: CodeStyleError.ConditionGroupFound,
         source: 'bslint',
         message: `${CS} remove parenthesis around condition`,
-        range: stat.condition.range,
+        range: stat.condition.location.range,
         data: stat
     }),
     expectedSubKeyword: (fun: FunctionExpression, reason: string) => ({
@@ -90,7 +90,7 @@ export const messages = {
         code: CodeStyleError.SubKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'sub' keyword ${reason}`,
-        range: fun.tokens.functionType.range,
+        range: fun.tokens.functionType.location.range,
         data: fun
     }),
     expectedFunctionKeyword: (fun: FunctionExpression, reason: string) => ({
@@ -98,7 +98,7 @@ export const messages = {
         code: CodeStyleError.FunctionKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'function' keyword ${reason}`,
-        range: fun.tokens.functionType.range,
+        range: fun.tokens.functionType.location.range,
         data: fun
     }),
     expectedReturnTypeAnnotation: (range: Range) => ({

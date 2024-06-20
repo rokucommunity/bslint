@@ -68,7 +68,7 @@ function removeAAComma(diagnostic: BsDiagnostic) {
 
 function addConditionGroup(diagnostic: BsDiagnostic) {
     const stat: IfStatement | WhileStatement = diagnostic.data;
-    const { start, end } = stat.condition.range;
+    const { start, end } = stat.condition.location.range;
     return {
         diagnostic,
         changes: [
@@ -92,17 +92,17 @@ function removeConditionGroup(diagnostic: BsDiagnostic) {
     return {
         diagnostic,
         changes: [
-            replaceText(leftParen.range, spaceBefore),
-            replaceText(rightParen.range, spaceAfter)
+            replaceText(leftParen.location.range, spaceBefore),
+            replaceText(rightParen.location.range, spaceAfter)
         ]
     };
 }
 
 function addThenToken(diagnostic: BsDiagnostic) {
     const stat: IfStatement = diagnostic.data;
-    const { end } = stat.condition.range;
+    const { end } = stat.condition.location.range;
     // const { start } = stat.thenBranch.range; // TODO: use when Block range bug is fixed
-    const start = stat.thenBranch.statements[0]?.range.start;
+    const start = stat.thenBranch.statements[0]?.location.range.start;
     const space = stat.isInline && comparePos(end, start) === 0 ? ' ' : '';
     return {
         diagnostic,
@@ -115,7 +115,7 @@ function addThenToken(diagnostic: BsDiagnostic) {
 function removeThenToken(diagnostic: BsDiagnostic) {
     const stat: IfStatement = diagnostic.data;
     const { then } = stat.tokens;
-    const { line, character } = then.range.start;
+    const { line, character } = then.location.range.start;
     const range = Range.create(
         line, character - (then.leadingWhitespace?.length || 0), line, character + then.text.length
     );
@@ -132,13 +132,13 @@ function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
     const space = fun.tokens.endFunctionType?.text.indexOf(' ') > 0 ? ' ' : '';
     // sub/function keyword
     const keywordChanges = [
-        replaceText(fun.tokens.functionType.range, token),
-        replaceText(fun.tokens.endFunctionType?.range, `end${space}${token}`)
+        replaceText(fun.tokens.functionType.location.range, token),
+        replaceText(fun.tokens.endFunctionType?.location.range, `end${space}${token}`)
     ];
     // remove `as void` in case of `sub`
     const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime }) ?? VoidType.instance;
     const returnChanges = token === 'sub' && fun.returnTypeExpression && isVoidType(returnType) ? [
-        replaceText(Range.create(fun.tokens.rightParen.range.end, fun.returnTypeExpression.range.end), '')
+        replaceText(Range.create(fun.tokens.rightParen?.location.range.end, fun.returnTypeExpression?.location.range.end), '')
     ] : [];
     return {
         diagnostic,

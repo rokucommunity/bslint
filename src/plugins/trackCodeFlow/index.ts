@@ -1,14 +1,15 @@
-import { BsDiagnostic, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterScopeValidateEvent, AfterFileValidateEvent, util, isFunctionExpression } from 'brighterscript';
+import { BsDiagnostic, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterScopeValidateEvent, AfterFileValidateEvent, util, isFunctionExpression } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
 import { extractFixes } from './trackFixes';
 import { addFixesToEvent } from '../../textEdit';
 import { BsLintDiagnosticContext } from '../../Linter';
+import type { Location } from 'vscode-languageserver-types'; // TODO: Get this from brighterscript
 
 export interface NarrowingInfo {
     text: string;
-    range: Range;
+    location: Location;
     type: 'valid' | 'invalid';
     block: Statement;
 }
@@ -29,7 +30,7 @@ export enum VarRestriction {
 
 export interface VarInfo {
     name: string;
-    range: Range;
+    location: Location;
     isGlobal?: boolean;
     isParam?: boolean;
     isUnsafe: boolean;

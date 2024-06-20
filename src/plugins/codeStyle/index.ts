@@ -61,7 +61,7 @@ export default class CodeStyle implements CompilerPlugin {
             const penultimateToken = tokens[tokens.length - 2];
             if (disallowEolLast) {
                 if (penultimateToken?.kind === TokenKind.Newline) {
-                    diagnostics.push(messages.removeEolLast(penultimateToken.range));
+                    diagnostics.push(messages.removeEolLast(penultimateToken.location.range));
                 }
             } else if (penultimateToken?.kind !== TokenKind.Newline) {
                 // Set the preferredEol as the last newline.
@@ -77,7 +77,7 @@ export default class CodeStyle implements CompilerPlugin {
 
                 diagnostics.push(
                     messages.addEolLast(
-                        penultimateToken.range,
+                        penultimateToken.location.range,
                         preferredEol
                     )
                 );
@@ -100,7 +100,7 @@ export default class CodeStyle implements CompilerPlugin {
                     }
                 } else if (s.isInline && validateInlineIf) {
                     if (disallowInlineIf) {
-                        diagnostics.push(messages.inlineIfNotAllowed(s.range));
+                        diagnostics.push(messages.inlineIfNotAllowed(s.location.range));
                     } else if (hasThenToken !== requireInlineIfThen) {
                         diagnostics.push(requireInlineIfThen
                             ? messages.addInlineIfThenKeyword(s)
@@ -130,18 +130,18 @@ export default class CodeStyle implements CompilerPlugin {
             },
             PrintStatement: s => {
                 if (validatePrint) {
-                    diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
+                    diagnostics.push(messages.noPrint(s.tokens.print.location.range, noPrint));
                 }
             },
             LiteralExpression: e => {
                 if (validateColorStyle && e.tokens.value.kind === TokenKind.StringLiteral) {
-                    validateColorStyle(e.tokens.value.text, e.tokens.value.range, diagnostics);
+                    validateColorStyle(e.tokens.value.text, e.tokens.value.location.range, diagnostics);
                 }
             },
             TemplateStringExpression: e => {
                 // only validate template strings that look like regular strings (i.e. `0xAABBCC`)
                 if (validateColorStyle && e.quasis.length === 1 && e.quasis[0].expressions.length === 1) {
-                    validateColorStyle(e.quasis[0].expressions[0].tokens.value.text, e.quasis[0].expressions[0].tokens.value.range, diagnostics);
+                    validateColorStyle(e.quasis[0].expressions[0].tokens.value.text, e.quasis[0].expressions[0].tokens.value.location.range, diagnostics);
                 }
             },
             AALiteralExpression: e => {
@@ -151,15 +151,15 @@ export default class CodeStyle implements CompilerPlugin {
             },
             StopStatement: s => {
                 if (validateNoStop) {
-                    diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
+                    diagnostics.push(messages.noStop(s.tokens.stop.location.range, noStop));
                 }
             },
             AstNode: (node: Statement | Expression) => {
-                const comments = [...node.getLeadingTrivia(), ...node.getEndTrivia()].filter(t => t.kind === TokenKind.Comment);
+                const comments = [...node.leadingTrivia, ...node.endTrivia].filter(t => t.kind === TokenKind.Comment);
                 if (validateTodo && comments.length > 0) {
                     for (const e of comments) {
                         if (this.lintContext.todoPattern.test(e.text)) {
-                            diagnostics.push(messages.noTodo(e.range, noTodo));
+                            diagnostics.push(messages.noTodo(e.location.range, noTodo));
                         }
                     }
                 }
@@ -185,7 +185,7 @@ export default class CodeStyle implements CompilerPlugin {
         const indexes = collectWrappingAAMembersIndexes(aa);
         const last = indexes.length - 1;
         const isSingleLine = (aa: AALiteralExpression): boolean => {
-            return aa.tokens.open.range.start.line === aa.tokens.close.range.end.line;
+            return aa.tokens.open.location.range.start.line === aa.tokens.close.location.range.end.line;
         };
 
         indexes.forEach((index, i) => {
@@ -193,10 +193,10 @@ export default class CodeStyle implements CompilerPlugin {
             const hasComma = !!member.tokens.comma;
             if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
                 if (hasComma) {
-                    diagnostics.push(messages.removeAAComma(member.tokens.comma.range));
+                    diagnostics.push(messages.removeAAComma(member.tokens.comma.location.range));
                 }
             } else if (!hasComma) {
-                diagnostics.push(messages.addAAComma(member.value.range));
+                diagnostics.push(messages.addAAComma(member.value.location.range));
             }
         });
     }
@@ -214,7 +214,7 @@ export default class CodeStyle implements CompilerPlugin {
                 if (hasReturnedValue && !fun.returnTypeExpression) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
                         // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
-                        fun.tokens.functionType?.range ?? fun.range
+                        fun.tokens.functionType?.location?.range ?? fun.location.range
                     ));
                 }
             }
@@ -222,7 +222,7 @@ export default class CodeStyle implements CompilerPlugin {
                 const missingAnnotation = fun.parameters.find(arg => !arg.typeExpression);
                 if (missingAnnotation) {
                     // only report 1st missing arg annotation to avoid error overload
-                    diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.range));
+                    diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.location.range));
                 }
             }
         }
@@ -283,7 +283,7 @@ export function collectWrappingAAMembersIndexes(aa: AALiteralExpression): number
         const e = elements[i];
 
         const ne = elements[i + 1];
-        const hasNL = ne.range.start.line > e.range.end.line;
+        const hasNL = ne.location.range.start.line > e.location.range.end.line;
         if (hasNL) {
             indexes.push(i);
         }

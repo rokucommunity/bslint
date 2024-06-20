@@ -39,7 +39,7 @@ export function createReturnLinter(
                 severity: severity.unreachableCode,
                 code: ReturnLintError.UnreachableCode,
                 message: 'Unreachable code',
-                range: curr.stat.range,
+                range: curr.stat.location.range,
                 file: file,
                 tags: [DiagnosticTag.Unnecessary]
             });
@@ -91,8 +91,8 @@ export function createReturnLinter(
         const returnedValues = returns.filter((r) => r.hasValue);
         const hasReturnedValue = returnedValues.length > 0;
         // Function range only includes the function signature
-        const funRangeStart = (fun.tokens.functionType ?? fun.tokens.leftParen).range.start;
-        const funRangeEnd = (fun.returnTypeExpression ?? fun.tokens.rightParen).range.end;
+        const funRangeStart = (fun.tokens.functionType ?? fun.tokens.leftParen).location.range.start;
+        const funRangeEnd = (fun.returnTypeExpression ?? fun.tokens.rightParen).location.range.end;
         const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
 
         // Explicit `as void` or `sub` without return type should never return a value
@@ -108,7 +108,7 @@ export function createReturnLinter(
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueUnexpected,
                         message: `${kind} as void should not return a value`,
-                        range: r.stat?.range || funRange,
+                        range: r.stat?.location.range || funRange,
                         file: file
                     });
                 });
@@ -144,7 +144,7 @@ export function createReturnLinter(
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueMissing,
                         message: `${kind} should consistently return a value`,
-                        range: r.stat.range || funRange,
+                        range: r.stat.location.range || funRange,
                         file: file
                     });
                 });
