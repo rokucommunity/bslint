@@ -129,3 +129,29 @@ end function
 sub some(o)
     print o
 end sub
+
+#const debug = true
+
+function conditionalCompileOk() as dynamic
+    #if DEBUG ' no error
+        return 1
+    #else
+        return 0
+    #end if
+end function
+
+function conditionalCompileOk2() as dynamic
+    #if DEBUG ' no error
+        throw "error"
+    #else
+        return 0
+    #end if
+end function
+
+function conditionalCompileError() as dynamic
+    #if DEBUG
+        ' error - no return
+    #else
+        return 0
+    #end if
+end function
