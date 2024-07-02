@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -44,21 +44,21 @@ export function createReturnLinter(
                 tags: [DiagnosticTag.Unnecessary]
             });
         } else if (isReturnStatement(curr.stat)) {
-            const { ifs, trys, branch, parent } = state;
+            const { ifs, conditionalCompiles, trys, branch, parent } = state;
             returns.push({
                 stat: curr.stat,
                 hasValue: !!curr.stat.value
             });
             // flag parent branch to return
-            const returnBlock = (ifs || trys) ? branch : parent;
+            const returnBlock = (ifs || conditionalCompiles || trys) ? branch : parent;
             if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
             }
         } else if (isThrowStatement(curr.stat)) {
-            const { ifs, trys, branch, parent } = state;
+            const { ifs, conditionalCompiles, trys, branch, parent } = state;
             throws.push({ stat: curr.stat });
             // flag parent branch to 'return'
-            const returnBlock = (ifs || trys) ? branch : parent;
+            const returnBlock = (ifs || conditionalCompiles || trys) ? branch : parent;
             if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
             }
@@ -69,13 +69,15 @@ export function createReturnLinter(
         const { parent } = state;
         if (!parent) {
             finalize(closed);
-        } else if (isIfStatement(closed.stat) || isTryCatchStatement(closed.stat) || isCatchStatement(closed.stat)) {
+        } else if (isIfStatement(closed.stat) || isConditionalCompileStatement(closed.stat) || isTryCatchStatement(closed.stat) || isCatchStatement(closed.stat)) {
             if (closed.branches === 0) {
                 parent.returns = true;
                 parent.branches--;
             }
         } else if (closed.returns) {
             if (isIfStatement(parent.stat)) {
+                parent.branches--;
+            } else if (isConditionalCompileStatement(parent.stat)) {
                 parent.branches--;
             } else if (isTryCatchStatement(parent.stat)) {
                 parent.branches--;
