@@ -3,6 +3,7 @@ import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
 import TrackCodeFlow from './plugins/trackCodeFlow';
+import CodePerformance from './plugins/performanceSuggestions';
 import { PluginWrapperContext, createContext } from './util';
 
 export type RuleSeverity = 'error' | 'warn' | 'info' | 'off';
@@ -49,6 +50,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'color-alpha'?: RuleColorAlpha;
         'color-alpha-defaults'?: RuleColorAlphaDefaults;
         'color-cert'?: RuleColorCertCompliant;
+        'interface-type'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -82,6 +84,7 @@ export interface BsLintRules {
     colorAlpha: RuleColorAlpha;
     colorAlphaDefaults: RuleColorAlphaDefaults;
     colorCertCompliant: RuleColorCertCompliant;
+    interfaceType: BsLintSeverity;
 }
 
 export { Linter };
@@ -99,6 +102,9 @@ export default function factory(): CompilerPlugin {
 
             const codeStyle = new CodeStyle(context);
             program.plugins.add(codeStyle);
+
+            const codePerformance = new CodePerformance(context);
+            program.plugins.add(codePerformance);
 
             if (context.checkUsage) {
                 const checkUsage = new CheckUsage(context);

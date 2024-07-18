@@ -26,6 +26,7 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'anon-function-style': 'auto',
         'aa-comma-style': 'no-dangling',
         'type-annotations': 'off',
+        'interface-type': 'info',
         'no-print': 'off'
     };
 }
@@ -162,7 +163,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         colorCase: rules['color-case'],
         colorAlpha: rules['color-alpha'],
         colorAlphaDefaults: rules['color-alpha-defaults'],
-        colorCertCompliant: rules['color-cert']
+        colorCertCompliant: rules['color-cert'],
+        interfaceType: ruleToSeverity(rules['interface-type'])
     };
 }
 
