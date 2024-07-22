@@ -203,14 +203,14 @@ export const messages = {
         range
     }),
     noAssocarrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
-        message: "Do not use field type 'assocarray'",
+        message: "'assocarray' node fields can cause performance problems",
         code: CodeStyleError.NoAssocarrayFieldType,
         severity: severity,
         source: 'bslint',
         range
     }),
     noArrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
-        message: "Do not use field type 'array'",
+        message: "'array' node fields can cause performance problems",
         code: CodeStyleError.NoArrayFieldType,
         severity: severity,
         source: 'bslint',
