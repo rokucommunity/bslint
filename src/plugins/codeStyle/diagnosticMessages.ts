@@ -203,14 +203,14 @@ export const messages = {
         range
     }),
     noAssocarrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
-        message: `Using 'assocarray' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+        message: "Do not use field type 'assocarray'",
         code: CodeStyleError.NoAssocarrayFieldType,
         severity: severity,
         source: 'bslint',
         range
     }),
     noArrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
-        message: `Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+        message: "Do not use field type 'array'",
         code: CodeStyleError.NoArrayFieldType,
         severity: severity,
         source: 'bslint',

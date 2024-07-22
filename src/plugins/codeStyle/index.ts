@@ -38,37 +38,34 @@ export default class CodeStyle {
 
     validateXMLFile(file: XmlFile) {
         const diagnostics: Omit<BsDiagnostic, "file">[] = [];
-        const apiFields = file.parser.ast?.component?.api?.fields;
         const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
 
-        if (apiFields) {
-            for (const field of apiFields) {
-                const { tag, attributes, range } = field;
-                if (tag.text === "field") {
-                    const typeAttribute = attributes.find(
-                        ({ key }) =>
-                            key.text === "type"
-                    );
+        for (const field of file.parser?.ast?.component?.api?.fields ?? []) {
+            const { tag, attributes, range } = field;
+            if (tag.text === "field") {
+                const typeAttribute = attributes.find(
+                    ({ key }) =>
+                        key.text === "type"
+                );
 
-                    const typeValue = typeAttribute?.value.text;
-                    if (typeValue === 'array' && validateArrayComponentFieldType) {
-                        diagnostics.push(
-                            messages.noArrayFieldType(
-                                range,
-                                noArrayComponentFieldType
-                            )
-                        );
-                    } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
-                        diagnostics.push(
-                            messages.noAssocarrayFieldType(
-                                range,
-                                noAssocarrayComponentFieldType
-                            )
-                        );
-                    }
+                const typeValue = typeAttribute?.value.text;
+                if (typeValue === 'array' && validateArrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noArrayFieldType(
+                            range,
+                            noArrayComponentFieldType
+                        )
+                    );
+                } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noAssocarrayFieldType(
+                            range,
+                            noAssocarrayComponentFieldType
+                        )
+                    );
                 }
             }
         }
