@@ -23,7 +23,9 @@ export enum CodeStyleError {
     ColorCase = 'LINT3020',
     ColorAlpha = 'LINT3021',
     ColorAlphaDefaults = 'LINT3022',
-    ColorCertCompliant = 'LINT3023'
+    ColorCertCompliant = 'LINT3023',
+    NoAssocarrayFieldType = 'LINT3024',
+    NoArrayFieldType = 'LINT3025'
 }
 
 const CS = 'Code style:';
@@ -198,6 +200,20 @@ export const messages = {
         code: CodeStyleError.ColorCertCompliant,
         source: 'bslint',
         message: `${CS} File should follow Roku broadcast safe color cert requirement`,
+        range
+    }),
+    noAssocarrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
+        message: `Using 'assocarray' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+        code: CodeStyleError.NoAssocarrayFieldType,
+        severity: severity,
+        source: 'bslint',
+        range
+    }),
+    noArrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
+        message: `Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+        code: CodeStyleError.NoArrayFieldType,
+        severity: severity,
+        source: 'bslint',
         range
     })
 };

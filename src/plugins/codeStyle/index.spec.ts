@@ -412,6 +412,7 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+
     describe('enforce no todo', () => {
         it('default todo pattern', async () => {
             const diagnostics = await linter.run({
@@ -532,6 +533,36 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
         });
+    });
+
+    it('enforce no assocarray component field type', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['components/interfaceTest.xml'],
+            rules: {
+                'no-assocarray-component-field-type': 'info'
+            }
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `06:LINT3024:Using 'assocarray' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('enforce no array component field type', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['components/interfaceTest.xml'],
+            rules: {
+                'no-array-component-field-type': 'info'
+            }
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `04:LINT3025:Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+        ];
+        expect(actual).deep.equal(expected);
     });
 
     describe('AA style', () => {

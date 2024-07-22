@@ -26,8 +26,9 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'anon-function-style': 'auto',
         'aa-comma-style': 'no-dangling',
         'type-annotations': 'off',
-        'interface-type': 'info',
-        'no-print': 'off'
+        'no-print': 'off',
+        'no-assocarray-component-field-type': 'off',
+        'no-array-component-field-type': 'off'
     };
 }
 
@@ -164,7 +165,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         colorAlpha: rules['color-alpha'],
         colorAlphaDefaults: rules['color-alpha-defaults'],
         colorCertCompliant: rules['color-cert'],
-        interfaceType: ruleToSeverity(rules['interface-type'])
+        noAssocarrayComponentFieldType: ruleToSeverity(rules['no-assocarray-component-field-type']),
+        noArrayComponentFieldType: ruleToSeverity(rules['no-array-component-field-type'])
     };
 }
 
