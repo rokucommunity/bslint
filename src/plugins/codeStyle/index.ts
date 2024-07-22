@@ -53,7 +53,7 @@ export default class CodeStyle {
                             key.text === "type"
                     );
 
-                    const typeValue = typeAttribute.value.text;
+                    const typeValue = typeAttribute?.value.text;
                     if (typeValue === 'array' && validateArrayComponentFieldType) {
                         diagnostics.push(
                             messages.noArrayFieldType(
