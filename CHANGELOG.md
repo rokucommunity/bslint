@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.22](https://github.com/rokucommunity/bslint/compare/v0.8.21...0.8.22) - 2024-07-24
+### Changed
+ - add rule to prevent use of `assocarray` and `array` component fields in xml ([#115](https://github.com/rokucommunity/bslint/pull/115))
+ - upgrade to [brighterscript@0.67.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0674---2024-07-24). Notable changes since 0.67.1:
+     - Fix crash with missing scope ([brighterscript#1234](https://github.com/rokucommunity/brighterscript/pull/1234))
+     - fix: conform bsconfig.schema.json to strict types ([brighterscript#1205](https://github.com/rokucommunity/brighterscript/pull/1205))
+     - Flag using devDependency in production code ([brighterscript#1222](https://github.com/rokucommunity/brighterscript/pull/1222))
+
+
+
 ## [0.8.21](https://github.com/rokucommunity/bslint/compare/v0.8.20...v0.8.21) - 2024-05-17
 ### Changed
  - fix node14 ([#106](https://github.com/rokucommunity/bslint/pull/106))
