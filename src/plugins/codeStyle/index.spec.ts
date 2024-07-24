@@ -545,7 +545,7 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:LINT3024:'assocarray' node fields can cause performance problems`,
+            `06:LINT3024:Avoid using field type 'assocarray'`,
         ];
         expect(actual).deep.equal(expected);
     });
@@ -560,7 +560,7 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:LINT3025:'array' node fields can cause performance problems`,
+            `04:LINT3025:Avoid using field type 'array'`,
         ];
         expect(actual).deep.equal(expected);
     });
