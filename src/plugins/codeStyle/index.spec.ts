@@ -545,7 +545,7 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:LINT3024:Using 'assocarray' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+            `06:LINT3024:'assocarray' node fields can cause performance problems`,
         ];
         expect(actual).deep.equal(expected);
     });
@@ -560,7 +560,7 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:LINT3025:Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread`,
+            `04:LINT3025:'array' node fields can cause performance problems`,
         ];
         expect(actual).deep.equal(expected);
     });
