@@ -412,6 +412,7 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+
     describe('enforce no todo', () => {
         it('default todo pattern', async () => {
             const diagnostics = await linter.run({
@@ -532,6 +533,36 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
         });
+    });
+
+    it('enforce no assocarray component field type', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['components/interfaceTest.xml'],
+            rules: {
+                'no-assocarray-component-field-type': 'info'
+            }
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `06:LINT3024:Avoid using field type 'assocarray'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('enforce no array component field type', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['components/interfaceTest.xml'],
+            rules: {
+                'no-array-component-field-type': 'info'
+            }
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `04:LINT3025:Avoid using field type 'array'`
+        ];
+        expect(actual).deep.equal(expected);
     });
 
     describe('AA style', () => {

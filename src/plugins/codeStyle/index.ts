@@ -1,4 +1,22 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
+import {
+    BscFile,
+    XmlFile,
+    BsDiagnostic,
+    createVisitor,
+    FunctionExpression,
+    isBrsFile,
+    isXmlFile,
+    isGroupingExpression,
+    TokenKind,
+    WalkMode,
+    CancellationTokenSource,
+    DiagnosticSeverity,
+    OnGetCodeActionsEvent,
+    isCommentStatement,
+    AALiteralExpression,
+    AAMemberExpression,
+    BrsFile
+} from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
@@ -18,13 +36,43 @@ export default class CodeStyle {
         extractFixes(addFixes, event.diagnostics);
     }
 
-    afterFileValidate(file: BscFile) {
-        if (!isBrsFile(file) || this.lintContext.ignores(file)) {
-            return;
+    validateXMLFile(file: XmlFile) {
+        const diagnostics: Omit<BsDiagnostic, 'file'>[] = [];
+        const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
+
+        const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
+        const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
+
+        for (const field of file.parser?.ast?.component?.api?.fields ?? []) {
+            const { tag, attributes } = field;
+            if (tag.text === 'field') {
+                const typeAttribute = attributes.find(({ key }) => key.text === 'type');
+
+                const typeValue = typeAttribute?.value.text;
+                if (typeValue === 'array' && validateArrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noArrayFieldType(
+                            typeAttribute.value.range,
+                            noArrayComponentFieldType
+                        )
+                    );
+                } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noAssocarrayFieldType(
+                            typeAttribute.value.range,
+                            noAssocarrayComponentFieldType
+                        )
+                    );
+                }
+            }
         }
 
+        return diagnostics;
+    }
+
+    validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
-        const { severity, fix } = this.lintContext;
+        const { severity } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
@@ -163,11 +211,28 @@ export default class CodeStyle {
             this.validateFunctionStyle(fun, diagnostics);
         }
 
+        return diagnostics;
+    }
+
+    afterFileValidate(file: BscFile) {
+        if (this.lintContext.ignores(file)) {
+            return;
+        }
+
+        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        if (isXmlFile(file)) {
+            diagnostics.push(...this.validateXMLFile(file));
+        } else if (isBrsFile(file)) {
+            diagnostics.push(...this.validateBrsFile(file));
+        }
+
         // add file reference
         let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
             ...diagnostic,
             file
         }));
+
+        const { fix } = this.lintContext;
 
         // apply fix
         if (fix) {
