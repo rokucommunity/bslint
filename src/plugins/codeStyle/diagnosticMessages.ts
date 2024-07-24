@@ -203,14 +203,14 @@ export const messages = {
         range
     }),
     noAssocarrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
-        message: "Avoid using field type 'assocarray'",
+        message: `Avoid using field type 'assocarray'`,
         code: CodeStyleError.NoAssocarrayFieldType,
         severity: severity,
         source: 'bslint',
         range
     }),
     noArrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
-        message: "Avoid using field type 'array'",
+        message: `Avoid using field type 'array'`,
         code: CodeStyleError.NoArrayFieldType,
         severity: severity,
         source: 'bslint',

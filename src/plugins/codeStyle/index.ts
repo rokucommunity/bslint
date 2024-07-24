@@ -37,32 +37,29 @@ export default class CodeStyle {
     }
 
     validateXMLFile(file: XmlFile) {
-        const diagnostics: Omit<BsDiagnostic, "file">[] = [];
+        const diagnostics: Omit<BsDiagnostic, 'file'>[] = [];
         const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
 
         for (const field of file.parser?.ast?.component?.api?.fields ?? []) {
-            const { tag, attributes, range } = field;
-            if (tag.text === "field") {
-                const typeAttribute = attributes.find(
-                    ({ key }) =>
-                        key.text === "type"
-                );
+            const { tag, attributes } = field;
+            if (tag.text === 'field') {
+                const typeAttribute = attributes.find(({ key }) => key.text === 'type');
 
                 const typeValue = typeAttribute?.value.text;
                 if (typeValue === 'array' && validateArrayComponentFieldType) {
                     diagnostics.push(
                         messages.noArrayFieldType(
-                            range,
+                            typeAttribute.value.range,
                             noArrayComponentFieldType
                         )
                     );
                 } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
                     diagnostics.push(
                         messages.noAssocarrayFieldType(
-                            range,
+                            typeAttribute.value.range,
                             noAssocarrayComponentFieldType
                         )
                     );
