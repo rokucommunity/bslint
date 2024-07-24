@@ -1,4 +1,25 @@
-import { BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, AALiteralExpression, isVoidType, CompilerPlugin, AfterFileValidateEvent, Expression, Statement, SymbolTypeFlag } from 'brighterscript';
+import {
+    BsDiagnostic,
+    createVisitor,
+    FunctionExpression,
+    isBrsFile,
+    isXmlFile,
+    isGroupingExpression,
+    TokenKind,
+    WalkMode,
+    CancellationTokenSource,
+    DiagnosticSeverity,
+    OnGetCodeActionsEvent,
+    AALiteralExpression,
+    BrsFile,
+    CompilerPlugin,
+    AfterFileValidateEvent,
+    Expression,
+    isVoidType,
+    Statement,
+    SymbolTypeFlag,
+    XmlFile
+} from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
@@ -19,14 +40,42 @@ export default class CodeStyle implements CompilerPlugin {
         extractFixes(addFixes, event.diagnostics);
     }
 
-    afterFileValidate(event: AfterFileValidateEvent) {
-        const { file } = event;
-        if (!isBrsFile(file) || this.lintContext.ignores(file)) {
-            return;
+    validateXMLFile(file: XmlFile) {
+        const diagnostics: Omit<BsDiagnostic, 'file'>[] = [];
+        const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
+
+        const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
+        const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
+
+        for (const field of file.parser?.ast?.componentElement?.interfaceElement?.fields ?? []) {
+            if (field.tokens.startTagName?.text?.toLowerCase() === 'field') {
+                const typeAttribute = field.getAttribute('type');
+
+                const typeValue = typeAttribute?.tokens?.value?.text?.toLowerCase();
+                if (typeValue === 'array' && validateArrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noArrayFieldType(
+                            typeAttribute?.tokens?.value?.location?.range,
+                            noArrayComponentFieldType
+                        )
+                    );
+                } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noAssocarrayFieldType(
+                            typeAttribute?.tokens?.value?.location?.range,
+                            noAssocarrayComponentFieldType
+                        )
+                    );
+                }
+            }
         }
 
+        return diagnostics;
+    }
+
+    validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
-        const { severity, fix } = this.lintContext;
+        const { severity } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
@@ -166,11 +215,29 @@ export default class CodeStyle implements CompilerPlugin {
             }
         }), { walkMode: WalkMode.visitAllRecursive });
 
+        return diagnostics;
+    }
+
+    afterFileValidate(event: AfterFileValidateEvent) {
+        const { file } = event;
+        if (this.lintContext.ignores(file)) {
+            return;
+        }
+
+        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        if (isXmlFile(file)) {
+            diagnostics.push(...this.validateXMLFile(file));
+        } else if (isBrsFile(file)) {
+            diagnostics.push(...this.validateBrsFile(file));
+        }
+
         // add file reference
         let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
             ...diagnostic,
             file
         }));
+
+        const { fix } = this.lintContext;
 
         // apply fix
         if (fix) {

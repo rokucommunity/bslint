@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="interfaceTest" extends="Group">
+    <interface>
+        <field id="test" type="array" />
+        <field id="test2" type="node" />
+        <field id="test3" type="assocarray" />
+    </interface>
+</component>

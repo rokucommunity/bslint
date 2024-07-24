@@ -1,4 +1,4 @@
-import { BsConfig, Program, DiagnosticSeverity, AfterProgramCreateEvent, AfterProgramValidateEvent, CompilerPlugin } from 'brighterscript';
+import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin, AfterProgramCreateEvent, AfterProgramValidateEvent } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
@@ -49,6 +49,8 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'color-alpha'?: RuleColorAlpha;
         'color-alpha-defaults'?: RuleColorAlphaDefaults;
         'color-cert'?: RuleColorCertCompliant;
+        'no-assocarray-component-field-type'?: RuleSeverity;
+        'no-array-component-field-type'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -82,6 +84,8 @@ export interface BsLintRules {
     colorAlpha: RuleColorAlpha;
     colorAlphaDefaults: RuleColorAlphaDefaults;
     colorCertCompliant: RuleColorCertCompliant;
+    noAssocarrayComponentFieldType: BsLintSeverity;
+    noArrayComponentFieldType: BsLintSeverity;
 }
 
 export { Linter };

@@ -23,7 +23,9 @@ export enum CodeStyleError {
     ColorCase = 'LINT3020',
     ColorAlpha = 'LINT3021',
     ColorAlphaDefaults = 'LINT3022',
-    ColorCertCompliant = 'LINT3023'
+    ColorCertCompliant = 'LINT3023',
+    NoAssocarrayFieldType = 'LINT3024',
+    NoArrayFieldType = 'LINT3025'
 }
 
 const CS = 'Code style:';
@@ -198,6 +200,20 @@ export const messages = {
         code: CodeStyleError.ColorCertCompliant,
         source: 'bslint',
         message: `${CS} File should follow Roku broadcast safe color cert requirement`,
+        range
+    }),
+    noAssocarrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
+        message: `Avoid using field type 'assocarray'`,
+        code: CodeStyleError.NoAssocarrayFieldType,
+        severity: severity,
+        source: 'bslint',
+        range
+    }),
+    noArrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
+        message: `Avoid using field type 'array'`,
+        code: CodeStyleError.NoArrayFieldType,
+        severity: severity,
+        source: 'bslint',
         range
     })
 };
