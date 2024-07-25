@@ -25,7 +25,8 @@ export enum CodeStyleError {
     ColorAlphaDefaults = 'LINT3022',
     ColorCertCompliant = 'LINT3023',
     NoAssocarrayFieldType = 'LINT3024',
-    NoArrayFieldType = 'LINT3025'
+    NoArrayFieldType = 'LINT3025',
+    NoRegexDuplicates = 'LINT3026'
 }
 
 const CS = 'Code style:';
@@ -212,6 +213,13 @@ export const messages = {
     noArrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
         message: `Avoid using field type 'array'`,
         code: CodeStyleError.NoArrayFieldType,
+        severity: severity,
+        source: 'bslint',
+        range
+    }),
+    noRegexDuplicates: (range: Range, severity: DiagnosticSeverity) => ({
+        message: 'Avoid creating multiple roRegex objects',
+        code: CodeStyleError.NoRegexDuplicates,
         severity: severity,
         source: 'bslint',
         range

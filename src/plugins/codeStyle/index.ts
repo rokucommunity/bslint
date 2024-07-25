@@ -15,7 +15,17 @@ import {
     isCommentStatement,
     AALiteralExpression,
     AAMemberExpression,
-    BrsFile
+    BrsFile,
+    isFunctionStatement,
+    isVariableExpression,
+    isLiteralExpression,
+    CallExpression,
+    isForEachStatement,
+    isForStatement,
+    isWhileStatement,
+    isIfStatement,
+    AstNode,
+    Expression
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
@@ -25,7 +35,6 @@ import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
 
 export default class CodeStyle {
-
     name: 'codeStyle';
 
     constructor(private lintContext: PluginContext) {
@@ -73,10 +82,11 @@ export default class CodeStyle {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
+        const validateNoRegexDuplicates = noRegexDuplicates !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
         const validateColorFormat = (colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
@@ -86,7 +96,7 @@ export default class CodeStyle {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
-        const walkExpressions = validateAAStyle || validateColorFormat;
+        const walkExpressions = validateAAStyle || validateColorFormat || validateNoRegexDuplicates;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
@@ -203,6 +213,11 @@ export default class CodeStyle {
                 if (validateNoStop) {
                     diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
                 }
+            },
+            CallExpression: s => {
+                if (validateNoRegexDuplicates) {
+                    this.validateCreateObject(s, diagnostics, noRegexDuplicates);
+                }
             }
         }), { walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive });
 
@@ -317,6 +332,53 @@ export default class CodeStyle {
         }
     }
 
+    validateCreateObject(s: CallExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        if (!this.isCreateObject(s)) {
+            return;
+        }
+        const callParams = this.getLiteralArgs(s.args);
+
+        if (callParams && callParams.length === 3 && callParams[0] === 'roRegex') {
+            const parentSt = s.findAncestor((node, cancel) => {
+                if (isIfStatement(node)) {
+                    cancel.cancel();
+                } else if (this.isLoop(node) || isFunctionStatement(node)) {
+                    return true;
+                }
+            });
+
+            let hasIssue = false;
+            if (isFunctionStatement(parentSt)) {
+                for (const callExp of parentSt.func.callExpressions) {
+                    if (callExp === s) {
+                        break;
+                    }
+
+                    if (this.isCreateObject(callExp)) {
+                        const callExpParams = this.getLiteralArgs(callExp.args);
+
+                        if (Array.isArray(callExpParams) &&
+                            callExpParams[0] === 'roRegex' &&
+                            callExpParams.length === 3 &&
+                            callExpParams.every((callExpParam, i) => {
+                                return callExpParam === callParams[i];
+                            })
+                        ) {
+                            hasIssue = true;
+                            break;
+                        }
+                    }
+                }
+            } else if (this.isLoop(parentSt)) {
+                hasIssue = true;
+            }
+
+            if (hasIssue) {
+                diagnostics.push(messages.noRegexDuplicates(s.range, severity));
+            }
+        }
+    }
+
     getFunctionReturns(fun: FunctionExpression) {
         let hasReturnedValue = false;
         if (fun.returnTypeToken) {
@@ -331,6 +393,27 @@ export default class CodeStyle {
             }), { walkMode: WalkMode.visitStatements, cancel: cancel.token });
         }
         return hasReturnedValue;
+    }
+
+    isLoop(node: AstNode) {
+        return isForStatement(node) || isForEachStatement(node) || isWhileStatement(node);
+    }
+
+    isCreateObject(s: CallExpression) {
+        return isVariableExpression(s.callee) && s.callee.name.text.toLowerCase() === 'createobject';
+    }
+
+    getLiteralArgs(args: Expression[]) {
+        const argsStringValue: string[] = [];
+        for (const arg of args) {
+            if (isLiteralExpression(arg)) {
+                argsStringValue.push(arg?.token?.text?.replace(/"/g, ''));
+            } else {
+                return;
+            }
+        }
+
+        return argsStringValue;
     }
 }
 

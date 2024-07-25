@@ -47,6 +47,7 @@ describe('codeStyle', () => {
                 'color-alpha': 'off',
                 'color-alpha-defaults': 'off',
                 'color-cert': 'off',
+                'no-regex-duplicates': 'off',
                 ...(rules ?? {})
             }
         } as BsLintConfig);
@@ -663,6 +664,29 @@ describe('codeStyle', () => {
             ];
             expect(actual).deep.equal(expected);
         });
+    });
+
+    it('enforce no regex re-creation', () => {
+        init({
+            'no-regex-duplicates': 'warn'
+        });
+        program.setFile('source/main.brs', `
+            sub init()
+                CreateObject("roRegex", "test3", "")
+                for i = 0 to 10
+                    CreateObject("roRegex", "test", "")
+                    if false
+                        CreateObject("roRegex", "test2", "")
+                    end if
+                end for
+                CreateObject("roRegex", "test3", "")
+            end sub
+        `);
+        program.validate();
+        expectDiagnosticsFmt(program, [
+            '05:LINT3026:Avoid creating multiple roRegex objects',
+            '10:LINT3026:Avoid creating multiple roRegex objects'
+        ]);
     });
 
     describe('color-format', () => {
