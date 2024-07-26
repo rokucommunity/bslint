@@ -256,7 +256,7 @@ Default rules:
 
 -   `no-array-component-field-type`: Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' field types for more efficient transfer of data between component boundaries by avoiding expensive data cloning(`error | warn | info | off`)
 
--   `no-regex-duplicates`: Avoid creating roRegex for the same template within a loop or duplicate creation within function scope as it can lead to less performant code. (`error | warn | info | off`)
+-   `no-regex-duplicates`: Avoid creating multiple roRegex objects with the same pattern as it leads to less performant code. (`error | warn | info | off`)
 
 ### Strictness rules
 
