@@ -217,8 +217,15 @@ export const messages = {
         source: 'bslint',
         range
     }),
-    noRegexDuplicates: (range: Range, severity: DiagnosticSeverity) => ({
-        message: 'Avoid creating multiple roRegex objects',
+    noIdenticalRegexInLoop: (range: Range, severity: DiagnosticSeverity) => ({
+        message: 'Avoid redeclaring identical regular expressions in a loop',
+        code: CodeStyleError.NoRegexDuplicates,
+        severity: severity,
+        source: 'bslint',
+        range
+    }),
+    noRegexRedeclaring: (range: Range, severity: DiagnosticSeverity) => ({
+        message: 'Avoid redeclaring identical regular expressions',
         code: CodeStyleError.NoRegexDuplicates,
         severity: severity,
         source: 'bslint',

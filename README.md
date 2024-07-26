@@ -252,9 +252,9 @@ Default rules:
     - `always`: ensures all white and black color-format values either match or are darker/ lighter than the minimum recommended values. For white the maximum value is `#EBEBEB` and for black the minimum value is `#161616`
     - `off`: do not validate (**default**)
 
--   `no-assocarray-component-field-type`: Using 'assocarray' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data between threads (`error | warn | info | off`)
+-   `no-assocarray-component-field-type`: Using 'assocarray' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' field types for more efficient transfer of data between component boundaries by avoiding expensive data cloning (`error | warn | info | off`)
 
--   `no-array-component-field-type`: Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data between threads (`error | warn | info | off`)
+-   `no-array-component-field-type`: Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' field types for more efficient transfer of data between component boundaries by avoiding expensive data cloning(`error | warn | info | off`)
 
 -   `no-regex-duplicates`: Avoid creating roRegex for the same template within a loop or duplicate creation within function scope as it can lead to less performant code. (`error | warn | info | off`)
 

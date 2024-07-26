@@ -16,7 +16,6 @@ import {
     AALiteralExpression,
     AAMemberExpression,
     BrsFile,
-    isFunctionStatement,
     isVariableExpression,
     isLiteralExpression,
     CallExpression,
@@ -24,6 +23,7 @@ import {
     isForStatement,
     isWhileStatement,
     isIfStatement,
+    isFunctionExpression,
     AstNode,
     Expression
 } from 'brighterscript';
@@ -96,7 +96,7 @@ export default class CodeStyle {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
-        const walkExpressions = validateAAStyle || validateColorFormat || validateNoRegexDuplicates;
+        const walkExpressions = validateAAStyle || validateColorFormat;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
@@ -139,6 +139,10 @@ export default class CodeStyle {
                     )
                 );
             }
+        }
+
+        if (validateNoRegexDuplicates) {
+            this.validateRegex(file, diagnostics, noRegexDuplicates);
         }
 
         file.ast.walk(createVisitor({
@@ -213,11 +217,6 @@ export default class CodeStyle {
                 if (validateNoStop) {
                     diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
                 }
-            },
-            CallExpression: s => {
-                if (validateNoRegexDuplicates) {
-                    this.validateCreateObject(s, diagnostics, noRegexDuplicates);
-                }
             }
         }), { walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive });
 
@@ -227,6 +226,46 @@ export default class CodeStyle {
         }
 
         return diagnostics;
+    }
+
+    validateRegex(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        for (const fun of file.parser.references.functionExpressions) {
+            const regexes = new Set();
+            for (const callExpression of fun.callExpressions) {
+                if (!this.isCreateObject(callExpression)) {
+                    continue;
+                }
+
+                // Check if all args are literals and get them as string
+                const callArgs = this.getLiteralArgs(callExpression.args);
+
+                // CreateObject for roRegex expects 3 params,
+                // they should be literals because only in this case we can guarante that call regex is the same
+                if (callArgs?.length === 3 && callArgs[0] === 'roRegex') {
+                    const parentStatement = callExpression.findAncestor((node, cancel) => {
+                        if (isIfStatement(node)) {
+                            cancel.cancel();
+                        } else if (this.isLoop(node) || isFunctionExpression(node)) {
+                            return true;
+                        }
+                    });
+
+                    const joinedArgs = callArgs.join('');
+                    const isRegexAlreadyExist = regexes.has(joinedArgs);
+                    if (!isRegexAlreadyExist) {
+                        regexes.add(joinedArgs);
+                    }
+
+                    if (isFunctionExpression(parentStatement)) {
+                        if (isRegexAlreadyExist) {
+                            diagnostics.push(messages.noRegexRedeclaring(callExpression.range, severity));
+                        }
+                    } else if (this.isLoop(parentStatement)) {
+                        diagnostics.push(messages.noIdenticalRegexInLoop(callExpression.range, severity));
+                    }
+                }
+            }
+        }
     }
 
     afterFileValidate(file: BscFile) {
@@ -329,53 +368,6 @@ export default class CodeStyle {
             }
         } else if (kind !== TokenKind.Sub) {
             diagnostics.push(messages.expectedSubKeyword(fun, `(use 'sub' when no value is returned)`));
-        }
-    }
-
-    validateCreateObject(s: CallExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
-        if (!this.isCreateObject(s)) {
-            return;
-        }
-        const callParams = this.getLiteralArgs(s.args);
-
-        if (callParams && callParams.length === 3 && callParams[0] === 'roRegex') {
-            const parentSt = s.findAncestor((node, cancel) => {
-                if (isIfStatement(node)) {
-                    cancel.cancel();
-                } else if (this.isLoop(node) || isFunctionStatement(node)) {
-                    return true;
-                }
-            });
-
-            let hasIssue = false;
-            if (isFunctionStatement(parentSt)) {
-                for (const callExp of parentSt.func.callExpressions) {
-                    if (callExp === s) {
-                        break;
-                    }
-
-                    if (this.isCreateObject(callExp)) {
-                        const callExpParams = this.getLiteralArgs(callExp.args);
-
-                        if (Array.isArray(callExpParams) &&
-                            callExpParams[0] === 'roRegex' &&
-                            callExpParams.length === 3 &&
-                            callExpParams.every((callExpParam, i) => {
-                                return callExpParam === callParams[i];
-                            })
-                        ) {
-                            hasIssue = true;
-                            break;
-                        }
-                    }
-                }
-            } else if (this.isLoop(parentSt)) {
-                hasIssue = true;
-            }
-
-            if (hasIssue) {
-                diagnostics.push(messages.noRegexDuplicates(s.range, severity));
-            }
         }
     }
 
