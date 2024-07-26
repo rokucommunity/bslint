@@ -103,6 +103,20 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('does not mark typecasts as uninitialised vars', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/typecast-expressions.bs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            diagnosticFilters: []
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [];
+        expect(actual).deep.equal(expected);
+    });
+
     describe('does not mark enums as uninitialised vars', () => {
         it('in a regular file', async () => {
             const diagnostics = await linter.run({
