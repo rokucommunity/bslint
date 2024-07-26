@@ -280,7 +280,7 @@ export function createVarLinter(
     }
 
     function visitExpression(expr: Expression, parent: Expression, curr: StatementInfo) {
-        if (isVariableExpression(expr)) {
+        if (isVariableExpression(expr) && !util.isInTypeExpression(expr)) {
             const name = expr.tokens.name.text;
             if (name === 'm') {
                 return;
