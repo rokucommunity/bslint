@@ -4,6 +4,12 @@ import {
     FunctionExpression,
     isBrsFile,
     isXmlFile,
+    isFunctionExpression,
+    isForEachStatement,
+    isForStatement,
+    isWhileStatement,
+    isDottedGetExpression,
+    isComponentType,
     isGroupingExpression,
     TokenKind,
     WalkMode,
@@ -18,7 +24,12 @@ import {
     isVoidType,
     Statement,
     SymbolTypeFlag,
-    XmlFile
+    XmlFile,
+    isAssignmentStatement,
+    isDottedSetStatement,
+    isVariableExpression,
+    CallExpression,
+    AstNode
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
@@ -76,7 +87,7 @@ export default class CodeStyle implements CompilerPlugin {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noCreateObjectInLoop } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
@@ -92,6 +103,7 @@ export default class CodeStyle implements CompilerPlugin {
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
+        const validateNoCreateChildInLoop = noCreateObjectInLoop !== DiagnosticSeverity.Hint;
 
         // Check if the file is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
@@ -132,6 +144,8 @@ export default class CodeStyle implements CompilerPlugin {
                 );
             }
         }
+
+        const createChildinLoop = new Map<AstNode, string[]>();
 
         file.ast.walk(createVisitor({
             // validate function style (`function` or `sub`)
@@ -212,10 +226,83 @@ export default class CodeStyle implements CompilerPlugin {
                         }
                     }
                 }
+            },
+            CallExpression: (node) => {
+                if (validateNoCreateChildInLoop) {
+                    this.findCreateChildinLoop(node, createChildinLoop);
+                }
             }
         }), { walkMode: WalkMode.visitAllRecursive });
 
+        for (const [loop, candidates] of createChildinLoop) {
+            loop.walk(createVisitor({
+                DottedSetStatement: (s) => {
+                    const leftExpression = s.obj;
+                    let varStr = '';
+                    if (isVariableExpression(leftExpression)) {
+                        varStr = leftExpression.tokens.name.text;
+                    } else if (isDottedGetExpression(leftExpression)) {
+                        varStr = this.getDottedStr(leftExpression.obj);
+                    }
+
+                    if (candidates.includes(varStr)) {
+                        diagnostics.push(messages.NoCreateChildInLoop(s.tokens.name.location.range, noCreateObjectInLoop));
+                    }
+                }
+            }), { walkMode: WalkMode.visitAllRecursive });
+        }
+
         return diagnostics;
+    }
+
+    isLoop(statement: AstNode) {
+        return isForStatement(statement) || isForEachStatement(statement) || isWhileStatement(statement);
+    }
+
+    findCreateChildinLoop(node: CallExpression, createChildinLoop: Map<AstNode, string[]>) {
+        if (!isDottedGetExpression(node.callee) || node.callee?.tokens?.name.text.toLowerCase() !== 'createchild') {
+            return;
+        }
+        const objType = node.callee.obj.getType({ flags: SymbolTypeFlag.runtime });
+        if (isComponentType(objType)) {
+            const parentLoop = node.findAncestor((node, cancel) => {
+                if (isFunctionExpression(node)) {
+                    cancel.cancel();
+                } else if (this.isLoop(node)) {
+                    return true;
+                }
+            });
+            if (this.isLoop(parentLoop)) {
+                let candidatesArray = createChildinLoop.get(parentLoop);
+
+                if (!candidatesArray) {
+                    candidatesArray = [];
+                    createChildinLoop.set(parentLoop, []);
+                }
+
+                let varStr = '';
+                if (isAssignmentStatement(node.parent)) {
+                    varStr = node.parent.tokens.name.text;
+                } else if (isDottedSetStatement(node.parent)) {
+                    varStr = this.getDottedStr(node.parent.obj);
+                }
+                createChildinLoop.get(parentLoop).push(varStr);
+            }
+        }
+    }
+
+    getDottedStr(expression: Expression) {
+        let currentExpression = expression;
+        let varStr = '';
+        while (isDottedGetExpression(currentExpression)) {
+            varStr = `.${currentExpression.tokens.name.text}${varStr}`;
+            currentExpression = currentExpression.obj;
+        }
+        if (isVariableExpression(currentExpression)) {
+            varStr = currentExpression.tokens.name.text + varStr;
+        }
+
+        return varStr;
     }
 
     afterFileValidate(event: AfterFileValidateEvent) {

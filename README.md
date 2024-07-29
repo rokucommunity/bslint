@@ -255,6 +255,8 @@ Default rules:
 
 -   `no-array-component-field-type`: Using 'array' type in component markup can result in inefficient copying of data during transfer to the render thread. Use 'node' type if possible for more efficient transfer of data from the task thread to the render thread (`error | warn | info | off`)
 
+- `no-createchild-in-loop`: CreateChild should be used when you want to append a single instance of a type of node to a parent, but avoid modifiing that child after it's created. Do not use in a loop to append multiple children. Use CreateChildren() instead (`error | warn | info | off`)
+
 ### Strictness rules
 
 - `type-annotations`: validation of presence of `as` type annotations, for function
