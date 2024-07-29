@@ -25,7 +25,8 @@ export enum CodeStyleError {
     ColorAlphaDefaults = 'LINT3022',
     ColorCertCompliant = 'LINT3023',
     NoAssocarrayFieldType = 'LINT3024',
-    NoArrayFieldType = 'LINT3025'
+    NoArrayFieldType = 'LINT3025',
+    NoCreateChildInLoop = 'LINT3027'
 }
 
 const CS = 'Code style:';
@@ -214,6 +215,13 @@ export const messages = {
         code: CodeStyleError.NoArrayFieldType,
         severity: severity,
         source: 'bslint',
+        range
+    }),
+    NoCreateChildInLoop: (range: Range, severity: DiagnosticSeverity) => ({
+        severity,
+        code: CodeStyleError.NoCreateChildInLoop,
+        source: 'bslint',
+        message: 'Avoid setting a value to node field after its creation within the same loop',
         range
     })
 };
