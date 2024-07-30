@@ -943,6 +943,47 @@ describe('codeStyle', () => {
         });
     });
 
+    describe('name-shadowing', () => {
+        it('detects name shadowings', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '15:LINT3026:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3026:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3026:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3026:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3026:Strictness: Const has same name as Namespace \'TestNamespace\''
+            ]);
+        });
+
+        it('detects name shadowings across scope', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs', 'source/name-shadowing-import.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:LINT3026:Strictness: Class has same name as Class \'TestImportClass\'',
+                '05:LINT3026:Strictness: Enum has same name as Enum \'TestImportEnum\'',
+                '08:LINT3026:Strictness: Interface has same name as Interface \'TestImportInterface\'',
+                '11:LINT3026:Strictness: Const has same name as Const \'TestImportConst\'',
+                '15:LINT3026:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3026:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3026:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3026:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3026:Strictness: Const has same name as Namespace \'TestNamespace\''
+
+            ]);
+        });
+    });
+
     describe('fix', () => {
         // Filenames (without the extension) that we want to copy with a "-temp" suffix
         const tmpFileNames = [
