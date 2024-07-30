@@ -18,7 +18,16 @@ import {
     isVoidType,
     Statement,
     SymbolTypeFlag,
-    XmlFile
+    XmlFile,
+    AstNode,
+    Token,
+    isNamespaceStatement,
+    util,
+    isAnyReferenceType,
+    ExtraSymbolData,
+    OnScopeValidateEvent,
+    InternalWalkMode,
+    isCallableType
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
@@ -27,6 +36,7 @@ import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
 import { BsLintDiagnosticContext } from '../../Linter';
+import { Location } from 'vscode-languageserver-types';
 
 export default class CodeStyle implements CompilerPlugin {
 
@@ -218,6 +228,33 @@ export default class CodeStyle implements CompilerPlugin {
         return diagnostics;
     }
 
+    validateBrsFileInScope(file: BrsFile) {
+        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        const { severity } = this.lintContext;
+        const { nameShadowing } = severity;
+
+        file.ast.walk(createVisitor({
+            NamespaceStatement: (nsStmt) => {
+                this.validateNameShadowing(file, nsStmt, nsStmt.getNameParts()?.[0], nameShadowing, diagnostics);
+            },
+            ClassStatement: (classStmt) => {
+                this.validateNameShadowing(file, classStmt, classStmt.tokens.name, nameShadowing, diagnostics);
+            },
+            InterfaceStatement: (ifaceStmt) => {
+                this.validateNameShadowing(file, ifaceStmt, ifaceStmt.tokens.name, nameShadowing, diagnostics);
+            },
+            ConstStatement: (constStmt) => {
+                this.validateNameShadowing(file, constStmt, constStmt.tokens.name, nameShadowing, diagnostics);
+            },
+            EnumStatement: (enumStmt) => {
+                this.validateNameShadowing(file, enumStmt, enumStmt.tokens.name, nameShadowing, diagnostics);
+            }
+            // eslint-disable-next-line no-bitwise
+        }), { walkMode: WalkMode.visitStatementsRecursive | InternalWalkMode.visitFalseConditionalCompilationBlocks });
+
+        return diagnostics;
+    }
+
     afterFileValidate(event: AfterFileValidateEvent) {
         const { file } = event;
         if (this.lintContext.ignores(file)) {
@@ -246,6 +283,35 @@ export default class CodeStyle implements CompilerPlugin {
 
         // append diagnostics
         event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
+    }
+
+    onScopeValidate(event: OnScopeValidateEvent) {
+        for (const file of event.scope.getOwnFiles()) {
+            if (this.lintContext.ignores(file)) {
+                return;
+            }
+
+            const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+            if (isBrsFile(file)) {
+                diagnostics.push(...this.validateBrsFileInScope(file));
+            }
+
+            // add file reference
+            let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
+                ...diagnostic,
+                file
+            }));
+
+            const { fix } = this.lintContext;
+
+            // apply fix
+            if (fix) {
+                bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
+            }
+
+            // append diagnostics
+            event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
+        }
     }
 
     validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
@@ -336,6 +402,50 @@ export default class CodeStyle implements CompilerPlugin {
             }), { walkMode: WalkMode.visitStatements, cancel: cancel.token });
         }
         return hasReturnedValue;
+    }
+
+    validateNameShadowing(file: BrsFile, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+        const name = nameIdentifier?.text;
+        if (!name || !node) {
+            return;
+        }
+        const nameLocation = nameIdentifier.location;
+
+        const astTable = file.ast.getSymbolTable();
+        const data = {} as ExtraSymbolData;
+        const typeChain = [];
+        // eslint-disable-next-line no-bitwise
+        const existingType = astTable.getSymbolType(name, { flags: SymbolTypeFlag.runtime | SymbolTypeFlag.typetime, data: data, typeChain: typeChain });
+
+        if (!existingType || isAnyReferenceType(existingType)) {
+            return;
+        }
+        if ((data.definingNode === node) || (isNamespaceStatement(data.definingNode) && isNamespaceStatement(node))) {
+            return;
+        }
+        const otherNode = data.definingNode as unknown as { tokens: { name: Token }; location: Location };
+        const thisNodeKindName = util.getAstNodeFriendlyName(node);
+        let thatNodeKindName = util.getAstNodeFriendlyName(data.definingNode) ?? '';
+        if (!thatNodeKindName && isCallableType(existingType)) {
+            thatNodeKindName = 'Global Function';
+        }
+
+        let thatNameLocation = otherNode?.tokens?.name?.location ?? otherNode?.location;
+
+        if (isNamespaceStatement(data.definingNode)) {
+            thatNameLocation = data.definingNode.getNameParts()?.[0]?.location;
+        }
+
+        const relatedInformation = thatNameLocation ? [{
+            message: `${thatNodeKindName} declared here`,
+            location: thatNameLocation
+        }] : undefined;
+
+        diagnostics.push({
+            ...messages.nameShadowing(thisNodeKindName, thatNodeKindName, name, severity),
+            range: nameLocation.range,
+            relatedInformation: relatedInformation
+        });
     }
 }
 

@@ -51,6 +51,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'color-cert'?: RuleColorCertCompliant;
         'no-assocarray-component-field-type'?: RuleSeverity;
         'no-array-component-field-type'?: RuleSeverity;
+        'name-shadowing'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -86,6 +87,7 @@ export interface BsLintRules {
     colorCertCompliant: RuleColorCertCompliant;
     noAssocarrayComponentFieldType: BsLintSeverity;
     noArrayComponentFieldType: BsLintSeverity;
+    nameShadowing: BsLintSeverity;
 }
 
 export { Linter };
