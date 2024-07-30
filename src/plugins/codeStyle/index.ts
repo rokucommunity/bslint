@@ -250,7 +250,7 @@ export default class CodeStyle {
                         }
                     });
 
-                    const joinedArgs = callArgs.join('');
+                    const joinedArgs = callArgs.join();
                     const isRegexAlreadyExist = regexes.has(joinedArgs);
                     if (!isRegexAlreadyExist) {
                         regexes.add(joinedArgs);
@@ -387,15 +387,15 @@ export default class CodeStyle {
         return hasReturnedValue;
     }
 
-    isLoop(node: AstNode) {
+    private isLoop(node: AstNode) {
         return isForStatement(node) || isForEachStatement(node) || isWhileStatement(node);
     }
 
-    isCreateObject(s: CallExpression) {
+    private isCreateObject(s: CallExpression) {
         return isVariableExpression(s.callee) && s.callee.name.text.toLowerCase() === 'createobject';
     }
 
-    getLiteralArgs(args: Expression[]) {
+    private getLiteralArgs(args: Expression[]) {
         const argsStringValue: string[] = [];
         for (const arg of args) {
             if (isLiteralExpression(arg)) {
