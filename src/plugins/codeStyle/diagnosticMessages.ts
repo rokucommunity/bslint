@@ -218,7 +218,7 @@ export const messages = {
         range
     }),
     nameShadowing: (thisThingKind: string, thatThingKind: string, thatThingName: string, severity: DiagnosticSeverity) => ({
-        message: `${ST} ${thisThingKind} has same name as ${thatThingKind} '${thatThingName}'`,
+        message: `${ST} ${thisThingKind} has same name as ${thatThingKind ? thatThingKind + ' ' : ''}'${thatThingName}'`,
         code: CodeStyleError.NameShadowing,
         severity: severity,
         source: 'bslint'

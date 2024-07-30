@@ -982,6 +982,20 @@ describe('codeStyle', () => {
 
             ]);
         });
+
+        it('detects name shadowing function', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing-functions.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:LINT3026:Strictness: Const has same name as Function \'TestFunction\'',
+                '03:LINT3026:Strictness: Const has same name as Global Function \'Lcase\''
+            ]);
+        });
     });
 
     describe('fix', () => {

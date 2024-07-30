@@ -26,7 +26,8 @@ import {
     isAnyReferenceType,
     ExtraSymbolData,
     OnScopeValidateEvent,
-    InternalWalkMode
+    InternalWalkMode,
+    isCallableType
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
@@ -412,8 +413,9 @@ export default class CodeStyle implements CompilerPlugin {
 
         const astTable = file.ast.getSymbolTable();
         const data = {} as ExtraSymbolData;
+        const typeChain = [];
         // eslint-disable-next-line no-bitwise
-        const existingType = astTable.getSymbolType(name, { flags: SymbolTypeFlag.runtime | SymbolTypeFlag.typetime, data: data });
+        const existingType = astTable.getSymbolType(name, { flags: SymbolTypeFlag.runtime | SymbolTypeFlag.typetime, data: data, typeChain: typeChain });
 
         if (!existingType || isAnyReferenceType(existingType)) {
             return;
@@ -423,7 +425,10 @@ export default class CodeStyle implements CompilerPlugin {
         }
         const otherNode = data.definingNode as unknown as { tokens: { name: Token }; location: Location };
         const thisNodeKindName = util.getAstNodeFriendlyName(node);
-        const thatNodeKindName = util.getAstNodeFriendlyName(data.definingNode) ?? ''; // data.definingNode.location.uri.file.srcPath === 'global' ? 'Global Function'
+        let thatNodeKindName = util.getAstNodeFriendlyName(data.definingNode) ?? '';
+        if (!thatNodeKindName && isCallableType(existingType)) {
+            thatNodeKindName = 'Global Function';
+        }
 
         let thatNameLocation = otherNode?.tokens?.name?.location ?? otherNode?.location;
 

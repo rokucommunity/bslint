@@ -24,6 +24,7 @@ namespace TestNamespace
     const TestConst = 1
 
     const TestNamespace = 2
+
 end namespace
 
 
