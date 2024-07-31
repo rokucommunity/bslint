@@ -51,7 +51,9 @@ describe('trackCodeFlow', () => {
         expectDiagnostics(program, [{
             code: VarLintError.UnsafeInitialization,
             message: `Not all the code paths assign 'text2'`,
-            range: util.createRange(9, 22, 9, 27)
+            location: {
+                range: util.createRange(9, 22, 9, 27)
+            }
         }]);
     });
 

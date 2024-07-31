@@ -354,7 +354,7 @@ describe('codeStyle', () => {
         ];
         expect(actual).deep.equal(expected);
         // should only highlight the function name
-        expect(diagnostics[0].range).to.eql(
+        expect(diagnostics[0].location.range).to.eql(
             util.createRange(4, 0, 4, 8)
         );
     });
@@ -683,14 +683,14 @@ describe('codeStyle', () => {
                     'color-format': 'quoted-numeric-hex',
                     'color-case': 'upper'
                 });
-                program.setFile(
+                const file = program.setFile(
                     'source/main.bs',
                     `sub init()\n${code}\nend sub`
                 );
                 program.validate();
                 expectDiagnostics(
                     program,
-                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createRange(1, x[0], 1, x[1])))
+                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createLocationFromFileRange(file, util.createRange(1, x[0], 1, x[1]))))
                 );
             }
             /* eslint-enable no-template-curly-in-string */

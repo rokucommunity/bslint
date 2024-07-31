@@ -47,11 +47,11 @@ export default class CodeStyle implements CompilerPlugin {
 
     onGetCodeActions(event: OnGetCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
-        extractFixes(addFixes, event.diagnostics);
+        extractFixes(event.file, addFixes, event.diagnostics);
     }
 
     validateXMLFile(file: XmlFile) {
-        const diagnostics: Omit<BsDiagnostic, 'file'>[] = [];
+        const diagnostics: BsDiagnostic[] = [];
         const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
@@ -65,14 +65,14 @@ export default class CodeStyle implements CompilerPlugin {
                 if (typeValue === 'array' && validateArrayComponentFieldType) {
                     diagnostics.push(
                         messages.noArrayFieldType(
-                            typeAttribute?.tokens?.value?.location?.range,
+                            typeAttribute?.tokens?.value?.location,
                             noArrayComponentFieldType
                         )
                     );
                 } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
                     diagnostics.push(
                         messages.noAssocarrayFieldType(
-                            typeAttribute?.tokens?.value?.location?.range,
+                            typeAttribute?.tokens?.value?.location,
                             noAssocarrayComponentFieldType
                         )
                     );
@@ -84,7 +84,7 @@ export default class CodeStyle implements CompilerPlugin {
     }
 
     validateBrsFile(file: BrsFile) {
-        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
@@ -120,7 +120,7 @@ export default class CodeStyle implements CompilerPlugin {
             const penultimateToken = tokens[tokens.length - 2];
             if (disallowEolLast) {
                 if (penultimateToken?.kind === TokenKind.Newline) {
-                    diagnostics.push(messages.removeEolLast(penultimateToken.location.range));
+                    diagnostics.push(messages.removeEolLast(penultimateToken.location));
                 }
             } else if (penultimateToken?.kind !== TokenKind.Newline) {
                 // Set the preferredEol as the last newline.
@@ -136,7 +136,7 @@ export default class CodeStyle implements CompilerPlugin {
 
                 diagnostics.push(
                     messages.addEolLast(
-                        penultimateToken.location.range,
+                        penultimateToken.location,
                         preferredEol
                     )
                 );
@@ -159,7 +159,7 @@ export default class CodeStyle implements CompilerPlugin {
                     }
                 } else if (s.isInline && validateInlineIf) {
                     if (disallowInlineIf) {
-                        diagnostics.push(messages.inlineIfNotAllowed(s.location.range));
+                        diagnostics.push(messages.inlineIfNotAllowed(s.location));
                     } else if (hasThenToken !== requireInlineIfThen) {
                         diagnostics.push(requireInlineIfThen
                             ? messages.addInlineIfThenKeyword(s)
@@ -189,18 +189,18 @@ export default class CodeStyle implements CompilerPlugin {
             },
             PrintStatement: s => {
                 if (validatePrint) {
-                    diagnostics.push(messages.noPrint(s.tokens.print.location.range, noPrint));
+                    diagnostics.push(messages.noPrint(s.tokens.print.location, noPrint));
                 }
             },
             LiteralExpression: e => {
                 if (validateColorStyle && e.tokens.value.kind === TokenKind.StringLiteral) {
-                    validateColorStyle(e.tokens.value.text, e.tokens.value.location.range, diagnostics);
+                    validateColorStyle(e.tokens.value.text, e.tokens.value.location, diagnostics);
                 }
             },
             TemplateStringExpression: e => {
                 // only validate template strings that look like regular strings (i.e. `0xAABBCC`)
                 if (validateColorStyle && e.quasis.length === 1 && e.quasis[0].expressions.length === 1) {
-                    validateColorStyle(e.quasis[0].expressions[0].tokens.value.text, e.quasis[0].expressions[0].tokens.value.location.range, diagnostics);
+                    validateColorStyle(e.quasis[0].expressions[0].tokens.value.text, e.quasis[0].expressions[0].tokens.value.location, diagnostics);
                 }
             },
             AALiteralExpression: e => {
@@ -210,7 +210,7 @@ export default class CodeStyle implements CompilerPlugin {
             },
             StopStatement: s => {
                 if (validateNoStop) {
-                    diagnostics.push(messages.noStop(s.tokens.stop.location.range, noStop));
+                    diagnostics.push(messages.noStop(s.tokens.stop.location, noStop));
                 }
             },
             AstNode: (node: Statement | Expression) => {
@@ -218,7 +218,7 @@ export default class CodeStyle implements CompilerPlugin {
                 if (validateTodo && comments.length > 0) {
                     for (const e of comments) {
                         if (this.lintContext.todoPattern.test(e.text)) {
-                            diagnostics.push(messages.noTodo(e.location.range, noTodo));
+                            diagnostics.push(messages.noTodo(e.location, noTodo));
                         }
                     }
                 }
@@ -229,7 +229,7 @@ export default class CodeStyle implements CompilerPlugin {
     }
 
     validateBrsFileInScope(file: BrsFile) {
-        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
         const { nameShadowing } = severity;
 
@@ -261,7 +261,7 @@ export default class CodeStyle implements CompilerPlugin {
             return;
         }
 
-        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        const diagnostics: (BsDiagnostic)[] = [];
         if (isXmlFile(file)) {
             diagnostics.push(...this.validateXMLFile(file));
         } else if (isBrsFile(file)) {
@@ -278,7 +278,7 @@ export default class CodeStyle implements CompilerPlugin {
 
         // apply fix
         if (fix) {
-            bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
+            bsDiagnostics = extractFixes(event.file, this.lintContext.addFixes, bsDiagnostics);
         }
 
         // append diagnostics
@@ -291,7 +291,7 @@ export default class CodeStyle implements CompilerPlugin {
                 return;
             }
 
-            const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+            const diagnostics: (BsDiagnostic)[] = [];
             if (isBrsFile(file)) {
                 diagnostics.push(...this.validateBrsFileInScope(file));
             }
@@ -306,7 +306,7 @@ export default class CodeStyle implements CompilerPlugin {
 
             // apply fix
             if (fix) {
-                bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
+                bsDiagnostics = extractFixes(file, this.lintContext.addFixes, bsDiagnostics);
             }
 
             // append diagnostics
@@ -314,7 +314,7 @@ export default class CodeStyle implements CompilerPlugin {
         }
     }
 
-    validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+    validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (BsDiagnostic)[]) {
         const indexes = collectWrappingAAMembersIndexes(aa);
         const last = indexes.length - 1;
         const isSingleLine = (aa: AALiteralExpression): boolean => {
@@ -326,15 +326,15 @@ export default class CodeStyle implements CompilerPlugin {
             const hasComma = !!member.tokens.comma;
             if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
                 if (hasComma) {
-                    diagnostics.push(messages.removeAAComma(member.tokens.comma.location.range));
+                    diagnostics.push(messages.removeAAComma(member.tokens.comma.location));
                 }
             } else if (!hasComma) {
-                diagnostics.push(messages.addAAComma(member.value.location.range));
+                diagnostics.push(messages.addAAComma(member.value.location));
             }
         });
     }
 
-    validateFunctionStyle(fun: FunctionExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+    validateFunctionStyle(fun: FunctionExpression, diagnostics: (BsDiagnostic)[]) {
         const { severity } = this.lintContext;
         const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = severity;
         const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
@@ -347,7 +347,7 @@ export default class CodeStyle implements CompilerPlugin {
                 if (hasReturnedValue && !fun.returnTypeExpression) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
                         // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
-                        fun.tokens.functionType?.location?.range ?? fun.location.range
+                        fun.tokens.functionType?.location ?? fun.location
                     ));
                 }
             }
@@ -355,7 +355,7 @@ export default class CodeStyle implements CompilerPlugin {
                 const missingAnnotation = fun.parameters.find(arg => !arg.typeExpression);
                 if (missingAnnotation) {
                     // only report 1st missing arg annotation to avoid error overload
-                    diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.location.range));
+                    diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.location));
                 }
             }
         }
@@ -404,7 +404,7 @@ export default class CodeStyle implements CompilerPlugin {
         return hasReturnedValue;
     }
 
-    validateNameShadowing(file: BrsFile, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+    validateNameShadowing(file: BrsFile, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
         const name = nameIdentifier?.text;
         if (!name || !node) {
             return;
@@ -443,7 +443,7 @@ export default class CodeStyle implements CompilerPlugin {
 
         diagnostics.push({
             ...messages.nameShadowing(thisNodeKindName, thatNodeKindName, name, severity),
-            range: nameLocation.range,
+            location: nameLocation,
             relatedInformation: relatedInformation
         });
     }

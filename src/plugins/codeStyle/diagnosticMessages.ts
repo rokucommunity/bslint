@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, FunctionExpression, IfStatement, Range, WhileStatement } from 'brighterscript';
+import { DiagnosticSeverity, FunctionExpression, IfStatement, Location, WhileStatement } from 'brighterscript';
 
 export enum CodeStyleError {
     InlineIfFound = 'LINT3001',
@@ -38,7 +38,7 @@ export const messages = {
         code: CodeStyleError.BlockIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        range: stat.tokens.if.location.range,
+        location: stat.tokens.if.location,
         data: stat
     }),
     removeBlockIfThenKeyword: (stat: IfStatement) => ({
@@ -46,22 +46,22 @@ export const messages = {
         code: CodeStyleError.BlockIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        range: stat.tokens.then.location.range,
+        location: stat.tokens.then.location,
         data: stat
     }),
-    inlineIfNotAllowed: (range: Range) => ({
+    inlineIfNotAllowed: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfFound,
         source: 'bslint',
         message: `${CS} no inline if statement allowed`,
-        range
+        location
     }),
     addInlineIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        range: stat.tokens.if.location.range,
+        location: stat.tokens.if.location,
         data: stat
     }),
     removeInlineIfThenKeyword: (stat: IfStatement) => ({
@@ -69,7 +69,7 @@ export const messages = {
         code: CodeStyleError.InlineIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        range: stat.tokens.then.location.range,
+        location: stat.tokens.then.location,
         data: stat
     }),
     addParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
@@ -77,7 +77,7 @@ export const messages = {
         code: CodeStyleError.ConditionGroupMissing,
         source: 'bslint',
         message: `${CS} add parenthesis around condition`,
-        range: stat.condition.location.range,
+        location: stat.condition.location,
         data: stat
     }),
     removeParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
@@ -85,7 +85,7 @@ export const messages = {
         code: CodeStyleError.ConditionGroupFound,
         source: 'bslint',
         message: `${CS} remove parenthesis around condition`,
-        range: stat.condition.location.range,
+        location: stat.condition.location,
         data: stat
     }),
     expectedSubKeyword: (fun: FunctionExpression, reason: string) => ({
@@ -93,7 +93,7 @@ export const messages = {
         code: CodeStyleError.SubKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'sub' keyword ${reason}`,
-        range: fun.tokens.functionType.location.range,
+        location: fun.tokens.functionType.location,
         data: fun
     }),
     expectedFunctionKeyword: (fun: FunctionExpression, reason: string) => ({
@@ -101,121 +101,121 @@ export const messages = {
         code: CodeStyleError.FunctionKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'function' keyword ${reason}`,
-        range: fun.tokens.functionType.location.range,
+        location: fun.tokens.functionType.location,
         data: fun
     }),
-    expectedReturnTypeAnnotation: (range: Range) => ({
+    expectedReturnTypeAnnotation: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ReturnTypeAnnotation,
         source: 'bslint',
         message: `${ST} function should declare the return type`,
-        range
+        location
     }),
-    expectedTypeAnnotation: (range: Range) => ({
+    expectedTypeAnnotation: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.TypeAnnotation,
         source: 'bslint',
         message: `${ST} type annotation required`,
-        range
+        location
     }),
-    noPrint: (range: Range, severity: DiagnosticSeverity) => ({
+    noPrint: (location: Location, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoPrint,
         source: 'bslint',
         message: `${CS} Avoid using direct Print statements`,
-        range
+        location
     }),
-    noTodo: (range: Range, severity: DiagnosticSeverity) => ({
+    noTodo: (location: Location, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoTodo,
         source: 'bslint',
         message: `${CS} Avoid using TODO comments`,
-        range
+        location
     }),
-    noStop: (range: Range, severity: DiagnosticSeverity) => ({
+    noStop: (location: Location, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoStop,
         source: 'bslint',
         message: `${CS} STOP statements are not allowed in published applications`,
-        range
+        location
     }),
-    removeAAComma: (range: Range) => ({
+    removeAAComma: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.AACommaFound,
         source: 'bslint',
         message: `Remove optional comma`,
-        range
+        location
     }),
-    addAAComma: (range: Range) => ({
+    addAAComma: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.AACommaMissing,
         source: 'bslint',
         message: `Add comma after the expression`,
-        range
+        location
     }),
-    addEolLast: (range: Range, preferredEol: string) => ({
+    addEolLast: (location: Location, preferredEol: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.EolLastMissing,
         source: 'bslint',
         message: `${CS} File should end with a newline`,
-        range,
+        location,
         data: { preferredEol }
     }),
-    removeEolLast: (range: Range) => ({
+    removeEolLast: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.EolLastFound,
         source: 'bslint',
         message: `${CS} File should not end with a newline`,
-        range
+        location
     }),
-    expectedColorFormat: (range: Range) => ({
+    expectedColorFormat: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorFormat,
         source: 'bslint',
         message: `${CS} File should follow color format`,
-        range
+        location
     }),
-    expectedColorCase: (range: Range) => ({
+    expectedColorCase: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorCase,
         source: 'bslint',
         message: `${CS} File should follow color case`,
-        range
+        location
     }),
-    expectedColorAlpha: (range: Range) => ({
+    expectedColorAlpha: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorAlpha,
         source: 'bslint',
         message: `${CS} File should follow color alpha rule`,
-        range
+        location
     }),
-    expectedColorAlphaDefaults: (range: Range) => ({
+    expectedColorAlphaDefaults: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorAlphaDefaults,
         source: 'bslint',
         message: `${CS} File should follow color alpha defaults rule`,
-        range
+        location
     }),
-    colorCertCompliance: (range: Range) => ({
+    colorCertCompliance: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorCertCompliant,
         source: 'bslint',
         message: `${CS} File should follow Roku broadcast safe color cert requirement`,
-        range
+        location
     }),
-    noAssocarrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
+    noAssocarrayFieldType: (location: Location, severity: DiagnosticSeverity) => ({
         message: `Avoid using field type 'assocarray'`,
         code: CodeStyleError.NoAssocarrayFieldType,
         severity: severity,
         source: 'bslint',
-        range
+        location
     }),
-    noArrayFieldType: (range: Range, severity: DiagnosticSeverity) => ({
+    noArrayFieldType: (location: Location, severity: DiagnosticSeverity) => ({
         message: `Avoid using field type 'array'`,
         code: CodeStyleError.NoArrayFieldType,
         severity: severity,
         source: 'bslint',
-        range
+        location
     }),
     nameShadowing: (thisThingKind: string, thatThingKind: string, thatThingName: string, severity: DiagnosticSeverity) => ({
         message: `${ST} ${thisThingKind} has same name as ${thatThingKind ? thatThingKind + ' ' : ''}'${thatThingName}'`,
