@@ -6,11 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.35](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.34...v1.0.0-alpha.35) - 2024-08-01
+### Added
+ - name shadowing lint rule ([#124](https://github.com/rokucommunity/bslint/pull/124))
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.35](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha35---2024-07-31)
+### Fixed
+ - check if in `TypeExpression` before doing `VariableExpression` checks ([#122](https://github.com/rokucommunity/bslint/pull/122))
+
+
+
 ## [1.0.0-alpha.34](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.33...v1.0.0-alpha.34) - 2024-07-24
 ### Changed
- - upgrade to [brighterscript@1.0.0-alpha.33](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha33---2024-06-14)
+ - upgrade to [brighterscript@1.0.0-alpha.34](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha34---2024-07-24)
 ### Fixed
- - fix bugs with new conditional compile blocks ([#114](https://github.com/rokucommunity/brighterscript/pull/114))
+ - fix bugs with new conditional compile blocks ([#114](https://github.com/rokucommunity/bslint/pull/114))
 
 
 
