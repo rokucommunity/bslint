@@ -60,9 +60,6 @@
     "ts-node": "^10.7.0",
     "typescript": "^4.9.4"
   },
-  "peerDependencies": {
-    "brighterscript": "1.0.0-alpha.34"
-  },
   "mocha": {
     "spec": "src/**/*.spec.ts",
     "require": [
