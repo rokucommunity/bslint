@@ -39,8 +39,7 @@ export function createReturnLinter(
                 severity: severity.unreachableCode,
                 code: ReturnLintError.UnreachableCode,
                 message: 'Unreachable code',
-                range: curr.stat.location.range,
-                file: file,
+                location: curr.stat.location,
                 tags: [DiagnosticTag.Unnecessary]
             });
         } else if (isReturnStatement(curr.stat)) {
@@ -96,7 +95,7 @@ export function createReturnLinter(
         const funRangeStart = (fun.tokens.functionType ?? fun.tokens.leftParen).location.range.start;
         const funRangeEnd = (fun.returnTypeExpression ?? fun.tokens.rightParen).location.range.end;
         const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
-
+        const funLocation = util.createLocationFromRange(fun.location.uri, funRange);
         // Explicit `as void` or `sub` without return type should never return a value
         const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime });
 
@@ -110,8 +109,7 @@ export function createReturnLinter(
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueUnexpected,
                         message: `${kind} as void should not return a value`,
-                        range: r.stat?.location.range || funRange,
-                        file: file
+                        location: r.stat?.location ?? funLocation
                     });
                 });
             }
@@ -132,8 +130,7 @@ export function createReturnLinter(
                 severity: consistentReturn,
                 code: ReturnLintError.UnsafeReturnValue,
                 message: 'Not all code paths return a value',
-                range: funRange,
-                file: file
+                location: funLocation
             });
         }
 
@@ -146,8 +143,7 @@ export function createReturnLinter(
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueMissing,
                         message: `${kind} should consistently return a value`,
-                        range: r.stat.location.range || funRange,
-                        file: file
+                        location: r.stat.location || funLocation
                     });
                 });
         }

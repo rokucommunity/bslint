@@ -62,7 +62,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
 
     onGetCodeActions(event: OnGetCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
-        extractFixes(addFixes, event.diagnostics);
+        extractFixes(event.file, addFixes, event.diagnostics);
     }
 
     afterScopeValidate(event: AfterScopeValidateEvent) {
@@ -186,7 +186,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         }
 
         if (this.lintContext.fix) {
-            diagnostics = extractFixes(this.lintContext.addFixes, diagnostics);
+            diagnostics = extractFixes(event.file, this.lintContext.addFixes, diagnostics);
         }
         event.program.diagnostics.register(diagnostics, BsLintDiagnosticContext);
     }

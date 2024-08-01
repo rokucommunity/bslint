@@ -21,7 +21,7 @@ interface ValidationInfo {
     kind: ValidationKind;
     name: string;
     local?: VarInfo;
-    range: Range;
+    location: Location;
     namespace?: NamespaceStatement;
 }
 
@@ -63,11 +63,10 @@ export function createVarLinter(
                 severity: severity.caseSensitivity,
                 code: VarLintError.CaseMismatch,
                 message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
-                range: name.location.range,
-                file: file,
+                location: name.location,
                 data: {
                     name: curr.name,
-                    range: name.location.range
+                    location: name.location
                 }
             });
         }
@@ -104,7 +103,7 @@ export function createVarLinter(
             kind: ValidationKind.Assignment,
             name: name.text,
             local: local,
-            range: name.location.range
+            location: name.location
         });
 
         return local;
@@ -291,7 +290,7 @@ export function createVarLinter(
                 deferred.push({
                     kind: ValidationKind.UninitializedVar,
                     name: name,
-                    range: expr.location.range,
+                    location: expr.location,
                     namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)
                 });
                 return;
@@ -306,16 +305,14 @@ export function createVarLinter(
                         severity: severity.unsafeIterators,
                         code: VarLintError.UnsafeIteratorVar,
                         message: `Using iterator variable '${name}' outside loop`,
-                        range: expr.location.range,
-                        file: file
+                        location: expr.location
                     });
                 } else if (!isNarrowing(local, expr, parent, curr)) {
                     diagnostics.push({
                         severity: severity.unsafePathLoop,
                         code: VarLintError.UnsafeInitialization,
                         message: `Not all the code paths assign '${name}'`,
-                        range: expr.location.range,
-                        file: file
+                        location: expr.location
                     });
                 }
             }
@@ -359,8 +356,7 @@ export function createVarLinter(
                     severity: severity.unusedVariable,
                     code: VarLintError.UnusedVariable,
                     message: `Variable '${local.name}' is set but value is never used`,
-                    range: local.location.range,
-                    file: file
+                    location: local.location
                 });
             }
         });
@@ -422,7 +418,7 @@ function deferredVarLinter(
     deferred: ValidationInfo[],
     diagnostics: BsDiagnostic[]
 ) {
-    deferred.forEach(({ kind, name, local, range, namespace }) => {
+    deferred.forEach(({ kind, name, local, location, namespace }) => {
         const key = name?.toLowerCase();
         let hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
         if (key && !hasCallable && namespace) {
@@ -437,8 +433,7 @@ function deferredVarLinter(
                         severity: DiagnosticSeverity.Error,
                         code: VarLintError.UninitializedVar,
                         message: `Using uninitialised variable '${name}' when this file is included in scope '${scope.name}'`,
-                        range: range,
-                        file: file
+                        location: location
                     });
                 }
                 // TODO else test case

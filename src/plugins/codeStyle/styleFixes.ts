@@ -4,13 +4,14 @@ import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
 
 export function extractFixes(
+    file: BscFile,
     addFixes: (file: BscFile, changes: ChangeEntry) => void,
     diagnostics: BsDiagnostic[]
 ): BsDiagnostic[] {
     return diagnostics.filter(diagnostic => {
         const fix = getFixes(diagnostic);
         if (fix) {
-            addFixes(diagnostic.file, fix);
+            addFixes(file, fix);
             return false;
         }
         return true;
@@ -47,21 +48,21 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
 }
 
 function addAAComma(diagnostic: BsDiagnostic) {
-    const { range } = diagnostic;
+    const { location } = diagnostic;
     return {
         diagnostic,
         changes: [
-            insertText(range.end, ',')
+            insertText(location.range.end, ',')
         ]
     };
 }
 
 function removeAAComma(diagnostic: BsDiagnostic) {
-    const { range } = diagnostic;
+    const { location } = diagnostic;
     return {
         diagnostic,
         changes: [
-            replaceText(range, '')
+            replaceText(location.range, '')
         ]
     };
 }
@@ -154,7 +155,7 @@ function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
         diagnostic,
         changes: [
             insertText(
-                diagnostic.range.end,
+                diagnostic.location.range.end,
                 // In single line files, the `preferredEol` cannot be determined
                 // e.g: `sub foo() end sub\EOF`
                 diagnostic.data.preferredEol ?? (platform.toString() === 'win32' ? '\r\n' : '\n')
@@ -167,7 +168,7 @@ function removeEolLast(diagnostic: BsDiagnostic): ChangeEntry {
     return {
         diagnostic,
         changes: [
-            replaceText(diagnostic.range, '')
+            replaceText(diagnostic.location.range, '')
         ]
     };
 }

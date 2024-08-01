@@ -1,4 +1,4 @@
-import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache } from 'brighterscript';
+import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 import { BsLintDiagnosticContext } from '../../Linter';
@@ -209,16 +209,14 @@ export default class CheckUsage implements CompilerPlugin {
                         severity: DiagnosticSeverity.Warning,
                         code: UnusedCode.UnusedScript,
                         message: `Script '${v.file.pkgPath}' does not seem to be used`,
-                        range: Range.create(0, 0, 1, 0),
-                        file: v.file
+                        location: util.createLocationFromFileRange(v.file, util.createRange(0, 0, 1, 0))
                     }, BsLintDiagnosticContext);
                 } else if (isXmlFile(v.file) && v.file.componentName?.location.range) {
                     v.file.program.diagnostics.register({
                         severity: DiagnosticSeverity.Warning,
                         code: UnusedCode.UnusedComponent,
                         message: `Component '${v.file.pkgPath}' does not seem to be used`,
-                        range: v.file.componentName.location.range,
-                        file: v.file
+                        location: v.file.componentName.location
                     }, BsLintDiagnosticContext);
                 }
             }
