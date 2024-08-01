@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { Program, util } from 'brighterscript';
+import { AfterProgramCreateEvent, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
@@ -20,11 +20,12 @@ describe('trackCodeFlow', () => {
         linter = new Linter();
         program = new Program({});
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProgramCreate', { builder: undefined, program: program });
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const trackCodeFlow = new TrackCodeFlow(lintContext);
                 program.plugins.add(trackCodeFlow);
@@ -50,7 +51,9 @@ describe('trackCodeFlow', () => {
         expectDiagnostics(program, [{
             code: VarLintError.UnsafeInitialization,
             message: `Not all the code paths assign 'text2'`,
-            range: util.createRange(9, 22, 9, 27)
+            location: {
+                range: util.createRange(9, 22, 9, 27)
+            }
         }]);
     });
 
@@ -62,7 +65,7 @@ describe('trackCodeFlow', () => {
                 'consistent-return': 'off',
                 'unused-variable': 'off'
             },
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
@@ -82,6 +85,34 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             diagnosticFilters: [1001]
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('does not mark inline anonymous functions param types as uninitialised vars', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/inline-functions.bs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            diagnosticFilters: []
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('does not mark typecasts as uninitialised vars', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/typecast-expressions.bs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            diagnosticFilters: []
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [];
@@ -213,7 +244,9 @@ describe('trackCodeFlow', () => {
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
-            `27:LINT1003:Not all the code paths assign 'b'`
+            `27:LINT1003:Not all the code paths assign 'b'`,
+            `67:1031:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`,
+            `67:1140:Cannot find function 'Bar'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -321,12 +354,14 @@ describe('trackCodeFlow', () => {
             rules: {
                 'consistent-return': 'error',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1142]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `04:LINT2002:Sub as void should not return a value`,
             `11:LINT2002:Function as void should not return a value`,
+            `151:LINT2004:Not all code paths return a value`,
             `15:LINT2006:Sub should consistently return a value`,
             `18:LINT2004:Not all code paths return a value`,
             `22:LINT2006:Function should consistently return a value`,
@@ -365,7 +400,7 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             globals: ['a'],
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [

@@ -1,6 +1,4 @@
 import {
-    BscFile,
-    XmlFile,
     BsDiagnostic,
     createVisitor,
     FunctionExpression,
@@ -12,10 +10,24 @@ import {
     CancellationTokenSource,
     DiagnosticSeverity,
     OnGetCodeActionsEvent,
-    isCommentStatement,
     AALiteralExpression,
-    AAMemberExpression,
-    BrsFile
+    BrsFile,
+    CompilerPlugin,
+    AfterFileValidateEvent,
+    Expression,
+    isVoidType,
+    Statement,
+    SymbolTypeFlag,
+    XmlFile,
+    AstNode,
+    Token,
+    isNamespaceStatement,
+    util,
+    isAnyReferenceType,
+    ExtraSymbolData,
+    OnScopeValidateEvent,
+    InternalWalkMode,
+    isCallableType
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
@@ -23,8 +35,10 @@ import { PluginContext } from '../../util';
 import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
+import { BsLintDiagnosticContext } from '../../Linter';
+import { Location } from 'vscode-languageserver-types';
 
-export default class CodeStyle {
+export default class CodeStyle implements CompilerPlugin {
 
     name: 'codeStyle';
 
@@ -33,33 +47,32 @@ export default class CodeStyle {
 
     onGetCodeActions(event: OnGetCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
-        extractFixes(addFixes, event.diagnostics);
+        extractFixes(event.file, addFixes, event.diagnostics);
     }
 
     validateXMLFile(file: XmlFile) {
-        const diagnostics: Omit<BsDiagnostic, 'file'>[] = [];
+        const diagnostics: BsDiagnostic[] = [];
         const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
 
-        for (const field of file.parser?.ast?.component?.api?.fields ?? []) {
-            const { tag, attributes } = field;
-            if (tag.text === 'field') {
-                const typeAttribute = attributes.find(({ key }) => key.text === 'type');
+        for (const field of file.parser?.ast?.componentElement?.interfaceElement?.fields ?? []) {
+            if (field.tokens.startTagName?.text?.toLowerCase() === 'field') {
+                const typeAttribute = field.getAttribute('type');
 
-                const typeValue = typeAttribute?.value.text;
+                const typeValue = typeAttribute?.tokens?.value?.text?.toLowerCase();
                 if (typeValue === 'array' && validateArrayComponentFieldType) {
                     diagnostics.push(
                         messages.noArrayFieldType(
-                            typeAttribute.value.range,
+                            typeAttribute?.tokens?.value?.location,
                             noArrayComponentFieldType
                         )
                     );
                 } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
                     diagnostics.push(
                         messages.noAssocarrayFieldType(
-                            typeAttribute.value.range,
+                            typeAttribute?.tokens?.value?.location,
                             noAssocarrayComponentFieldType
                         )
                     );
@@ -71,7 +84,7 @@ export default class CodeStyle {
     }
 
     validateBrsFile(file: BrsFile) {
-        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
@@ -86,7 +99,6 @@ export default class CodeStyle {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
-        const walkExpressions = validateAAStyle || validateColorFormat;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
@@ -108,7 +120,7 @@ export default class CodeStyle {
             const penultimateToken = tokens[tokens.length - 2];
             if (disallowEolLast) {
                 if (penultimateToken?.kind === TokenKind.Newline) {
-                    diagnostics.push(messages.removeEolLast(penultimateToken.range));
+                    diagnostics.push(messages.removeEolLast(penultimateToken.location));
                 }
             } else if (penultimateToken?.kind !== TokenKind.Newline) {
                 // Set the preferredEol as the last newline.
@@ -124,7 +136,7 @@ export default class CodeStyle {
 
                 diagnostics.push(
                     messages.addEolLast(
-                        penultimateToken.range,
+                        penultimateToken.location,
                         preferredEol
                     )
                 );
@@ -132,6 +144,10 @@ export default class CodeStyle {
         }
 
         file.ast.walk(createVisitor({
+            // validate function style (`function` or `sub`)
+            FunctionExpression: (func) => {
+                this.validateFunctionStyle(func, diagnostics);
+            },
             IfStatement: s => {
                 const hasThenToken = !!s.tokens.then;
                 if (!s.isInline && validateBlockIf) {
@@ -143,7 +159,7 @@ export default class CodeStyle {
                     }
                 } else if (s.isInline && validateInlineIf) {
                     if (disallowInlineIf) {
-                        diagnostics.push(messages.inlineIfNotAllowed(s.range));
+                        diagnostics.push(messages.inlineIfNotAllowed(s.location));
                     } else if (hasThenToken !== requireInlineIfThen) {
                         diagnostics.push(requireInlineIfThen
                             ? messages.addInlineIfThenKeyword(s)
@@ -173,18 +189,18 @@ export default class CodeStyle {
             },
             PrintStatement: s => {
                 if (validatePrint) {
-                    diagnostics.push(messages.noPrint(s.tokens.print.range, noPrint));
+                    diagnostics.push(messages.noPrint(s.tokens.print.location, noPrint));
                 }
             },
             LiteralExpression: e => {
-                if (validateColorStyle && e.token.kind === TokenKind.StringLiteral) {
-                    validateColorStyle(e.token.text, e.token.range, diagnostics);
+                if (validateColorStyle && e.tokens.value.kind === TokenKind.StringLiteral) {
+                    validateColorStyle(e.tokens.value.text, e.tokens.value.location, diagnostics);
                 }
             },
             TemplateStringExpression: e => {
                 // only validate template strings that look like regular strings (i.e. `0xAABBCC`)
                 if (validateColorStyle && e.quasis.length === 1 && e.quasis[0].expressions.length === 1) {
-                    validateColorStyle(e.quasis[0].expressions[0].token.text, e.quasis[0].expressions[0].token.range, diagnostics);
+                    validateColorStyle(e.quasis[0].expressions[0].tokens.value.text, e.quasis[0].expressions[0].tokens.value.location, diagnostics);
                 }
             },
             AALiteralExpression: e => {
@@ -192,34 +208,60 @@ export default class CodeStyle {
                     this.validateAAStyle(e, aaCommaStyle, diagnostics);
                 }
             },
-            CommentStatement: e => {
-                if (validateTodo) {
-                    if (this.lintContext.todoPattern.test(e.text)) {
-                        diagnostics.push(messages.noTodo(e.range, noTodo));
-                    }
-                }
-            },
             StopStatement: s => {
                 if (validateNoStop) {
-                    diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
+                    diagnostics.push(messages.noStop(s.tokens.stop.location, noStop));
+                }
+            },
+            AstNode: (node: Statement | Expression) => {
+                const comments = [...node.leadingTrivia, ...node.endTrivia].filter(t => t.kind === TokenKind.Comment);
+                if (validateTodo && comments.length > 0) {
+                    for (const e of comments) {
+                        if (this.lintContext.todoPattern.test(e.text)) {
+                            diagnostics.push(messages.noTodo(e.location, noTodo));
+                        }
+                    }
                 }
             }
-        }), { walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive });
-
-        // validate function style (`function` or `sub`)
-        for (const fun of file.parser.references.functionExpressions) {
-            this.validateFunctionStyle(fun, diagnostics);
-        }
+        }), { walkMode: WalkMode.visitAllRecursive });
 
         return diagnostics;
     }
 
-    afterFileValidate(file: BscFile) {
+    validateBrsFileInScope(file: BrsFile) {
+        const diagnostics: (BsDiagnostic)[] = [];
+        const { severity } = this.lintContext;
+        const { nameShadowing } = severity;
+
+        file.ast.walk(createVisitor({
+            NamespaceStatement: (nsStmt) => {
+                this.validateNameShadowing(file, nsStmt, nsStmt.getNameParts()?.[0], nameShadowing, diagnostics);
+            },
+            ClassStatement: (classStmt) => {
+                this.validateNameShadowing(file, classStmt, classStmt.tokens.name, nameShadowing, diagnostics);
+            },
+            InterfaceStatement: (ifaceStmt) => {
+                this.validateNameShadowing(file, ifaceStmt, ifaceStmt.tokens.name, nameShadowing, diagnostics);
+            },
+            ConstStatement: (constStmt) => {
+                this.validateNameShadowing(file, constStmt, constStmt.tokens.name, nameShadowing, diagnostics);
+            },
+            EnumStatement: (enumStmt) => {
+                this.validateNameShadowing(file, enumStmt, enumStmt.tokens.name, nameShadowing, diagnostics);
+            }
+            // eslint-disable-next-line no-bitwise
+        }), { walkMode: WalkMode.visitStatementsRecursive | InternalWalkMode.visitFalseConditionalCompilationBlocks });
+
+        return diagnostics;
+    }
+
+    afterFileValidate(event: AfterFileValidateEvent) {
+        const { file } = event;
         if (this.lintContext.ignores(file)) {
             return;
         }
 
-        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        const diagnostics: (BsDiagnostic)[] = [];
         if (isXmlFile(file)) {
             diagnostics.push(...this.validateXMLFile(file));
         } else if (isBrsFile(file)) {
@@ -236,55 +278,84 @@ export default class CodeStyle {
 
         // apply fix
         if (fix) {
-            bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
+            bsDiagnostics = extractFixes(event.file, this.lintContext.addFixes, bsDiagnostics);
         }
 
         // append diagnostics
-        file.addDiagnostics(bsDiagnostics);
+        event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
     }
 
-    validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+    onScopeValidate(event: OnScopeValidateEvent) {
+        for (const file of event.scope.getOwnFiles()) {
+            if (this.lintContext.ignores(file)) {
+                return;
+            }
+
+            const diagnostics: (BsDiagnostic)[] = [];
+            if (isBrsFile(file)) {
+                diagnostics.push(...this.validateBrsFileInScope(file));
+            }
+
+            // add file reference
+            let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
+                ...diagnostic,
+                file
+            }));
+
+            const { fix } = this.lintContext;
+
+            // apply fix
+            if (fix) {
+                bsDiagnostics = extractFixes(file, this.lintContext.addFixes, bsDiagnostics);
+            }
+
+            // append diagnostics
+            event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
+        }
+    }
+
+    validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (BsDiagnostic)[]) {
         const indexes = collectWrappingAAMembersIndexes(aa);
         const last = indexes.length - 1;
         const isSingleLine = (aa: AALiteralExpression): boolean => {
-            return aa.open.range.start.line === aa.close.range.end.line;
+            return aa.tokens.open.location.range.start.line === aa.tokens.close.location.range.end.line;
         };
 
         indexes.forEach((index, i) => {
-            const member = aa.elements[index] as AAMemberExpression;
-            const hasComma = !!member.commaToken;
+            const member = aa.elements[index];
+            const hasComma = !!member.tokens.comma;
             if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
                 if (hasComma) {
-                    diagnostics.push(messages.removeAAComma(member.commaToken.range));
+                    diagnostics.push(messages.removeAAComma(member.tokens.comma.location));
                 }
             } else if (!hasComma) {
-                diagnostics.push(messages.addAAComma(member.value.range));
+                diagnostics.push(messages.addAAComma(member.value.location));
             }
         });
     }
 
-    validateFunctionStyle(fun: FunctionExpression, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
+    validateFunctionStyle(fun: FunctionExpression, diagnostics: (BsDiagnostic)[]) {
         const { severity } = this.lintContext;
         const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = severity;
         const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
-        const kind = fun.functionType.kind;
+        const kind = fun.tokens.functionType.kind;
         const hasReturnedValue = style === 'auto' || typeAnnotations !== 'off' ? this.getFunctionReturns(fun) : false;
 
         // type annotations
         if (typeAnnotations !== 'off') {
             if (typeAnnotations !== 'args') {
-                if (hasReturnedValue && !fun.returnTypeToken) {
+                if (hasReturnedValue && !fun.returnTypeExpression) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
                         // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
-                        fun.functionType?.range ?? fun.range
+                        fun.tokens.functionType?.location ?? fun.location
                     ));
                 }
             }
             if (typeAnnotations !== 'return') {
-                const missingAnnotation = fun.parameters.find(arg => !arg.typeToken);
+                const missingAnnotation = fun.parameters.find(arg => !arg.typeExpression);
                 if (missingAnnotation) {
                     // only report 1st missing arg annotation to avoid error overload
-                    diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.range));
+                    diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.location));
                 }
             }
         }
@@ -319,8 +390,8 @@ export default class CodeStyle {
 
     getFunctionReturns(fun: FunctionExpression) {
         let hasReturnedValue = false;
-        if (fun.returnTypeToken) {
-            hasReturnedValue = fun.returnTypeToken.kind !== TokenKind.Void;
+        if (fun.returnTypeExpression) {
+            hasReturnedValue = !isVoidType(fun.returnTypeExpression.getType({ flags: SymbolTypeFlag.typetime }));
         } else {
             const cancel = new CancellationTokenSource();
             fun.body.walk(createVisitor({
@@ -331,6 +402,50 @@ export default class CodeStyle {
             }), { walkMode: WalkMode.visitStatements, cancel: cancel.token });
         }
         return hasReturnedValue;
+    }
+
+    validateNameShadowing(file: BrsFile, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
+        const name = nameIdentifier?.text;
+        if (!name || !node) {
+            return;
+        }
+        const nameLocation = nameIdentifier.location;
+
+        const astTable = file.ast.getSymbolTable();
+        const data = {} as ExtraSymbolData;
+        const typeChain = [];
+        // eslint-disable-next-line no-bitwise
+        const existingType = astTable.getSymbolType(name, { flags: SymbolTypeFlag.runtime | SymbolTypeFlag.typetime, data: data, typeChain: typeChain });
+
+        if (!existingType || isAnyReferenceType(existingType)) {
+            return;
+        }
+        if ((data.definingNode === node) || (isNamespaceStatement(data.definingNode) && isNamespaceStatement(node))) {
+            return;
+        }
+        const otherNode = data.definingNode as unknown as { tokens: { name: Token }; location: Location };
+        const thisNodeKindName = util.getAstNodeFriendlyName(node);
+        let thatNodeKindName = util.getAstNodeFriendlyName(data.definingNode) ?? '';
+        if (!thatNodeKindName && isCallableType(existingType)) {
+            thatNodeKindName = 'Global Function';
+        }
+
+        let thatNameLocation = otherNode?.tokens?.name?.location ?? otherNode?.location;
+
+        if (isNamespaceStatement(data.definingNode)) {
+            thatNameLocation = data.definingNode.getNameParts()?.[0]?.location;
+        }
+
+        const relatedInformation = thatNameLocation ? [{
+            message: `${thatNodeKindName} declared here`,
+            location: thatNameLocation
+        }] : undefined;
+
+        diagnostics.push({
+            ...messages.nameShadowing(thisNodeKindName, thatNodeKindName, name, severity),
+            location: nameLocation,
+            relatedInformation: relatedInformation
+        });
     }
 }
 
@@ -343,17 +458,15 @@ export function collectWrappingAAMembersIndexes(aa: AALiteralExpression): number
     const lastIndex = elements.length - 1;
     for (let i = 0; i < lastIndex; i++) {
         const e = elements[i];
-        if (isCommentStatement(e)) {
-            continue;
-        }
+
         const ne = elements[i + 1];
-        const hasNL = isCommentStatement(ne) || ne.range.start.line > e.range.end.line;
+        const hasNL = ne.location.range.start.line > e.location.range.end.line;
         if (hasNL) {
             indexes.push(i);
         }
     }
     const last = elements[lastIndex];
-    if (last && !isCommentStatement(last)) {
+    if (last) {
         indexes.push(lastIndex);
     }
     return indexes;

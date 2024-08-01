@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProgramCreateEvent, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -51,7 +51,7 @@ describe('codeStyle', () => {
             }
         } as BsLintConfig);
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProgramCreate', { builder: {} as any, program: program });
         return program;
     }
 
@@ -61,7 +61,8 @@ describe('codeStyle', () => {
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const codeStyle = new CodeStyle(lintContext);
                 program.plugins.add(codeStyle);
@@ -302,8 +303,9 @@ describe('codeStyle', () => {
                     'named-function-style': 'auto',
                     'anon-function-style': 'auto',
                     'no-print': 'off'
-                }
-            });
+                },
+                diagnosticFilters: [1142]
+            } as any);
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
                 `22:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
@@ -352,7 +354,7 @@ describe('codeStyle', () => {
         ];
         expect(actual).deep.equal(expected);
         // should only highlight the function name
-        expect(diagnostics[0].range).to.eql(
+        expect(diagnostics[0].location.range).to.eql(
             util.createRange(4, 0, 4, 8)
         );
     });
@@ -599,8 +601,8 @@ describe('codeStyle', () => {
                 [],
                 [0],
                 [0, 1],
-                [1, 3],
-                [0, 2],
+                [0, 1],
+                [0, 1],
                 [0],
                 [1],
                 [1]
@@ -681,14 +683,14 @@ describe('codeStyle', () => {
                     'color-format': 'quoted-numeric-hex',
                     'color-case': 'upper'
                 });
-                program.setFile(
+                const file = program.setFile(
                     'source/main.bs',
                     `sub init()\n${code}\nend sub`
                 );
                 program.validate();
                 expectDiagnostics(
                     program,
-                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createRange(1, x[0], 1, x[1])))
+                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createLocationFromFileRange(file, util.createRange(1, x[0], 1, x[1]))))
                 );
             }
             /* eslint-enable no-template-curly-in-string */
@@ -937,6 +939,61 @@ describe('codeStyle', () => {
             expectDiagnosticsFmt(program, [
                 '03:LINT3021:Code style: File should follow color alpha rule',
                 '05:LINT3021:Code style: File should follow color alpha rule'
+            ]);
+        });
+    });
+
+    describe('name-shadowing', () => {
+        it('detects name shadowings', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '15:LINT3026:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3026:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3026:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3026:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3026:Strictness: Const has same name as Namespace \'TestNamespace\''
+            ]);
+        });
+
+        it('detects name shadowings across scope', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs', 'source/name-shadowing-import.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:LINT3026:Strictness: Class has same name as Class \'TestImportClass\'',
+                '05:LINT3026:Strictness: Enum has same name as Enum \'TestImportEnum\'',
+                '08:LINT3026:Strictness: Interface has same name as Interface \'TestImportInterface\'',
+                '11:LINT3026:Strictness: Const has same name as Const \'TestImportConst\'',
+                '15:LINT3026:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3026:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3026:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3026:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3026:Strictness: Const has same name as Namespace \'TestNamespace\''
+
+            ]);
+        });
+
+        it('detects name shadowing function', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing-functions.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:LINT3026:Strictness: Const has same name as Function \'TestFunction\'',
+                '03:LINT3026:Strictness: Const has same name as Global Function \'Lcase\''
             ]);
         });
     });

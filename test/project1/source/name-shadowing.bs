@@ -1,0 +1,40 @@
+class TestClass
+end class
+
+enum TestEnum
+end enum
+
+interface TestInterface
+end interface
+
+const TestConst = 1
+
+
+namespace TestNamespace
+
+    class TestClass
+    end class
+
+    enum TestEnum
+    end enum
+
+    interface TestInterface
+    end interface
+
+    const TestConst = 1
+
+    const TestNamespace = 2
+
+end namespace
+
+
+class TestImportClass
+end class
+
+enum TestImportEnum
+end enum
+
+interface TestImportInterface
+end interface
+
+const TestImportConst = 1

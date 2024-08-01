@@ -6,6 +6,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.35](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.34...v1.0.0-alpha.35) - 2024-08-01
+### Added
+ - name shadowing lint rule ([#124](https://github.com/rokucommunity/bslint/pull/124))
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.35](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha35---2024-07-31)
+### Fixed
+ - check if in `TypeExpression` before doing `VariableExpression` checks ([#122](https://github.com/rokucommunity/bslint/pull/122))
+
+
+
+## [1.0.0-alpha.34](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.33...v1.0.0-alpha.34) - 2024-07-24
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.34](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha34---2024-07-24)
+### Fixed
+ - fix bugs with new conditional compile blocks ([#114](https://github.com/rokucommunity/bslint/pull/114))
+
+
+
+## [1.0.0-alpha.33](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.32...v1.0.0-alpha.33) - 2024-06-21
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.33](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha33---2024-06-14)
+
+
+
+## [1.0.0-alpha.32](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.31...v1.0.0-alpha.32) - 2024-06-05
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.32](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha32---2024-06-05)
+
+
+
+## [1.0.0-alpha.31](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.30...v1.0.0-alpha.31) - 2024-06-04
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.31](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha31---2024-06-04)
+
+
+
+## [1.0.0-alpha.30](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.27...v1.0.0-alpha.30) - 2024-05-16
+Skipped a few brighterscript releases because there were some bugs we couldn't mitigate. This release tracks bsc@1.0.0-alpha.30
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.30](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha30---2024-05-16)
+
+
+
+## [1.0.0-alpha.27](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.26...v1.0.0-alpha.27) - 2024-02-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.27](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha27---2024-02-27)
+
+
+
+## [1.0.0-alpha.26](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.25...v1.0.0-alpha.26) - 2024-02-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.26](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha26---2024-02-01)
+
+
+
+## [1.0.0-alpha.25](https://github.com/rokucommunity/bslint/compare/v0.9.0-alpha.1...v1.0.0-alpha.25) - 2024-02-01
+### Changed
+ - Align with the brighterscript alpha prerelease numbers
+ - upgrade to [brighterscript@1.0.0-alpha.25](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha25---2024-01-25)
+
+
+
+## [0.9.0-alpha.1](https://github.com/rokucommunity/bslint/compare/v0.9.0-alpha.0...v0.9.0-alpha.1) - 2023-09-21
+### Changed
+- fixes for brighterscript v0.66.0-alpha.5 through v0.66.0-alpha.6
+## [0.8.16](https://github.com/rokucommunity/bslint/compare/v0.8.15...v0.8.16) - 2024-01-25
+### Changed
+ - upgrade to [brighterscript@0.65.18](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06518---2024-01-25). Notable changes since 0.65.17:
+     - Prevent overwriting the Program._manifest if already set on startup ([brighterscript#1027](https://github.com/rokucommunity/brighterscript/pull/1027))
+     - Improving null safety: Add FinalizedBsConfig and tweak plugin events ([brighterscript#1000](https://github.com/rokucommunity/brighterscript/pull/1000))
+## [0.8.19](https://github.com/rokucommunity/bslint/compare/v0.8.18...v0.8.19) - 2024-03-07
+### Changed
+ - upgrade to [brighterscript@0.65.25](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06525---2024-03-07). Notable changes since 0.65.23:
+     - Support when tokens have null ranges ([brighterscript#1072](https://github.com/rokucommunity/brighterscript/pull/1072))
+     - Support whitespace in conditional compile keywords ([brighterscript#1090](https://github.com/rokucommunity/brighterscript/pull/1090))
+     - Allow negative patterns in diagnostic filters ([brighterscript#1078](https://github.com/rokucommunity/brighterscript/pull/1078))
+
+
 ## [0.8.22](https://github.com/rokucommunity/bslint/compare/v0.8.21...0.8.22) - 2024-07-24
 ### Changed
  - add rule to prevent use of `assocarray` and `array` component fields in xml ([#115](https://github.com/rokucommunity/bslint/pull/115))
@@ -196,7 +274,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      - Fix namespace-relative items ([brighterscript#789](https://github.com/rokucommunity/brighterscript/pull/789))
      - Wrap transpiled template strings in parens ([brighterscript#788](https://github.com/rokucommunity/brighterscript/pull/788))
      - Simplify the ast range logic ([brighterscript#784](https://github.com/rokucommunity/brighterscript/pull/784))
-### Fixed 
+### Fixed
  - do not consider consts as unused variables ([#85](https://github.com/rokucommunity/bslint/pull/85))
 
 

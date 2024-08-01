@@ -22,14 +22,14 @@ function error5()
     return ' error
 end function
 
-sub error6() as string ' error
+sub error6() as integer ' error
     a = 1
     if a > 0
         return a
     end if
 end sub
 
-sub error7() as string ' error
+sub error7() as integer ' error
     for i = 0 to 10
         return i
     end for
@@ -62,11 +62,11 @@ end sub
 function ok2()
 end function
 
-sub ok3() as string
+sub ok3() as dynamic
     return 1
 end sub
 
-sub ok4() as string
+sub ok4() as dynamic
     a = 1
     if a > 0
         return 1
@@ -129,3 +129,29 @@ end function
 sub some(o)
     print o
 end sub
+
+#const debug = true
+
+function conditionalCompileOk() as dynamic
+    #if DEBUG ' no error
+        return 1
+    #else
+        return 0
+    #end if
+end function
+
+function conditionalCompileOk2() as dynamic
+    #if DEBUG ' no error
+        throw "error"
+    #else
+        return 0
+    #end if
+end function
+
+function conditionalCompileError() as dynamic
+    #if DEBUG
+        ' error - no return
+    #else
+        return 0
+    #end if
+end function

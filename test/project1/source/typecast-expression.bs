@@ -1,0 +1,14 @@
+typecast m as MyTypeCast
+
+
+
+sub main(input)
+    print m.name
+    print (input as myTypeCast).name
+    print (input as dynamic).name
+end sub
+
+
+interface MyTypeCast
+    name as string
+end interface

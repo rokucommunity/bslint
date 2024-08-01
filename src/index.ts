@@ -1,4 +1,4 @@
-import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin } from 'brighterscript';
+import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin, AfterProgramCreateEvent, AfterProgramValidateEvent } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
@@ -51,6 +51,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'color-cert'?: RuleColorCertCompliant;
         'no-assocarray-component-field-type'?: RuleSeverity;
         'no-array-component-field-type'?: RuleSeverity;
+        'name-shadowing'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -86,6 +87,7 @@ export interface BsLintRules {
     colorCertCompliant: RuleColorCertCompliant;
     noAssocarrayComponentFieldType: BsLintSeverity;
     noArrayComponentFieldType: BsLintSeverity;
+    nameShadowing: BsLintSeverity;
 }
 
 export { Linter };
@@ -94,7 +96,8 @@ export default function factory(): CompilerPlugin {
     const contextMap = new WeakMap<Program, PluginWrapperContext>();
     return {
         name: 'bslint',
-        afterProgramCreate: (program: Program) => {
+        afterProgramCreate: (event: AfterProgramCreateEvent) => {
+            const { program } = event;
             const context = createContext(program);
             contextMap.set(program, context);
 
@@ -109,8 +112,8 @@ export default function factory(): CompilerPlugin {
                 program.plugins.add(checkUsage);
             }
         },
-        afterProgramValidate: async (program: Program) => {
-            const context = contextMap.get(program);
+        afterProgramValidate: async (event: AfterProgramValidateEvent) => {
+            const context = contextMap.get(event.program);
             await context.applyFixes();
         }
     };
