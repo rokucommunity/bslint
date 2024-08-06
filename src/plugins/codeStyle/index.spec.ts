@@ -47,6 +47,7 @@ describe('codeStyle', () => {
                 'color-alpha': 'off',
                 'color-alpha-defaults': 'off',
                 'color-cert': 'off',
+                'no-regex-duplicates': 'off',
                 ...(rules ?? {})
             }
         } as BsLintConfig);
@@ -663,6 +664,72 @@ describe('codeStyle', () => {
             ];
             expect(actual).deep.equal(expected);
         });
+    });
+
+    describe('enforce no regex re-creation', () => {
+        it('within loop', () => {
+            init({
+                'no-regex-duplicates': 'warn'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                    ? type(5)
+                    for i = 0 to 10
+                        CreateObject("roRegex", "test", "")
+                        for i = 0 to 10
+                            if false
+                                ? type(5)
+                                CreateObject("roRegex", "test2", "")
+                            end if
+                            CreateObject("roRegex", "test3", "")
+                        end for
+                    end for
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '05:LINT3026:Avoid redeclaring identical regular expressions in a loop',
+                '11:LINT3026:Avoid redeclaring identical regular expressions in a loop'
+            ]);
+        });
+
+        it('no error within if', () => {
+            init({
+                'no-regex-duplicates': 'warn'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                    CreateObject("roRegex", "test", "")
+                    ? type(5)
+                    if false
+                        CreateObject("roRegex", "test", "")
+                    end if
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('anonymous function', () => {
+            init({
+                'no-regex-duplicates': 'warn'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                CreateObject("roRegex", "test", "")
+                    someAnonFunc = sub()
+                        CreateObject("roRegex", "test", "")
+                        ? type(5)
+                        CreateObject("roRegex", "test2", "")
+                        temp = CreateObject("roRegex", "test2", "")
+                    end sub
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, ['08:LINT3026:Avoid redeclaring identical regular expressions']);
+        });
+
+
     });
 
     describe('color-format', () => {
