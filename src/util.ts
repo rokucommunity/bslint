@@ -26,7 +26,10 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'anon-function-style': 'auto',
         'aa-comma-style': 'no-dangling',
         'type-annotations': 'off',
-        'no-print': 'off'
+        'no-print': 'off',
+        'no-assocarray-component-field-type': 'off',
+        'no-array-component-field-type': 'off',
+        'no-regex-duplicates': 'off'
     };
 }
 
@@ -162,7 +165,10 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         colorCase: rules['color-case'],
         colorAlpha: rules['color-alpha'],
         colorAlphaDefaults: rules['color-alpha-defaults'],
-        colorCertCompliant: rules['color-cert']
+        colorCertCompliant: rules['color-cert'],
+        noAssocarrayComponentFieldType: ruleToSeverity(rules['no-assocarray-component-field-type']),
+        noArrayComponentFieldType: ruleToSeverity(rules['no-array-component-field-type']),
+        noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates'])
     };
 }
 

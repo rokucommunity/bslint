@@ -1,4 +1,32 @@
-import { BscFile, BsDiagnostic, createVisitor, FunctionExpression, isBrsFile, isGroupingExpression, TokenKind, WalkMode, CancellationTokenSource, DiagnosticSeverity, OnGetCodeActionsEvent, isCommentStatement, AALiteralExpression, AAMemberExpression } from 'brighterscript';
+import {
+    BscFile,
+    XmlFile,
+    BsDiagnostic,
+    createVisitor,
+    FunctionExpression,
+    isBrsFile,
+    isXmlFile,
+    isGroupingExpression,
+    TokenKind,
+    WalkMode,
+    CancellationTokenSource,
+    DiagnosticSeverity,
+    OnGetCodeActionsEvent,
+    isCommentStatement,
+    AALiteralExpression,
+    AAMemberExpression,
+    BrsFile,
+    isVariableExpression,
+    isLiteralExpression,
+    CallExpression,
+    isForEachStatement,
+    isForStatement,
+    isWhileStatement,
+    isIfStatement,
+    isFunctionExpression,
+    AstNode,
+    Expression
+} from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
@@ -7,7 +35,6 @@ import { messages } from './diagnosticMessages';
 import { extractFixes } from './styleFixes';
 
 export default class CodeStyle {
-
     name: 'codeStyle';
 
     constructor(private lintContext: PluginContext) {
@@ -18,17 +45,48 @@ export default class CodeStyle {
         extractFixes(addFixes, event.diagnostics);
     }
 
-    afterFileValidate(file: BscFile) {
-        if (!isBrsFile(file) || this.lintContext.ignores(file)) {
-            return;
+    validateXMLFile(file: XmlFile) {
+        const diagnostics: Omit<BsDiagnostic, 'file'>[] = [];
+        const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
+
+        const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
+        const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
+
+        for (const field of file.parser?.ast?.component?.api?.fields ?? []) {
+            const { tag, attributes } = field;
+            if (tag.text === 'field') {
+                const typeAttribute = attributes.find(({ key }) => key.text === 'type');
+
+                const typeValue = typeAttribute?.value.text;
+                if (typeValue === 'array' && validateArrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noArrayFieldType(
+                            typeAttribute.value.range,
+                            noArrayComponentFieldType
+                        )
+                    );
+                } else if (typeValue === 'assocarray' && validateAssocarrayComponentFieldType) {
+                    diagnostics.push(
+                        messages.noAssocarrayFieldType(
+                            typeAttribute.value.range,
+                            noAssocarrayComponentFieldType
+                        )
+                    );
+                }
+            }
         }
 
+        return diagnostics;
+    }
+
+    validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
-        const { severity, fix } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat } = severity;
+        const { severity } = this.lintContext;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
+        const validateNoRegexDuplicates = noRegexDuplicates !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
         const validateColorFormat = (colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
@@ -81,6 +139,10 @@ export default class CodeStyle {
                     )
                 );
             }
+        }
+
+        if (validateNoRegexDuplicates) {
+            this.validateRegex(file, diagnostics, noRegexDuplicates);
         }
 
         file.ast.walk(createVisitor({
@@ -163,11 +225,68 @@ export default class CodeStyle {
             this.validateFunctionStyle(fun, diagnostics);
         }
 
+        return diagnostics;
+    }
+
+    validateRegex(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        for (const fun of file.parser.references.functionExpressions) {
+            const regexes = new Set();
+            for (const callExpression of fun.callExpressions) {
+                if (!this.isCreateObject(callExpression)) {
+                    continue;
+                }
+
+                // Check if all args are literals and get them as string
+                const callArgs = this.getLiteralArgs(callExpression.args);
+
+                // CreateObject for roRegex expects 3 params,
+                // they should be literals because only in this case we can guarante that call regex is the same
+                if (callArgs?.length === 3 && callArgs[0] === 'roRegex') {
+                    const parentStatement = callExpression.findAncestor((node, cancel) => {
+                        if (isIfStatement(node)) {
+                            cancel.cancel();
+                        } else if (this.isLoop(node) || isFunctionExpression(node)) {
+                            return true;
+                        }
+                    });
+
+                    const joinedArgs = callArgs.join();
+                    const isRegexAlreadyExist = regexes.has(joinedArgs);
+                    if (!isRegexAlreadyExist) {
+                        regexes.add(joinedArgs);
+                    }
+
+                    if (isFunctionExpression(parentStatement)) {
+                        if (isRegexAlreadyExist) {
+                            diagnostics.push(messages.noRegexRedeclaring(callExpression.range, severity));
+                        }
+                    } else if (this.isLoop(parentStatement)) {
+                        diagnostics.push(messages.noIdenticalRegexInLoop(callExpression.range, severity));
+                    }
+                }
+            }
+        }
+    }
+
+    afterFileValidate(file: BscFile) {
+        if (this.lintContext.ignores(file)) {
+            return;
+        }
+
+        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+        if (isXmlFile(file)) {
+            diagnostics.push(...this.validateXMLFile(file));
+        } else if (isBrsFile(file)) {
+            diagnostics.push(...this.validateBrsFile(file));
+        }
+
         // add file reference
         let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
             ...diagnostic,
             file
         }));
+
+        const { fix } = this.lintContext;
 
         // apply fix
         if (fix) {
@@ -266,6 +385,27 @@ export default class CodeStyle {
             }), { walkMode: WalkMode.visitStatements, cancel: cancel.token });
         }
         return hasReturnedValue;
+    }
+
+    private isLoop(node: AstNode) {
+        return isForStatement(node) || isForEachStatement(node) || isWhileStatement(node);
+    }
+
+    private isCreateObject(s: CallExpression) {
+        return isVariableExpression(s.callee) && s.callee.name.text.toLowerCase() === 'createobject';
+    }
+
+    private getLiteralArgs(args: Expression[]) {
+        const argsStringValue: string[] = [];
+        for (const arg of args) {
+            if (isLiteralExpression(arg)) {
+                argsStringValue.push(arg?.token?.text?.replace(/"/g, ''));
+            } else {
+                return;
+            }
+        }
+
+        return argsStringValue;
     }
 }
 
