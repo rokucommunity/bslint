@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.36](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.35...v1.0.0-alpha.36) - 2024-08-09
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.36](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha36---2024-08-09)
+ - Removed brighterscript as a peer-dependency because it keeps causing issues with the alpha releases ([#126](https://github.com/rokucommunity/bslint/pull/126))
+
+
+
 ## [1.0.0-alpha.35](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.34...v1.0.0-alpha.35) - 2024-08-01
 ### Added
  - name shadowing lint rule ([#124](https://github.com/rokucommunity/bslint/pull/124))
