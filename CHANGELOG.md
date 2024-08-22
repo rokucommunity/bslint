@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.23](https://github.com/rokucommunity/bslint/compare/v0.8.22...v0.8.23) - 2024-08-22
+### Added
+ - add rule for roRegex duplicates ([#119](https://github.com/rokucommunity/bslint/pull/119))
+### Changed
+ - upgrade to [brighterscript@0.67.5](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0675---2024-07-31). Notable changes since 0.67.4:
+     - Add templatestring support for annotation.getArguments() ([brighterscript#1264](https://github.com/rokucommunity/brighterscript/pull/1264))
+
+
+
 ## [0.8.22](https://github.com/rokucommunity/bslint/compare/v0.8.21...0.8.22) - 2024-07-24
 ### Changed
  - add rule to prevent use of `assocarray` and `array` component fields in xml ([#115](https://github.com/rokucommunity/bslint/pull/115))
