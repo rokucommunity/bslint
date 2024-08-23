@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.24](https://github.com/rokucommunity/bslint/compare/v0.8.23...v0.8.24) - 2024-08-23
+### Fixed
+ - bug where LINT3024 and LINT3025 were doing a case-sensitive check when they should be checking case-insensitive. ([#129](https://github.com/rokucommunity/bslint/pull/129))
+
+
+
 ## [0.8.23](https://github.com/rokucommunity/bslint/compare/v0.8.22...v0.8.23) - 2024-08-22
 ### Added
  - add rule for roRegex duplicates ([#119](https://github.com/rokucommunity/bslint/pull/119))
