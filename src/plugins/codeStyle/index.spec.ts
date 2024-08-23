@@ -546,7 +546,8 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:LINT3024:Avoid using field type 'assocarray'`
+            `06:LINT3024:Avoid using field type 'assocarray'`,
+            `07:LINT3024:Avoid using field type 'assocarray'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -561,7 +562,8 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:LINT3025:Avoid using field type 'array'`
+            `04:LINT3025:Avoid using field type 'array'`,
+            `08:LINT3025:Avoid using field type 'array'`
         ];
         expect(actual).deep.equal(expected);
     });

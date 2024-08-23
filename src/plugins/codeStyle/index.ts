@@ -57,7 +57,7 @@ export default class CodeStyle {
             if (tag.text === 'field') {
                 const typeAttribute = attributes.find(({ key }) => key.text === 'type');
 
-                const typeValue = typeAttribute?.value.text;
+                const typeValue = typeAttribute?.value.text?.toLowerCase();
                 if (typeValue === 'array' && validateArrayComponentFieldType) {
                     diagnostics.push(
                         messages.noArrayFieldType(
