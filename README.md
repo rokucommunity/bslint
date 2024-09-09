@@ -265,6 +265,10 @@ Default rules:
     - `args`: enforce arguments type annotations
     - `off`: do not validate (**default**)
 
+- `name-shadowing`: enforces that no two items have the same name (`error | warn | info | off`)
+
+- `type-reassignment`: enforces that a variable is not used to reference multiple types (`error | warn | info | off`)
+
 ### Code flow rules
 
 Valid values for the rules severity are: `error | warn | info | off`.

@@ -1,0 +1,51 @@
+interface Iface1
+    a as string
+end interface
+
+interface Iface2
+    a as string
+    optional b as string
+end interface
+
+interface OtherFace1
+    a as integer
+end interface
+
+function convertToIface1(arg as Iface2) as Iface1
+    arg = {a: arg.a} ' no diagnostic
+    return arg
+end function
+
+function convertToIface2(arg as Iface1) as Iface2
+    arg = {a: arg.a, b: "hello"} ' no diagnostic
+    return arg
+end function
+
+function convertToIface2ViaTypeCast(arg as Iface1)
+    arg = arg as Iface2 ' no diagnostic
+    return arg
+end function
+
+function convertToToOtherFace1(arg as Iface1)
+    arg as OtherFace1 = {a: 1} ' diagnostic
+    return arg
+end function
+
+
+class Parent
+    a as string
+end class
+
+class Child extends Parent
+    b as string
+end class
+
+function convertToParent(arg as Child)
+    arg = new Parent() ' diagnostic
+    return arg
+end function
+
+function convertToChild(arg as Parent)
+    arg = new Child() ' no diagnostic - Child is a subclass of Parent
+    return arg
+end function

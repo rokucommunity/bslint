@@ -52,6 +52,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'no-assocarray-component-field-type'?: RuleSeverity;
         'no-array-component-field-type'?: RuleSeverity;
         'name-shadowing'?: RuleSeverity;
+        'type-reassignment'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -88,6 +89,7 @@ export interface BsLintRules {
     noAssocarrayComponentFieldType: BsLintSeverity;
     noArrayComponentFieldType: BsLintSeverity;
     nameShadowing: BsLintSeverity;
+    typeReassignment: BsLintSeverity;
 }
 
 export { Linter };

@@ -27,7 +27,10 @@ import {
     ExtraSymbolData,
     OnScopeValidateEvent,
     InternalWalkMode,
-    isCallableType
+    isCallableType,
+    AssignmentStatement,
+    isFunctionExpression,
+    isDynamicType
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
@@ -231,7 +234,7 @@ export default class CodeStyle implements CompilerPlugin {
     validateBrsFileInScope(file: BrsFile) {
         const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
-        const { nameShadowing } = severity;
+        const { nameShadowing, typeReassignment } = severity;
 
         file.ast.walk(createVisitor({
             NamespaceStatement: (nsStmt) => {
@@ -248,6 +251,9 @@ export default class CodeStyle implements CompilerPlugin {
             },
             EnumStatement: (enumStmt) => {
                 this.validateNameShadowing(file, enumStmt, enumStmt.tokens.name, nameShadowing, diagnostics);
+            },
+            AssignmentStatement: (assignStmt) => {
+                this.validateTypeReassignment(file, assignStmt, typeReassignment, diagnostics);
             }
             // eslint-disable-next-line no-bitwise
         }), { walkMode: WalkMode.visitStatementsRecursive | InternalWalkMode.visitFalseConditionalCompilationBlocks });
@@ -446,6 +452,44 @@ export default class CodeStyle implements CompilerPlugin {
             location: nameLocation,
             relatedInformation: relatedInformation
         });
+    }
+
+    validateTypeReassignment(file: BrsFile, assignStmt: AssignmentStatement, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
+        const functionExpression = assignStmt.findAncestor<FunctionExpression>(isFunctionExpression);
+        if (!functionExpression) {
+            return;
+        }
+        const bodyTable = functionExpression.body?.getSymbolTable();
+        const rhsType = assignStmt.value?.getType({ flags: SymbolTypeFlag.runtime });
+        if (!rhsType.isResolvable()) {
+            return;
+        }
+        const varName = assignStmt.tokens.name.text;
+        let previousType = functionExpression.getSymbolTable().getSymbolType(varName, { flags: SymbolTypeFlag.runtime });
+
+        if (!previousType) {
+            // check for last previous assignment
+            const symbols = bodyTable.getSymbol(varName, SymbolTypeFlag.runtime);
+            for (const symbol of symbols) {
+                if (util.comparePosition(symbol.data?.definingNode?.location?.range?.start, assignStmt.location.range.start) < 0) {
+                    previousType = symbol.type;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if (previousType?.isResolvable()) {
+            // is this different?
+            if (!isDynamicType(previousType)) {
+                if (isDynamicType(rhsType) || !previousType.isTypeCompatible(rhsType)) {
+                    diagnostics.push({
+                        ...messages.typeReassignment(varName, previousType.toString(), rhsType.toString(), severity),
+                        location: assignStmt.location
+                    });
+                }
+            }
+        }
     }
 }
 
