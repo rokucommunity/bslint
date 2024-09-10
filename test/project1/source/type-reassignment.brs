@@ -38,3 +38,17 @@ sub checkTypesDynamicToDefined() ' no diagnostic
     value = 1 ' was dynamic. now integer
 end sub
 
+sub checkTypesObject(obj as object)
+    if obj = invalid
+        obj = createObject("roAssociativeArray")
+    end if
+    obj.foo = "bar"
+end sub
+
+sub checkTypesObjectToPrimitive(obj as object)
+    obj = 3 ' This is allowed because primitive types can be boxed as objects
+end sub
+
+sub checkTypesPrimitiveToObject(obj as integer)
+    obj = createObject("roAssociativeArray") ' was integer. now associativearray
+end sub

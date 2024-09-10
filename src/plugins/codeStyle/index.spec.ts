@@ -1010,7 +1010,8 @@ describe('codeStyle', () => {
             expectDiagnosticsFmt(diagnostics, [
                 '12:LINT3026:Strictness: Reassignment of the type of \'param\' from string to integer',
                 '18:LINT3026:Strictness: Reassignment of the type of \'value\' from integer to string',
-                '27:LINT3026:Strictness: Reassignment of the type of \'value\' from integer to dynamic'
+                '27:LINT3026:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
+                '53:LINT3026:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
             ]);
         });
 
