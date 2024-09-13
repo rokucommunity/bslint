@@ -230,6 +230,28 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('implements assign-all-paths with conditional compilation', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/assign-all-paths-conditional-compilation.brs'],
+            rules: {
+                'assign-all-paths': 'error',
+                'consistent-return': 'off',
+                'unused-variable': 'off'
+            },
+            diagnosticFilters: [1001, 1090]
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `15:LINT1003:Not all the code paths assign 'a'`,
+            `23:LINT1003:Not all the code paths assign 'a'`,
+            `42:LINT1003:Not all the code paths assign 'a'`,
+            `65:LINT1003:Not all the code paths assign 'a'`,
+            `76:LINT1003:Not all the code paths assign 'a'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
     it('report errors for classes', async () => {
         const diagnostics = await linter.run({
             ...project1,
