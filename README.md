@@ -267,8 +267,7 @@ Default rules:
     - `args-allow-implicit`: enforce arguments type annotations, but allows arguments with default values to not have an annotation
     - `off`: do not validate (**default**)
 
-- `name-shadowing`: validation of using the same name for different entities (`error | warn | info | off`)
-
+- `name-shadowing`: enforces that no two items have the same name (`error | warn | info | off`)
 
 ### Code flow rules
 
