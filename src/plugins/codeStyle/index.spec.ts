@@ -335,67 +335,111 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
         });
-    });
 
-    it('enforce return type only', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'return',
-                'no-print': 'off'
-            }
+        it('enforce return type only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'return',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `05:LINT3010:Strictness: function should declare the return type`
+            ];
+            expect(actual).deep.equal(expected);
+            // should only highlight the function name
+            expect(diagnostics[0].location.range).to.eql(
+                util.createRange(4, 0, 4, 8)
+            );
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `05:LINT3010:Strictness: function should declare the return type`
-        ];
-        expect(actual).deep.equal(expected);
-        // should only highlight the function name
-        expect(diagnostics[0].location.range).to.eql(
-            util.createRange(4, 0, 4, 8)
-        );
-    });
 
-    it('enforce arguments type only', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'args',
-                'no-print': 'off'
-            }
+        it('enforce arguments type only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'args',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3011:Strictness: type annotation required`,
+                `13:LINT3011:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `01:LINT3011:Strictness: type annotation required`,
-            `05:LINT3011:Strictness: type annotation required`
-        ];
-        expect(actual).deep.equal(expected);
-    });
 
-    it('enforce all annotations', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'all',
-                'no-print': 'off'
-            }
+        it('enforce all annotations', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'all',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3010:Strictness: function should declare the return type`,
+                `05:LINT3011:Strictness: type annotation required`,
+                `13:LINT3011:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `01:LINT3011:Strictness: type annotation required`,
-            `05:LINT3010:Strictness: function should declare the return type`,
-            `05:LINT3011:Strictness: type annotation required`
-        ];
-        expect(actual).deep.equal(expected);
+
+        it('allows implicit type definitions with default values', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations-implicit.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'all-allow-implicit',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3010:Strictness: function should declare the return type`,
+                `05:LINT3011:Strictness: type annotation required`,
+                `17:LINT3010:Strictness: function should declare the return type`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+
+        it('allows implicit type definitions with default values for args only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations-implicit.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'args-allow-implicit',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3011:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
     });
 
     it('enforce no print', async () => {
