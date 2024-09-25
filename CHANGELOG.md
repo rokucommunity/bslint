@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.37](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.36...v1.0.0-alpha.37) - 2024-09-25
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.36](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha37---2024-09-25)
+### Fixed
+ - Conditional compile code flow - var tracking (#132)
+
+
+
 ## [1.0.0-alpha.36](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.35...v1.0.0-alpha.36) - 2024-08-09
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.36](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha36---2024-08-09)
