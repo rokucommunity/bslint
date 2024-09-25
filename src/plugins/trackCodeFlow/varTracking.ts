@@ -92,7 +92,7 @@ export function createVarLinter(
         args.set(name.toLowerCase(), { name: name, location: p.tokens.name.location, isParam: true, isUnsafe: false, isUsed: false });
     });
 
-    if (isMethodStatement(fun.functionStatement)) {
+    if (isMethodStatement(fun.parent)) {
         args.set('super', { name: 'super', location: null, isParam: true, isUnsafe: false, isUsed: true });
     }
 

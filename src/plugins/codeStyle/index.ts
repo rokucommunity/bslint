@@ -337,7 +337,7 @@ export default class CodeStyle implements CompilerPlugin {
     validateFunctionStyle(fun: FunctionExpression, diagnostics: (BsDiagnostic)[]) {
         const { severity } = this.lintContext;
         const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = severity;
-        const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
+        const style = fun.parent ? namedFunctionStyle : anonFunctionStyle;
         const kind = fun.tokens.functionType.kind;
         const hasReturnedValue = style === 'auto' || typeAnnotations !== 'off' ? this.getFunctionReturns(fun) : false;
 
