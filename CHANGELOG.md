@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.25](https://github.com/rokucommunity/bslint/compare/v0.8.24...v0.8.25) - 2024-09-26
+### Changed
+ - upgrade to [brighterscript@0.67.7](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0677---2024-09-25). Notable changes since 0.67.5:
+     - Ast node clone ([brighterscript#1281](https://github.com/rokucommunity/brighterscript/pull/1281))
+     - Add support for resolving sourceRoot at time of config load ([brighterscript#1290](https://github.com/rokucommunity/brighterscript/pull/1290))
+     - Add support for roIntrinsicDouble ([brighterscript#1291](https://github.com/rokucommunity/brighterscript/pull/1291))
+     - Add plugin naming convention ([brighterscript#1284](https://github.com/rokucommunity/brighterscript/pull/1284))
+
+
+
 ## [0.8.24](https://github.com/rokucommunity/bslint/compare/v0.8.23...v0.8.24) - 2024-08-23
 ### Fixed
  - bug where LINT3024 and LINT3025 were doing a case-sensitive check when they should be checking case-insensitive. ([#129](https://github.com/rokucommunity/bslint/pull/129))
