@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AfterProgramCreateEvent, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProgramCreateEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -414,6 +414,22 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('does not crash when node has no leadingTrivia', () => {
+        (program.options as any).rules['consistent-return'] = 'error';
+        const file = program.setFile<BrsFile>('source/main.bs', `
+            'comment
+            sub test()
+            end sub
+
+            'TODO
+            sub test2()
+            end sub
+        `);
+        (file.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
+        program.validate();
+        const codeStyle = new CodeStyle(createContext(program));
+        codeStyle.validateBrsFile(file);
+    });
 
     describe('enforce no todo', () => {
         it('default todo pattern', async () => {
