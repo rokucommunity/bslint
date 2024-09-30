@@ -214,7 +214,7 @@ export default class CodeStyle implements CompilerPlugin {
                 }
             },
             AstNode: (node: Statement | Expression) => {
-                const comments = [...node.leadingTrivia, ...node.endTrivia].filter(t => t.kind === TokenKind.Comment);
+                const comments = [...node.leadingTrivia ?? [], ...node.endTrivia ?? []].filter(t => t.kind === TokenKind.Comment);
                 if (validateTodo && comments.length > 0) {
                     for (const e of comments) {
                         if (this.lintContext.todoPattern.test(e.text)) {
