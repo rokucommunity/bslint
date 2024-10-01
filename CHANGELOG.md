@@ -6,11 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.38](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.37...v1.0.0-alpha.38) - 2024-10-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.38](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha38---2024-10-01)
+### Fixed
+ - crash when comment is missing trivia array ([#134](https://github.com/rokucommunity/bslint/pull/134))
+
+
+
 ## [1.0.0-alpha.37](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.36...v1.0.0-alpha.37) - 2024-09-25
 ### Changed
- - upgrade to [brighterscript@1.0.0-alpha.36](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha37---2024-09-25)
+ - upgrade to [brighterscript@1.0.0-alpha.37](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha37---2024-09-25)
 ### Fixed
- - Conditional compile code flow - var tracking (#132)
+ - Conditional compile code flow - var tracking ([#132](https://github.com/rokucommunity/bslint/pull/132))
 
 
 
