@@ -49,7 +49,7 @@
     "@types/node": "^14.6.0",
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
-    "brighterscript": "^1.0.0-alpha.39",
+    "brighterscript": "^1.0.0-alpha.40",
     "chai": "^4.3.6",
     "coveralls-next": "^4.2.0",
     "eslint": "^7.7.0",
