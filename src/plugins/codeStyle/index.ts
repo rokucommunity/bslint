@@ -40,7 +40,7 @@ import { Location } from 'vscode-languageserver-types';
 
 export default class CodeStyle implements CompilerPlugin {
 
-    name: 'codeStyle';
+    name = 'bslint-codeStyle';
 
     constructor(private lintContext: PluginContext) {
     }
