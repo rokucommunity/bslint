@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 import { Location } from 'vscode-languageserver-types';
@@ -92,7 +92,7 @@ export function createVarLinter(
         args.set(name.toLowerCase(), { name: name, location: p.tokens.name.location, isParam: true, isUnsafe: false, isUsed: false });
     });
 
-    if (isMethodStatement(fun.functionStatement)) {
+    if (isMethodStatement(fun.parent)) {
         args.set('super', { name: 'super', location: null, isParam: true, isUnsafe: false, isUsed: true });
     }
 
@@ -222,7 +222,7 @@ export function createVarLinter(
             // value = stat.value;
             setLocal(state.parent, stat.tokens.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
         } else if (isCatchStatement(stat) && state.parent) {
-            setLocal(curr, stat.tokens.exceptionVariable, VarRestriction.CatchedError);
+            setLocal(curr, (stat.exceptionVariableExpression as VariableExpression)?.tokens?.name, VarRestriction.CatchedError);
         } else if (isLabelStatement(stat) && !foundLabelAt) {
             foundLabelAt = stat.location.range.start.line;
         } else if (foundLabelAt && isGotoStatement(stat) && state.parent) {

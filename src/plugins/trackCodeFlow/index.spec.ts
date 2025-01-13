@@ -382,15 +382,20 @@ describe('trackCodeFlow', () => {
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `04:LINT2002:Sub as void should not return a value`,
+            `104:1155:Expected return statement in function`,
+            `118:1155:Expected return statement in function`,
             `11:LINT2002:Function as void should not return a value`,
             `151:LINT2004:Not all code paths return a value`,
             `15:LINT2006:Sub should consistently return a value`,
+            `18:1155:Expected return statement in function`,
             `18:LINT2004:Not all code paths return a value`,
             `22:LINT2006:Function should consistently return a value`,
             `25:LINT2004:Not all code paths return a value`,
             `32:LINT2004:Not all code paths return a value`,
             `39:LINT2004:Not all code paths return a value`,
+            `45:1155:Expected return statement in function`,
             `45:LINT2004:Not all code paths return a value`,
+            `49:1155:Expected return statement in function`,
             `49:LINT2004:Not all code paths return a value`
         ];
         expect(actual).deep.equal(expected);

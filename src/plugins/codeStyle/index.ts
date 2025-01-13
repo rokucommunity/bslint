@@ -40,7 +40,7 @@ import { Location } from 'vscode-languageserver-types';
 
 export default class CodeStyle implements CompilerPlugin {
 
-    name: 'codeStyle';
+    name = 'bslint-codeStyle';
 
     constructor(private lintContext: PluginContext) {
     }
@@ -214,7 +214,7 @@ export default class CodeStyle implements CompilerPlugin {
                 }
             },
             AstNode: (node: Statement | Expression) => {
-                const comments = [...node.leadingTrivia, ...node.endTrivia].filter(t => t.kind === TokenKind.Comment);
+                const comments = [...node.leadingTrivia ?? [], ...node.endTrivia ?? []].filter(t => t.kind === TokenKind.Comment);
                 if (validateTodo && comments.length > 0) {
                     for (const e of comments) {
                         if (this.lintContext.todoPattern.test(e.text)) {
@@ -337,7 +337,7 @@ export default class CodeStyle implements CompilerPlugin {
     validateFunctionStyle(fun: FunctionExpression, diagnostics: (BsDiagnostic)[]) {
         const { severity } = this.lintContext;
         const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = severity;
-        const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
+        const style = fun.parent ? namedFunctionStyle : anonFunctionStyle;
         const kind = fun.tokens.functionType.kind;
         const hasReturnedValue = style === 'auto' || typeAnnotations !== 'off' ? this.getFunctionReturns(fun) : false;
 

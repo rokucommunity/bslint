@@ -6,6 +6,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.41](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.40...v1.0.0-alpha.41) - 2024-10-20
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.41](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha41---2024-10-20)
+
+
+
+## [1.0.0-alpha.40](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.39...v1.0.0-alpha.40) - 2024-10-20
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.40](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha40---2024-10-19)
+
+
+
+## [1.0.0-alpha.39](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.38...v1.0.0-alpha.39) - 2024-10-03
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.39](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha39---2024-10-03)
+
+
+
+## [1.0.0-alpha.38](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.37...v1.0.0-alpha.38) - 2024-10-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.38](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha38---2024-10-01)
+### Fixed
+ - crash when comment is missing trivia array ([#134](https://github.com/rokucommunity/bslint/pull/134))
+
+
+
+## [1.0.0-alpha.37](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.36...v1.0.0-alpha.37) - 2024-09-25
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.37](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha37---2024-09-25)
+### Fixed
+ - Conditional compile code flow - var tracking ([#132](https://github.com/rokucommunity/bslint/pull/132))
+
+
+
 ## [1.0.0-alpha.36](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.35...v1.0.0-alpha.36) - 2024-08-09
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.36](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha36---2024-08-09)
