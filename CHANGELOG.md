@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.28](https://github.com/rokucommunity/bslint/compare/v0.8.27...v0.8.28) - 2025-01-13
+### Changed
+ - upgrade to [brighterscript@0.68.3](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0683---2025-01-13). Notable changes since 0.68.2:
+     - Fix class transpile issue with child class constructor not inherriting parent params ([brighterscript#1390](https://github.com/rokucommunity/brighterscript/pull/1390))
+     - Export more items ([brighterscript#1394](https://github.com/rokucommunity/brighterscript/pull/1394))
+
+
+
 ## [0.8.27](https://github.com/rokucommunity/bslint/compare/v0.8.26...v0.8.27) - 2024-12-20
 ### Changed
  - upgrade to [brighterscript@0.68.2](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0682---2024-12-06). Notable changes since 0.67.8:
