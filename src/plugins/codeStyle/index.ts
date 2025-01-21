@@ -343,7 +343,11 @@ export default class CodeStyle implements CompilerPlugin {
 
         // type annotations
         if (typeAnnotations !== 'off') {
-            if (typeAnnotations !== 'args') {
+            const needsArgType = typeAnnotations.startsWith('args') || typeAnnotations.startsWith('all');
+            const needsReturnType = typeAnnotations.startsWith('return') || typeAnnotations.startsWith('all');
+            const allowImplicit = typeAnnotations.includes('allow-implicit');
+
+            if (needsReturnType) {
                 if (hasReturnedValue && !fun.returnTypeExpression) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
                         // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
@@ -351,8 +355,16 @@ export default class CodeStyle implements CompilerPlugin {
                     ));
                 }
             }
-            if (typeAnnotations !== 'return') {
-                const missingAnnotation = fun.parameters.find(arg => !arg.typeExpression);
+            if (needsArgType) {
+                const missingAnnotation = fun.parameters.find(arg => {
+                    if (!arg.typeExpression) {
+                        if (allowImplicit && arg.defaultValue) {
+                            return false;
+                        }
+                        return true;
+                    }
+                    return false;
+                });
                 if (missingAnnotation) {
                     // only report 1st missing arg annotation to avoid error overload
                     diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.location));
