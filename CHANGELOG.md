@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.42](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.41...v1.0.0-alpha.42) - 2024-01-21
+### Added
+ - Adds `allow-implicit` for type annotations ([#133](https://github.com/rokucommunity/bslint/pull/133))
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.42](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha42---2025-01-17)
+### Fixed
+ - Actually add name property to plugin classes ([#137](https://github.com/rokucommunity/bslint/pull/137))
+
+
+
 ## [1.0.0-alpha.41](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.40...v1.0.0-alpha.41) - 2024-10-20
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.41](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha41---2024-10-20)
