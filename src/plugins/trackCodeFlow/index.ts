@@ -55,7 +55,7 @@ export interface LintState {
 
 export default class TrackCodeFlow implements CompilerPlugin {
 
-    name: 'trackCodeFlow';
+    name = 'bslint-trackCodeFlow';
 
     constructor(private lintContext: PluginContext) {
     }

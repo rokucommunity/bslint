@@ -43,7 +43,7 @@ import { Location } from 'vscode-languageserver-types';
 
 export default class CodeStyle implements CompilerPlugin {
 
-    name: 'codeStyle';
+    name = 'bslint-codeStyle';
 
     constructor(private lintContext: PluginContext) {
     }
@@ -217,7 +217,7 @@ export default class CodeStyle implements CompilerPlugin {
                 }
             },
             AstNode: (node: Statement | Expression) => {
-                const comments = [...node.leadingTrivia, ...node.endTrivia].filter(t => t.kind === TokenKind.Comment);
+                const comments = [...node.leadingTrivia ?? [], ...node.endTrivia ?? []].filter(t => t.kind === TokenKind.Comment);
                 if (validateTodo && comments.length > 0) {
                     for (const e of comments) {
                         if (this.lintContext.todoPattern.test(e.text)) {
@@ -343,13 +343,17 @@ export default class CodeStyle implements CompilerPlugin {
     validateFunctionStyle(fun: FunctionExpression, diagnostics: (BsDiagnostic)[]) {
         const { severity } = this.lintContext;
         const { namedFunctionStyle, anonFunctionStyle, typeAnnotations } = severity;
-        const style = fun.functionStatement ? namedFunctionStyle : anonFunctionStyle;
+        const style = fun.parent ? namedFunctionStyle : anonFunctionStyle;
         const kind = fun.tokens.functionType.kind;
         const hasReturnedValue = style === 'auto' || typeAnnotations !== 'off' ? this.getFunctionReturns(fun) : false;
 
         // type annotations
         if (typeAnnotations !== 'off') {
-            if (typeAnnotations !== 'args') {
+            const needsArgType = typeAnnotations.startsWith('args') || typeAnnotations.startsWith('all');
+            const needsReturnType = typeAnnotations.startsWith('return') || typeAnnotations.startsWith('all');
+            const allowImplicit = typeAnnotations.includes('allow-implicit');
+
+            if (needsReturnType) {
                 if (hasReturnedValue && !fun.returnTypeExpression) {
                     diagnostics.push(messages.expectedReturnTypeAnnotation(
                         // add the error to the function keyword (or just highlight the whole function if that's somehow missing)
@@ -357,8 +361,16 @@ export default class CodeStyle implements CompilerPlugin {
                     ));
                 }
             }
-            if (typeAnnotations !== 'return') {
-                const missingAnnotation = fun.parameters.find(arg => !arg.typeExpression);
+            if (needsArgType) {
+                const missingAnnotation = fun.parameters.find(arg => {
+                    if (!arg.typeExpression) {
+                        if (allowImplicit && arg.defaultValue) {
+                            return false;
+                        }
+                        return true;
+                    }
+                    return false;
+                });
                 if (missingAnnotation) {
                     // only report 1st missing arg annotation to avoid error overload
                     diagnostics.push(messages.expectedTypeAnnotation(missingAnnotation.location));

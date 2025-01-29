@@ -142,7 +142,7 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                '04:1136:enum must be declared at the root level or within a namespace'
+                '04:invalid-declaration-location:enum must be declared at the root level or within a namespace'
             ];
             expect(actual).deep.equal(expected);
         });
@@ -197,8 +197,8 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `11:1140:Cannot find function 'one'`,
-                `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`
+                `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`,
+                `11:cannot-find-function:Cannot find function 'one'`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -230,6 +230,28 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('implements assign-all-paths with conditional compilation', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/assign-all-paths-conditional-compilation.brs'],
+            rules: {
+                'assign-all-paths': 'error',
+                'consistent-return': 'off',
+                'unused-variable': 'off'
+            },
+            diagnosticFilters: [1001, 1090]
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `15:LINT1003:Not all the code paths assign 'a'`,
+            `23:LINT1003:Not all the code paths assign 'a'`,
+            `42:LINT1003:Not all the code paths assign 'a'`,
+            `65:LINT1003:Not all the code paths assign 'a'`,
+            `76:LINT1003:Not all the code paths assign 'a'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
     it('report errors for classes', async () => {
         const diagnostics = await linter.run({
             ...project1,
@@ -245,8 +267,8 @@ describe('trackCodeFlow', () => {
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
             `27:LINT1003:Not all the code paths assign 'b'`,
-            `67:1031:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`,
-            `67:1140:Cannot find function 'Bar'`
+            `67:cannot-find-function:Cannot find function 'Bar'`,
+            `67:not-constructable:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -364,11 +386,13 @@ describe('trackCodeFlow', () => {
             `151:LINT2004:Not all code paths return a value`,
             `15:LINT2006:Sub should consistently return a value`,
             `18:LINT2004:Not all code paths return a value`,
+            `18:return-type-coercion-mismatch:Function has no return statement and will return 'invalid': 'string' cannot be coerced into 'invalid'`,
             `22:LINT2006:Function should consistently return a value`,
             `25:LINT2004:Not all code paths return a value`,
             `32:LINT2004:Not all code paths return a value`,
             `39:LINT2004:Not all code paths return a value`,
             `45:LINT2004:Not all code paths return a value`,
+            `45:return-type-coercion-mismatch:Function has no return statement and will return 'invalid': 'string' cannot be coerced into 'invalid'`,
             `49:LINT2004:Not all code paths return a value`
         ];
         expect(actual).deep.equal(expected);

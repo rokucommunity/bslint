@@ -123,6 +123,7 @@ export function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
         .filter((d) => d.severity && d.severity < 4)
         .sort((a, b) => a.location.range.start.line - b.location.range.start.line)
         .map((d) => `${pad(d.location.range.start.line + 1)}:${d.code}:${d.message}`)
+        .map(d => d.trim())
         .sort();
 }
 

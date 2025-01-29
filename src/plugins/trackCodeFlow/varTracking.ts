@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 import { Location } from 'vscode-languageserver-types';
@@ -16,6 +16,45 @@ enum ValidationKind {
     UninitializedVar = 'UninitializedVar',
     Unsafe = 'Unsafe'
 }
+
+
+export const VarTrackingMessages = {
+    varCasing: (curr: VarInfo, name: { text: string; location: Location }) => ({
+        severity: DiagnosticSeverity.Warning,
+        source: 'bslint',
+        code: VarLintError.CaseMismatch,
+        message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
+        data: {
+            name: curr.name,
+            location: name.location
+        }
+    }),
+    unsafeIterator: (name: string) => ({
+        severity: DiagnosticSeverity.Error,
+        source: 'bslint',
+        code: VarLintError.UnsafeIteratorVar,
+        message: `Using iterator variable '${name}' outside loop`
+    }),
+    unusedVariable: (name: string) => ({
+        severity: DiagnosticSeverity.Warning,
+        source: 'bslint',
+        code: VarLintError.UnusedVariable,
+        message: `Variable '${name}' is set but value is never used`
+    }),
+    unsafeInitialization: (name: string) => ({
+        severity: DiagnosticSeverity.Error,
+        source: 'bslint',
+        code: VarLintError.UnsafeInitialization,
+        message: `Not all the code paths assign '${name}'`
+    }),
+    uninitializedVariable: (name: string, scopeName: string) => ({
+        severity: DiagnosticSeverity.Error,
+        source: 'bslint',
+        code: VarLintError.UninitializedVar,
+        message: `Using uninitialised variable '${name}' when this file is included in scope '${scopeName}'`
+    })
+};
+
 
 interface ValidationInfo {
     kind: ValidationKind;
@@ -53,21 +92,16 @@ export function createVarLinter(
         args.set(name.toLowerCase(), { name: name, location: p.tokens.name.location, isParam: true, isUnsafe: false, isUsed: false });
     });
 
-    if (isMethodStatement(fun.functionStatement)) {
+    if (isMethodStatement(fun.parent)) {
         args.set('super', { name: 'super', location: null, isParam: true, isUnsafe: false, isUsed: true });
     }
 
     function verifyVarCasing(curr: VarInfo, name: { text: string; location: Location }) {
         if (curr && curr.name !== name.text) {
             diagnostics.push({
+                ...VarTrackingMessages.varCasing(curr, name),
                 severity: severity.caseSensitivity,
-                code: VarLintError.CaseMismatch,
-                message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
-                location: name.location,
-                data: {
-                    name: curr.name,
-                    location: name.location
-                }
+                location: name.location
             });
         }
     }
@@ -188,7 +222,7 @@ export function createVarLinter(
             // value = stat.value;
             setLocal(state.parent, stat.tokens.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
         } else if (isCatchStatement(stat) && state.parent) {
-            setLocal(curr, stat.tokens.exceptionVariable, VarRestriction.CatchedError);
+            setLocal(curr, (stat.exceptionVariableExpression as VariableExpression)?.tokens?.name, VarRestriction.CatchedError);
         } else if (isLabelStatement(stat) && !foundLabelAt) {
             foundLabelAt = stat.location.range.start.line;
         } else if (foundLabelAt && isGotoStatement(stat) && state.parent) {
@@ -246,7 +280,7 @@ export function createVarLinter(
         if (!parent.locals) {
             parent.locals = locals;
         } else {
-            const isParentBranched = isIfStatement(parent.stat) || isTryCatchStatement(parent.stat);
+            const isParentBranched = isIfStatement(parent.stat) || isTryCatchStatement(parent.stat) || isConditionalCompileStatement(parent.stat);
             const isLoop = isForStatement(closed.stat) || isForEachStatement(closed.stat) || isWhileStatement(closed.stat);
             locals.forEach((local, name) => {
                 const parentLocal = parent.locals.get(name);
@@ -302,16 +336,14 @@ export function createVarLinter(
             if (local.isUnsafe && !findSafeLocal(name)) {
                 if (local.restriction) {
                     diagnostics.push({
+                        ...VarTrackingMessages.unsafeIterator(name),
                         severity: severity.unsafeIterators,
-                        code: VarLintError.UnsafeIteratorVar,
-                        message: `Using iterator variable '${name}' outside loop`,
                         location: expr.location
                     });
                 } else if (!isNarrowing(local, expr, parent, curr)) {
                     diagnostics.push({
-                        severity: severity.unsafePathLoop,
-                        code: VarLintError.UnsafeInitialization,
-                        message: `Not all the code paths assign '${name}'`,
+                        ...VarTrackingMessages.unsafeInitialization(name),
+                        severity: severity.unsafePathLoop, // should this be severity.assignAllPath?
                         location: expr.location
                     });
                 }
@@ -353,9 +385,8 @@ export function createVarLinter(
         locals.forEach(local => {
             if (!local.isUsed && !local.restriction) {
                 diagnostics.push({
+                    ...VarTrackingMessages.unusedVariable(local.name),
                     severity: severity.unusedVariable,
-                    code: VarLintError.UnusedVariable,
-                    message: `Variable '${local.name}' is set but value is never used`,
                     location: local.location
                 });
             }
@@ -430,9 +461,8 @@ function deferredVarLinter(
             case ValidationKind.UninitializedVar:
                 if (!hasCallable) {
                     diagnostics.push({
+                        ...VarTrackingMessages.uninitializedVariable(name, scope.name),
                         severity: DiagnosticSeverity.Error,
-                        code: VarLintError.UninitializedVar,
-                        message: `Using uninitialised variable '${name}' when this file is included in scope '${scope.name}'`,
                         location: location
                     });
                 }
