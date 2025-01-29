@@ -29,7 +29,8 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'no-print': 'off',
         'no-assocarray-component-field-type': 'off',
         'no-array-component-field-type': 'off',
-        'name-shadowing': 'off'
+        'name-shadowing': 'off',
+        'type-reassignment': 'off'
     };
 }
 
@@ -168,7 +169,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         colorCertCompliant: rules['color-cert'],
         noAssocarrayComponentFieldType: ruleToSeverity(rules['no-assocarray-component-field-type']),
         noArrayComponentFieldType: ruleToSeverity(rules['no-array-component-field-type']),
-        nameShadowing: ruleToSeverity(rules['name-shadowing'])
+        nameShadowing: ruleToSeverity(rules['name-shadowing']),
+        typeReassignment: ruleToSeverity(rules['type-reassignment'])
     };
 }
 

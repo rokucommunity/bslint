@@ -1058,6 +1058,38 @@ describe('codeStyle', () => {
         });
     });
 
+    describe('type-reassignment', () => {
+        it('detects type reassignment', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-reassignment.brs'],
+                rules: {
+                    'type-reassignment': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '12:LINT3026:Strictness: Reassignment of the type of \'param\' from string to integer',
+                '18:LINT3026:Strictness: Reassignment of the type of \'value\' from integer to string',
+                '27:LINT3026:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
+                '53:LINT3026:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
+            ]);
+        });
+
+        it('allows type reassignment with custom types', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-reassignment-custom.bs'],
+                rules: {
+                    'type-reassignment': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '30:LINT3026:Strictness: Reassignment of the type of \'arg\' from Iface1 to roAssociativeArray',
+                '44:LINT3026:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
+            ]);
+        });
+    });
+
     describe('fix', () => {
         // Filenames (without the extension) that we want to copy with a "-temp" suffix
         const tmpFileNames = [

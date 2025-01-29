@@ -222,5 +222,11 @@ export const messages = {
         code: CodeStyleError.NameShadowing,
         severity: severity,
         source: 'bslint'
+    }),
+    typeReassignment: (varName: string, previousType: string, newType: string, severity: DiagnosticSeverity) => ({
+        message: `${ST} Reassignment of the type of '${varName}' from ${previousType} to ${newType}`,
+        code: CodeStyleError.NameShadowing,
+        severity: severity,
+        source: 'bslint'
     })
 };
