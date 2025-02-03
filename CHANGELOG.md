@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.43](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.42...v1.0.0-alpha.43) - 2024-02-03
+### Added
+ - diagnostic for when a variables type changes ([#130](https://github.com/rokucommunity/bslint/pull/130))
+
+
+
 ## [1.0.0-alpha.42](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.41...v1.0.0-alpha.42) - 2024-01-21
 ### Added
  - Adds `allow-implicit` for type annotations ([#133](https://github.com/rokucommunity/bslint/pull/133))
