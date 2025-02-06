@@ -481,7 +481,7 @@ export default class CodeStyle implements CompilerPlugin {
 
         if (!previousType) {
             // check for last previous assignment
-            const symbols = bodyTable.getSymbol(varName, SymbolTypeFlag.runtime);
+            const symbols = bodyTable.getSymbol(varName, SymbolTypeFlag.runtime) ?? [];
             for (const symbol of symbols) {
                 if (util.comparePosition(symbol.data?.definingNode?.location?.range?.start, assignStmt.location.range.start) < 0) {
                     previousType = symbol.type;
