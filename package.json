@@ -15,7 +15,7 @@
     "test:watch": "npm run test -- --watch --watch-files \"src/**/*.ts,test/**/*.brs\"",
     "watch": "tsc --watch",
     "publish-coverage": "nyc report --reporter=text-lcov | coveralls",
-    "package": "npm ci && npm run build && npm pack"
+    "package": "npm run build && npm pack"
   },
   "files": [
     "dist/**/*",
