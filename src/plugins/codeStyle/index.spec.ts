@@ -47,6 +47,7 @@ describe('codeStyle', () => {
                 'color-alpha': 'off',
                 'color-alpha-defaults': 'off',
                 'color-cert': 'off',
+                'no-regex-duplicates': 'off',
                 ...(rules ?? {})
             }
         } as BsLintConfig);
@@ -607,7 +608,8 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:LINT3024:Avoid using field type 'assocarray'`
+            `06:LINT3024:Avoid using field type 'assocarray'`,
+            `07:LINT3024:Avoid using field type 'assocarray'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -622,7 +624,8 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:LINT3025:Avoid using field type 'array'`
+            `04:LINT3025:Avoid using field type 'array'`,
+            `08:LINT3025:Avoid using field type 'array'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -725,6 +728,72 @@ describe('codeStyle', () => {
             ];
             expect(actual).deep.equal(expected);
         });
+    });
+
+    describe('enforce no regex re-creation', () => {
+        it('within loop', () => {
+            init({
+                'no-regex-duplicates': 'warn'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                    ? type(5)
+                    for i = 0 to 10
+                        CreateObject("roRegex", "test", "")
+                        for i = 0 to 10
+                            if false
+                                ? type(5)
+                                CreateObject("roRegex", "test2", "")
+                            end if
+                            CreateObject("roRegex", "test3", "")
+                        end for
+                    end for
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                '05:LINT3026:Avoid redeclaring identical regular expressions in a loop',
+                '11:LINT3026:Avoid redeclaring identical regular expressions in a loop'
+            ]);
+        });
+
+        it('no error within if', () => {
+            init({
+                'no-regex-duplicates': 'warn'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                    CreateObject("roRegex", "test", "")
+                    ? type(5)
+                    if false
+                        CreateObject("roRegex", "test", "")
+                    end if
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('anonymous function', () => {
+            init({
+                'no-regex-duplicates': 'warn'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                CreateObject("roRegex", "test", "")
+                    someAnonFunc = sub()
+                        CreateObject("roRegex", "test", "")
+                        ? type(5)
+                        CreateObject("roRegex", "test2", "")
+                        temp = CreateObject("roRegex", "test2", "")
+                    end sub
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, ['08:LINT3026:Avoid redeclaring identical regular expressions']);
+        });
+
+
     });
 
     describe('color-format', () => {
@@ -1013,11 +1082,11 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '15:LINT3026:Strictness: Class has same name as Class \'TestClass\'',
-                '18:LINT3026:Strictness: Enum has same name as Enum \'TestEnum\'',
-                '21:LINT3026:Strictness: Interface has same name as Interface \'TestInterface\'',
-                '24:LINT3026:Strictness: Const has same name as Const \'TestConst\'',
-                '26:LINT3026:Strictness: Const has same name as Namespace \'TestNamespace\''
+                '15:LINT3027:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3027:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3027:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3027:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3027:Strictness: Const has same name as Namespace \'TestNamespace\''
             ]);
         });
 
@@ -1030,15 +1099,15 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '02:LINT3026:Strictness: Class has same name as Class \'TestImportClass\'',
-                '05:LINT3026:Strictness: Enum has same name as Enum \'TestImportEnum\'',
-                '08:LINT3026:Strictness: Interface has same name as Interface \'TestImportInterface\'',
-                '11:LINT3026:Strictness: Const has same name as Const \'TestImportConst\'',
-                '15:LINT3026:Strictness: Class has same name as Class \'TestClass\'',
-                '18:LINT3026:Strictness: Enum has same name as Enum \'TestEnum\'',
-                '21:LINT3026:Strictness: Interface has same name as Interface \'TestInterface\'',
-                '24:LINT3026:Strictness: Const has same name as Const \'TestConst\'',
-                '26:LINT3026:Strictness: Const has same name as Namespace \'TestNamespace\''
+                '02:LINT3027:Strictness: Class has same name as Class \'TestImportClass\'',
+                '05:LINT3027:Strictness: Enum has same name as Enum \'TestImportEnum\'',
+                '08:LINT3027:Strictness: Interface has same name as Interface \'TestImportInterface\'',
+                '11:LINT3027:Strictness: Const has same name as Const \'TestImportConst\'',
+                '15:LINT3027:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3027:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3027:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3027:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3027:Strictness: Const has same name as Namespace \'TestNamespace\''
 
             ]);
         });
@@ -1052,8 +1121,8 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '02:LINT3026:Strictness: Const has same name as Function \'TestFunction\'',
-                '03:LINT3026:Strictness: Const has same name as Global Function \'Lcase\''
+                '02:LINT3027:Strictness: Const has same name as Function \'TestFunction\'',
+                '03:LINT3027:Strictness: Const has same name as Global Function \'Lcase\''
             ]);
         });
     });
@@ -1068,10 +1137,10 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '12:LINT3026:Strictness: Reassignment of the type of \'param\' from string to integer',
-                '18:LINT3026:Strictness: Reassignment of the type of \'value\' from integer to string',
-                '27:LINT3026:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
-                '53:LINT3026:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
+                '12:LINT3027:Strictness: Reassignment of the type of \'param\' from string to integer',
+                '18:LINT3027:Strictness: Reassignment of the type of \'value\' from integer to string',
+                '27:LINT3027:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
+                '53:LINT3027:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
             ]);
         });
 
@@ -1084,8 +1153,8 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '30:LINT3026:Strictness: Reassignment of the type of \'arg\' from Iface1 to roAssociativeArray',
-                '44:LINT3026:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
+                '30:LINT3027:Strictness: Reassignment of the type of \'arg\' from Iface1 to roAssociativeArray',
+                '44:LINT3027:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
             ]);
         });
     });

@@ -4,5 +4,7 @@
         <field id="test" type="array" />
         <field id="test2" type="node" />
         <field id="test3" type="assocarray" />
+        <field id="test3" type="assocArray" />
+        <field id="test" type="arRay" />
     </interface>
 </component>

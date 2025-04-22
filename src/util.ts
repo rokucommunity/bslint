@@ -30,7 +30,8 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'no-assocarray-component-field-type': 'off',
         'no-array-component-field-type': 'off',
         'name-shadowing': 'off',
-        'type-reassignment': 'off'
+        'type-reassignment': 'off',
+        'no-regex-duplicates': 'off'
     };
 }
 
@@ -170,7 +171,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         noAssocarrayComponentFieldType: ruleToSeverity(rules['no-assocarray-component-field-type']),
         noArrayComponentFieldType: ruleToSeverity(rules['no-array-component-field-type']),
         nameShadowing: ruleToSeverity(rules['name-shadowing']),
-        typeReassignment: ruleToSeverity(rules['type-reassignment'])
+        typeReassignment: ruleToSeverity(rules['type-reassignment']),
+        noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates'])
     };
 }
 

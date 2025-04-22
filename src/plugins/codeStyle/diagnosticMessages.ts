@@ -26,7 +26,8 @@ export enum CodeStyleError {
     ColorCertCompliant = 'LINT3023',
     NoAssocarrayFieldType = 'LINT3024',
     NoArrayFieldType = 'LINT3025',
-    NameShadowing = 'LINT3026'
+    NoRegexDuplicates = 'LINT3026',
+    NameShadowing = 'LINT3027'
 }
 
 const CS = 'Code style:';
@@ -223,10 +224,25 @@ export const messages = {
         severity: severity,
         source: 'bslint'
     }),
-    typeReassignment: (varName: string, previousType: string, newType: string, severity: DiagnosticSeverity) => ({
+    typeReassignment: (location: Location, varName: string, previousType: string, newType: string, severity: DiagnosticSeverity) => ({
         message: `${ST} Reassignment of the type of '${varName}' from ${previousType} to ${newType}`,
         code: CodeStyleError.NameShadowing,
         severity: severity,
-        source: 'bslint'
+        source: 'bslint',
+        location
+    }),
+    noIdenticalRegexInLoop: (location: Location, severity: DiagnosticSeverity) => ({
+        message: 'Avoid redeclaring identical regular expressions in a loop',
+        code: CodeStyleError.NoRegexDuplicates,
+        severity: severity,
+        source: 'bslint',
+        location
+    }),
+    noRegexRedeclaring: (location: Location, severity: DiagnosticSeverity) => ({
+        message: 'Avoid redeclaring identical regular expressions',
+        code: CodeStyleError.NoRegexDuplicates,
+        severity: severity,
+        source: 'bslint',
+        location
     })
 };
