@@ -309,6 +309,8 @@ describe('codeStyle', () => {
             const expected = [
                 `22:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
                 `23:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
+                `24:1141:Void sub may not return a value`,
+                `26:1141:Void sub may not return a value`,
                 `29:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
                 `31:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
                 `36:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
