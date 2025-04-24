@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.46](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.45...v1.0.0-alpha.46) - 2025-04-24
+### Changed
+ - Merge branch 'master' of https://github.com/rokucommunity/bslint into v1 ([a225c6e](https://github.com/rokucommunity/bslint/commit/a225c6e))
+ - Upgade to brighterscript@1.0.0-alpha.46 ([#149](https://github.com/rokucommunity/bslint/pull/149))
+ - Merge branch 'master' into v1 ([ca45adc](https://github.com/rokucommunity/bslint/commit/ca45adc))
+ - Another node  version tweak ([d3a76d2](https://github.com/rokucommunity/bslint/commit/d3a76d2))
+ - Bump create-package to node 16.20.2 ([4a7d6a9](https://github.com/rokucommunity/bslint/commit/4a7d6a9))
+ - Elevate brighterscript to a prod dependency. ([8763ee1](https://github.com/rokucommunity/bslint/commit/8763ee1))
+ - Merge branch 'master' of https://github.com/rokucommunity/bslint into v1 ([0a0a3f5](https://github.com/rokucommunity/bslint/commit/0a0a3f5))
+
+
+
 ## [1.0.0-alpha.44](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.43...v1.0.0-alpha.44) - 2024-02-06
 ### Fixed
  - issue if `getSymbol()` returns undefined ([#141](https://github.com/rokucommunity/bslint/pull/141))
