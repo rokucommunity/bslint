@@ -17,7 +17,8 @@
     "allowSyntheticDefaultImports": true,
     "lib": [
       "es2017",
-      "es2019.array"
+      "es2019.array",
+      "es2020.promise"
     ]
   },
   "include": [
