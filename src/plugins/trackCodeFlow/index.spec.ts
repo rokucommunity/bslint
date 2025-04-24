@@ -325,10 +325,14 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
+            `04:1141:Void sub may not return a value`,
             `04:LINT2002:Sub as void should not return a value`,
+            `11:1141:Void function may not return a value`,
             `11:LINT2002:Function as void should not return a value`,
+            `15:1142:Non-void sub must return a value`,
             `15:LINT2006:Sub should consistently return a value`,
             `18:LINT2004:Not all code paths return a value`,
+            `22:1142:Non-void function must return a value`,
             `22:LINT2006:Function should consistently return a value`,
             `25:LINT2004:Not all code paths return a value`,
             `32:LINT2004:Not all code paths return a value`,
