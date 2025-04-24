@@ -1,4 +1,4 @@
-import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin } from 'brighterscript';
+import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin, AfterProgramCreateEvent, AfterProgramValidateEvent } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
@@ -11,7 +11,7 @@ export type RuleBlockIf = 'no-then' | 'then' | 'off';
 export type RuleCondition = 'no-group' | 'group' | 'off';
 export type RuleFunction = 'no-function' | 'no-sub' | 'auto' | 'off';
 export type RuleAAComma = 'always' | 'no-dangling' | 'never' | 'off';
-export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off';
+export type RuleTypeAnnotations = 'all' | 'return' | 'args' | 'off' | 'all-allow-implicit' | 'args-allow-implicit';
 export type RuleEolLast = 'always' | 'never' | 'off';
 export type RuleColorFormat = 'hash-hex' | 'quoted-numeric-hex' | 'never' | 'off';
 export type RuleColorCase = 'upper' | 'lower' | 'off';
@@ -51,6 +51,8 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'color-cert'?: RuleColorCertCompliant;
         'no-assocarray-component-field-type'?: RuleSeverity;
         'no-array-component-field-type'?: RuleSeverity;
+        'name-shadowing'?: RuleSeverity;
+        'type-reassignment'?: RuleSeverity;
         'no-regex-duplicates'?: RuleSeverity;
     };
     globals?: string[];
@@ -87,6 +89,8 @@ export interface BsLintRules {
     colorCertCompliant: RuleColorCertCompliant;
     noAssocarrayComponentFieldType: BsLintSeverity;
     noArrayComponentFieldType: BsLintSeverity;
+    nameShadowing: BsLintSeverity;
+    typeReassignment: BsLintSeverity;
     noRegexDuplicates: BsLintSeverity;
 }
 
@@ -96,7 +100,8 @@ export default function factory(): CompilerPlugin {
     const contextMap = new WeakMap<Program, PluginWrapperContext>();
     return {
         name: 'bslint',
-        afterProgramCreate: (program: Program) => {
+        afterProgramCreate: (event: AfterProgramCreateEvent) => {
+            const { program } = event;
             const context = createContext(program);
             contextMap.set(program, context);
 
@@ -111,8 +116,8 @@ export default function factory(): CompilerPlugin {
                 program.plugins.add(checkUsage);
             }
         },
-        afterProgramValidate: async (program: Program) => {
-            const context = contextMap.get(program);
+        afterProgramValidate: async (event: AfterProgramValidateEvent) => {
+            const context = contextMap.get(event.program);
             await context.applyFixes();
         }
     };

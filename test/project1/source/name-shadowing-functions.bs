@@ -1,0 +1,8 @@
+namespace TestNamespace
+    const TestFunction = 3
+    const Lcase = 4
+end namespace
+
+function TestFunction()
+    return 2
+end function

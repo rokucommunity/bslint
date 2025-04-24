@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { Program, util } from 'brighterscript';
+import { AfterProgramCreateEvent, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
@@ -20,11 +20,12 @@ describe('trackCodeFlow', () => {
         linter = new Linter();
         program = new Program({});
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProgramCreate', { builder: undefined, program: program });
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const trackCodeFlow = new TrackCodeFlow(lintContext);
                 program.plugins.add(trackCodeFlow);
@@ -50,7 +51,9 @@ describe('trackCodeFlow', () => {
         expectDiagnostics(program, [{
             code: VarLintError.UnsafeInitialization,
             message: `Not all the code paths assign 'text2'`,
-            range: util.createRange(9, 22, 9, 27)
+            location: {
+                range: util.createRange(9, 22, 9, 27)
+            }
         }]);
     });
 
@@ -62,7 +65,7 @@ describe('trackCodeFlow', () => {
                 'consistent-return': 'off',
                 'unused-variable': 'off'
             },
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
@@ -82,6 +85,34 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             diagnosticFilters: [1001]
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('does not mark inline anonymous functions param types as uninitialised vars', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/inline-functions.bs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            diagnosticFilters: []
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('does not mark typecasts as uninitialised vars', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/typecast-expressions.bs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            diagnosticFilters: []
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [];
@@ -111,7 +142,7 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                '04:1136:enum must be declared at the root level or within a namespace'
+                '04:invalid-declaration-location:enum must be declared at the root level or within a namespace'
             ];
             expect(actual).deep.equal(expected);
         });
@@ -166,8 +197,8 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `11:1140:Cannot find function 'one'`,
-                `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`
+                `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`,
+                `11:cannot-find-function:Cannot find function 'one'`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -199,6 +230,28 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('implements assign-all-paths with conditional compilation', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/assign-all-paths-conditional-compilation.brs'],
+            rules: {
+                'assign-all-paths': 'error',
+                'consistent-return': 'off',
+                'unused-variable': 'off'
+            },
+            diagnosticFilters: [1001, 1090]
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `15:LINT1003:Not all the code paths assign 'a'`,
+            `23:LINT1003:Not all the code paths assign 'a'`,
+            `42:LINT1003:Not all the code paths assign 'a'`,
+            `65:LINT1003:Not all the code paths assign 'a'`,
+            `76:LINT1003:Not all the code paths assign 'a'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
     it('report errors for classes', async () => {
         const diagnostics = await linter.run({
             ...project1,
@@ -213,7 +266,9 @@ describe('trackCodeFlow', () => {
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `18:LINT1003:Not all the code paths assign 'b'`,
-            `27:LINT1003:Not all the code paths assign 'b'`
+            `27:LINT1003:Not all the code paths assign 'b'`,
+            `67:cannot-find-function:Cannot find function 'Bar'`,
+            `67:not-constructable:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -321,23 +376,28 @@ describe('trackCodeFlow', () => {
             rules: {
                 'consistent-return': 'error',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1142]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:1141:Void sub may not return a value`,
             `04:LINT2002:Sub as void should not return a value`,
-            `11:1141:Void function may not return a value`,
+            `04:return-type-mismatch:Type 'integer' is not compatible with declared return type 'void' '`,
+            `04:unexpected-return-value:Void sub may not return a value`,
             `11:LINT2002:Function as void should not return a value`,
-            `15:1142:Non-void sub must return a value`,
+            `11:return-type-mismatch:Type 'string' is not compatible with declared return type 'void' '`,
+            `11:unexpected-return-value:Void function may not return a value`,
+            `151:LINT2004:Not all code paths return a value`,
             `15:LINT2006:Sub should consistently return a value`,
+            `15:return-type-mismatch:Type 'void' is not compatible with declared return type 'string' '`,
             `18:LINT2004:Not all code paths return a value`,
-            `22:1142:Non-void function must return a value`,
+            `18:return-type-coercion-mismatch:Function has no return statement and will return 'invalid': 'string' cannot be coerced into 'invalid'`,
             `22:LINT2006:Function should consistently return a value`,
             `25:LINT2004:Not all code paths return a value`,
             `32:LINT2004:Not all code paths return a value`,
             `39:LINT2004:Not all code paths return a value`,
             `45:LINT2004:Not all code paths return a value`,
+            `45:return-type-coercion-mismatch:Function has no return statement and will return 'invalid': 'string' cannot be coerced into 'invalid'`,
             `49:LINT2004:Not all code paths return a value`
         ];
         expect(actual).deep.equal(expected);
@@ -369,7 +429,7 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             globals: ['a'],
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [

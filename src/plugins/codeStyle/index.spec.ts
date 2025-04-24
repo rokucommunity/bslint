@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProgramCreateEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -52,7 +52,7 @@ describe('codeStyle', () => {
             }
         } as BsLintConfig);
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProgramCreate', { builder: {} as any, program: program });
         return program;
     }
 
@@ -62,7 +62,8 @@ describe('codeStyle', () => {
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const codeStyle = new CodeStyle(lintContext);
                 program.plugins.add(codeStyle);
@@ -303,14 +304,17 @@ describe('codeStyle', () => {
                     'named-function-style': 'auto',
                     'anon-function-style': 'auto',
                     'no-print': 'off'
-                }
-            });
+                },
+                diagnosticFilters: [1142]
+            } as any);
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
                 `22:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
                 `23:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
-                `24:1141:Void sub may not return a value`,
-                `26:1141:Void sub may not return a value`,
+                `24:return-type-mismatch:Type 'string' is not compatible with declared return type 'void' '`,
+                `24:unexpected-return-value:Void sub may not return a value`,
+                `26:return-type-mismatch:Type 'string' is not compatible with declared return type 'void' '`,
+                `26:unexpected-return-value:Void sub may not return a value`,
                 `29:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
                 `31:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
                 `36:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
@@ -336,67 +340,111 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
         });
-    });
 
-    it('enforce return type only', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'return',
-                'no-print': 'off'
-            }
+        it('enforce return type only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'return',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `05:LINT3010:Strictness: function should declare the return type`
+            ];
+            expect(actual).deep.equal(expected);
+            // should only highlight the function name
+            expect(diagnostics[0].location.range).to.eql(
+                util.createRange(4, 0, 4, 8)
+            );
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `05:LINT3010:Strictness: function should declare the return type`
-        ];
-        expect(actual).deep.equal(expected);
-        // should only highlight the function name
-        expect(diagnostics[0].range).to.eql(
-            util.createRange(4, 0, 4, 8)
-        );
-    });
 
-    it('enforce arguments type only', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'args',
-                'no-print': 'off'
-            }
+        it('enforce arguments type only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'args',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3011:Strictness: type annotation required`,
+                `13:LINT3011:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `01:LINT3011:Strictness: type annotation required`,
-            `05:LINT3011:Strictness: type annotation required`
-        ];
-        expect(actual).deep.equal(expected);
-    });
 
-    it('enforce all annotations', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'all',
-                'no-print': 'off'
-            }
+        it('enforce all annotations', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'all',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3010:Strictness: function should declare the return type`,
+                `05:LINT3011:Strictness: type annotation required`,
+                `13:LINT3011:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `01:LINT3011:Strictness: type annotation required`,
-            `05:LINT3010:Strictness: function should declare the return type`,
-            `05:LINT3011:Strictness: type annotation required`
-        ];
-        expect(actual).deep.equal(expected);
+
+        it('allows implicit type definitions with default values', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations-implicit.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'all-allow-implicit',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3010:Strictness: function should declare the return type`,
+                `05:LINT3011:Strictness: type annotation required`,
+                `17:LINT3010:Strictness: function should declare the return type`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+
+        it('allows implicit type definitions with default values for args only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations-implicit.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'args-allow-implicit',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:LINT3011:Strictness: type annotation required`,
+                `05:LINT3011:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
     });
 
     it('enforce no print', async () => {
@@ -415,6 +463,22 @@ describe('codeStyle', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('does not crash when node has no leadingTrivia', () => {
+        (program.options as any).rules['consistent-return'] = 'error';
+        const file = program.setFile<BrsFile>('source/main.bs', `
+            'comment
+            sub test()
+            end sub
+
+            'TODO
+            sub test2()
+            end sub
+        `);
+        (file.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
+        program.validate();
+        const codeStyle = new CodeStyle(createContext(program));
+        codeStyle.validateBrsFile(file);
+    });
 
     describe('enforce no todo', () => {
         it('default todo pattern', async () => {
@@ -604,8 +668,8 @@ describe('codeStyle', () => {
                 [],
                 [0],
                 [0, 1],
-                [1, 3],
-                [0, 2],
+                [0, 1],
+                [0, 1],
                 [0],
                 [1],
                 [1]
@@ -752,14 +816,14 @@ describe('codeStyle', () => {
                     'color-format': 'quoted-numeric-hex',
                     'color-case': 'upper'
                 });
-                program.setFile(
+                const file = program.setFile(
                     'source/main.bs',
                     `sub init()\n${code}\nend sub`
                 );
                 program.validate();
                 expectDiagnostics(
                     program,
-                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createRange(1, x[0], 1, x[1])))
+                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createLocationFromFileRange(file, util.createRange(1, x[0], 1, x[1]))))
                 );
             }
             /* eslint-enable no-template-curly-in-string */
@@ -1008,6 +1072,93 @@ describe('codeStyle', () => {
             expectDiagnosticsFmt(program, [
                 '03:LINT3021:Code style: File should follow color alpha rule',
                 '05:LINT3021:Code style: File should follow color alpha rule'
+            ]);
+        });
+    });
+
+    describe('name-shadowing', () => {
+        it('detects name shadowings', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '15:LINT3027:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3027:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3027:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3027:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3027:Strictness: Const has same name as Namespace \'TestNamespace\''
+            ]);
+        });
+
+        it('detects name shadowings across scope', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs', 'source/name-shadowing-import.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:LINT3027:Strictness: Class has same name as Class \'TestImportClass\'',
+                '05:LINT3027:Strictness: Enum has same name as Enum \'TestImportEnum\'',
+                '08:LINT3027:Strictness: Interface has same name as Interface \'TestImportInterface\'',
+                '11:LINT3027:Strictness: Const has same name as Const \'TestImportConst\'',
+                '15:LINT3027:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3027:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3027:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3027:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3027:Strictness: Const has same name as Namespace \'TestNamespace\''
+
+            ]);
+        });
+
+        it('detects name shadowing function', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing-functions.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:LINT3027:Strictness: Const has same name as Function \'TestFunction\'',
+                '03:LINT3027:Strictness: Const has same name as Global Function \'Lcase\''
+            ]);
+        });
+    });
+
+    describe('type-reassignment', () => {
+        it('detects type reassignment', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-reassignment.brs'],
+                rules: {
+                    'type-reassignment': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '12:LINT3027:Strictness: Reassignment of the type of \'param\' from string to integer',
+                '18:LINT3027:Strictness: Reassignment of the type of \'value\' from integer to string',
+                '27:LINT3027:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
+                '53:LINT3027:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
+            ]);
+        });
+
+        it('allows type reassignment with custom types', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-reassignment-custom.bs'],
+                rules: {
+                    'type-reassignment': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '30:LINT3027:Strictness: Reassignment of the type of \'arg\' from Iface1 to roAssociativeArray',
+                '44:LINT3027:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
             ]);
         });
     });

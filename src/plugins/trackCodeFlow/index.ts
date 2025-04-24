@@ -1,13 +1,15 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement } from 'brighterscript';
+import { BsDiagnostic, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterScopeValidateEvent, AfterFileValidateEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
 import { extractFixes } from './trackFixes';
 import { addFixesToEvent } from '../../textEdit';
+import { BsLintDiagnosticContext } from '../../Linter';
+import type { Location } from 'vscode-languageserver-types'; // TODO: Get this from brighterscript
 
 export interface NarrowingInfo {
     text: string;
-    range: Range;
+    location: Location;
     type: 'valid' | 'invalid';
     block: Statement;
 }
@@ -28,7 +30,7 @@ export enum VarRestriction {
 
 export interface VarInfo {
     name: string;
-    range: Range;
+    location: Location;
     isGlobal?: boolean;
     isParam?: boolean;
     isUnsafe: boolean;
@@ -48,26 +50,33 @@ export interface LintState {
     ifs?: StatementInfo;
     trys?: StatementInfo;
     branch?: StatementInfo;
+    conditionalCompiles?: StatementInfo;
 }
 
-export default class TrackCodeFlow {
+export default class TrackCodeFlow implements CompilerPlugin {
 
-    name: 'trackCodeFlow';
+    name = 'bslint-trackCodeFlow';
 
     constructor(private lintContext: PluginContext) {
     }
 
     onGetCodeActions(event: OnGetCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
-        extractFixes(addFixes, event.diagnostics);
+        extractFixes(event.file, addFixes, event.diagnostics);
     }
 
-    afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
-        const diagnostics = runDeferredValidation(this.lintContext, scope, files, callables);
-        scope.addDiagnostics(diagnostics);
+    afterScopeValidate(event: AfterScopeValidateEvent) {
+        const { scope } = event;
+        const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
+        const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
+        event.program.diagnostics.register(diagnostics as any, {
+            ...BsLintDiagnosticContext,
+            scope: scope
+        });
     }
 
-    afterFileValidate(file: BscFile) {
+    afterFileValidate(event: AfterFileValidateEvent) {
+        const { file } = event;
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
@@ -75,7 +84,7 @@ export default class TrackCodeFlow {
 
         resetVarContext(file);
 
-        file.parser.references.functionExpressions.forEach((fun) => {
+        for (const fun of file.parser.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive })) {
             const state: LintState = {
                 file: file,
                 fun: fun,
@@ -84,7 +93,8 @@ export default class TrackCodeFlow {
                 blocks: new WeakMap(),
                 ifs: undefined,
                 trys: undefined,
-                branch: undefined
+                branch: undefined,
+                conditionalCompiles: undefined
             };
             let curr: StatementInfo = {
                 stat: new EmptyStatement()
@@ -111,9 +121,11 @@ export default class TrackCodeFlow {
 
                 if (isIfStatement(opened)) {
                     state.ifs = curr;
+                } else if (isConditionalCompileStatement(opened)) {
+                    state.conditionalCompiles = curr;
                 } else if (isTryCatchStatement(opened)) {
                     state.trys = curr;
-                } else if (!curr.parent || isIfStatement(curr.parent) || isTryCatchStatement(curr.parent) || isCatchStatement(curr.parent)) {
+                } else if (!curr.parent || isIfStatement(curr.parent) || isConditionalCompileStatement(curr.parent) || isTryCatchStatement(curr.parent) || isCatchStatement(curr.parent)) {
                     state.branch = curr;
                 }
                 state.parent = curr;
@@ -123,6 +135,10 @@ export default class TrackCodeFlow {
                 if (isIfStatement(closed)) {
                     const { ifs, branch } = findIfBranch(state);
                     state.ifs = ifs;
+                    state.branch = branch;
+                } else if (isConditionalCompileStatement(closed)) {
+                    const { conditionalCompiles, branch } = findConditionalCompileBranch(state);
+                    state.conditionalCompiles = conditionalCompiles;
                     state.branch = branch;
                 } else if (isTryCatchStatement(closed)) {
                     const { trys, branch } = findTryBranch(state);
@@ -146,7 +162,7 @@ export default class TrackCodeFlow {
                     } else if (parent) {
                         varLinter.visitExpression(elem, parent, curr);
                     }
-                }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions });
+                }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions | InternalWalkMode.visitFalseConditionalCompilationBlocks });
             } else {
                 // ensure empty functions are finalized
                 state.blocks.set(fun.body, curr);
@@ -167,13 +183,12 @@ export default class TrackCodeFlow {
                     varLinter.closeBlock(block);
                 }
             }
-        });
-
-        if (this.lintContext.fix) {
-            diagnostics = extractFixes(this.lintContext.addFixes, diagnostics);
         }
 
-        file.addDiagnostics(diagnostics);
+        if (this.lintContext.fix) {
+            diagnostics = extractFixes(event.file, this.lintContext.addFixes, diagnostics);
+        }
+        event.program.diagnostics.register(diagnostics, BsLintDiagnosticContext);
     }
 }
 
@@ -190,6 +205,23 @@ function findIfBranch(state: LintState): { ifs?: StatementInfo; branch?: Stateme
     }
     return {
         ifs: undefined,
+        branch: parent
+    };
+}
+
+// Find parent if and block where code flow is branched
+function findConditionalCompileBranch(state: LintState): { conditionalCompiles?: StatementInfo; branch?: StatementInfo } {
+    const { blocks, parent, stack } = state;
+    for (let i = stack.length - 2; i >= 0; i--) {
+        if (isConditionalCompileStatement(stack[i])) {
+            return {
+                conditionalCompiles: blocks.get(stack[i]),
+                branch: blocks.get(stack[i + 1])
+            };
+        }
+    }
+    return {
+        conditionalCompiles: undefined,
         branch: parent
     };
 }
@@ -213,5 +245,5 @@ function findTryBranch(state: LintState): { trys?: StatementInfo; branch?: State
 
 // `if` and `for/while` are considered as multi-branch
 export function isBranchedStatement(stat: Statement) {
-    return isIfStatement(stat) || isForStatement(stat) || isForEachStatement(stat) || isWhileStatement(stat) || isTryCatchStatement(stat);
+    return isIfStatement(stat) || isForStatement(stat) || isForEachStatement(stat) || isWhileStatement(stat) || isTryCatchStatement(stat) || isConditionalCompileStatement(stat);
 }
