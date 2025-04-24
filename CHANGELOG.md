@@ -8,13 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-alpha.46](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.45...v1.0.0-alpha.46) - 2025-04-24
 ### Changed
- - Merge branch 'master' of https://github.com/rokucommunity/bslint into v1 ([a225c6e](https://github.com/rokucommunity/bslint/commit/a225c6e))
- - Upgade to brighterscript@1.0.0-alpha.46 ([#149](https://github.com/rokucommunity/bslint/pull/149))
- - Merge branch 'master' into v1 ([ca45adc](https://github.com/rokucommunity/bslint/commit/ca45adc))
- - Another node  version tweak ([d3a76d2](https://github.com/rokucommunity/bslint/commit/d3a76d2))
- - Bump create-package to node 16.20.2 ([4a7d6a9](https://github.com/rokucommunity/bslint/commit/4a7d6a9))
+ - upgrade to [brighterscript@1.0.0-alpha.46](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha46---2025-04-24). Notable changes since 1.0.0-alpha.45:
+   - Add missing content node fields ([#1481](https://github.com/rokucommunity/brighterscript/pull/1481))
+   - Add `DialogBase` to types ([#1470](https://github.com/rokucommunity/brighterscript/pull/1470))
+   - Do not validate typedef files for return type mismatch ([#1459](https://github.com/rokucommunity/brighterscript/pull/1459))
+   - Fix erroneous diagnostic for component name on first validation ([#1477](https://github.com/rokucommunity/brighterscript/pull/1477))
+   - Fix ScopeValidator crash ([#1465](https://github.com/rokucommunity/brighterscript/pull/1465))
+   - Import `performance` from `perf_hooks` to work on node <16 ([#1462](https://github.com/rokucommunity/brighterscript/pull/1462))
+   - Change type of 'version' parameter from String to Integer in the Type ([#1453](https://github.com/rokucommunity/brighterscript/pull/1453))
  - Elevate brighterscript to a prod dependency. ([8763ee1](https://github.com/rokucommunity/bslint/commit/8763ee1))
- - Merge branch 'master' of https://github.com/rokucommunity/bslint into v1 ([0a0a3f5](https://github.com/rokucommunity/bslint/commit/0a0a3f5))
+
+## [1.0.0-alpha.45](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.44...v1.0.0-alpha.45) - 2025-04-04
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.45](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha45---2025-04-04). Notable changes since 1.0.0-alpha.44:
+   - new `diagnosticFiltersV0Compatibility` bsconfig.json option ([#1424](https://github.com/rokucommunity/brighterscript/pull/1424))
+   - Merge latest `master` which includes the language server rewrite ([#1428](https://github.com/rokucommunity/brighterscript/pull/1428))
+   - reduce `BscType` creation ([#1417](https://github.com/rokucommunity/brighterscript/pull/1417))
+   - add lookup tables to `DiagnosticsManager` to speed up diagnostic clearing ([#1411](https://github.com/rokucommunity/brighterscript/pull/1411))
 
 
 
