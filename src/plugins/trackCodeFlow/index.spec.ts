@@ -382,9 +382,14 @@ describe('trackCodeFlow', () => {
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
             `04:LINT2002:Sub as void should not return a value`,
+            `04:return-type-mismatch:Type 'integer' is not compatible with declared return type 'void' '`,
+            `04:unexpected-return-value:Void sub may not return a value`,
             `11:LINT2002:Function as void should not return a value`,
+            `11:return-type-mismatch:Type 'string' is not compatible with declared return type 'void' '`,
+            `11:unexpected-return-value:Void function may not return a value`,
             `151:LINT2004:Not all code paths return a value`,
             `15:LINT2006:Sub should consistently return a value`,
+            `15:return-type-mismatch:Type 'void' is not compatible with declared return type 'string' '`,
             `18:LINT2004:Not all code paths return a value`,
             `18:return-type-coercion-mismatch:Function has no return statement and will return 'invalid': 'string' cannot be coerced into 'invalid'`,
             `22:LINT2006:Function should consistently return a value`,
