@@ -1,6 +1,6 @@
 {
   "name": "@rokucommunity/bslint",
-  "version": "1.0.0-alpha.46",
+  "version": "1.0.0-alpha.47",
   "description": "BrighterScript linter plugin",
   "main": "dist/index.js",
   "bin": {
@@ -35,7 +35,7 @@
     "url": "https://github.com/rokucommunity/bslint.git"
   },
   "dependencies": {
-    "brighterscript": "^1.0.0-alpha.46",
+    "brighterscript": "^1.0.0-alpha.47",
     "coveralls-next": "^4.2.0",
     "fs-extra": "^10.0.0",
     "jsonc-parser": "^2.3.0",
