@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.47](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.46...v1.0.0-alpha.47) - 2025-06-03
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.47](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha47---2025-05-22). Notable changes since 1.0.0-alpha.46:
+     - Type Tracking within a Function ([#1468](https://github.com/rokucommunity/bslint/pull/1468))
+     - Better Support for Union of Functions and CallFuncs ([#1485](https://github.com/rokucommunity/bslint/pull/1485))
+     - Better diagnostic null location handling ([#1491](https://github.com/rokucommunity/bslint/pull/1491))
+     - bsc1 cli binary ([#1492](https://github.com/rokucommunity/bslint/pull/1492))
+     - Merge branch 'master' of https://github.com/rokucommunity/brighterscript into v1 ([31e93246](https://github.com/rokucommunity/bslint/commit/31e93246))
+
+
+
 ## [1.0.0-alpha.46](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.45...v1.0.0-alpha.46) - 2025-04-24
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.46](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha46---2025-04-24). Notable changes since 1.0.0-alpha.45:

@@ -533,25 +533,15 @@ export default class CodeStyle implements Plugin {
         if (!functionExpression) {
             return;
         }
-        const bodyTable = functionExpression.body?.getSymbolTable();
         const rhsType = assignStmt.value?.getType({ flags: SymbolTypeFlag.runtime });
         if (!rhsType.isResolvable()) {
             return;
         }
         const varName = assignStmt.tokens.name.text;
-        let previousType = functionExpression.getSymbolTable().getSymbolType(varName, { flags: SymbolTypeFlag.runtime });
-
-        if (!previousType) {
-            // check for last previous assignment
-            const symbols = bodyTable.getSymbol(varName, SymbolTypeFlag.runtime) ?? [];
-            for (const symbol of symbols) {
-                if (util.comparePosition(symbol.data?.definingNode?.location?.range?.start, assignStmt.location.range.start) < 0) {
-                    previousType = symbol.type;
-                } else {
-                    break;
-                }
-            }
-        }
+        const previousType = assignStmt.getSymbolTable().getSymbolType(varName, {
+            flags: SymbolTypeFlag.runtime,
+            statementIndex: assignStmt.statementIndex
+        });
 
         if (previousType?.isResolvable()) {
             // is this different?
