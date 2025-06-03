@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - Change type of 'version' parameter from String to Integer in the Type ([#1453](https://github.com/rokucommunity/brighterscript/pull/1453))
  - Elevate brighterscript to a prod dependency. ([8763ee1](https://github.com/rokucommunity/bslint/commit/8763ee1))
 
+
+
 ## [1.0.0-alpha.45](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.44...v1.0.0-alpha.45) - 2025-04-04
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.45](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha45---2025-04-04). Notable changes since 1.0.0-alpha.44:
@@ -167,6 +169,20 @@ Skipped a few brighterscript releases because there were some bugs we couldn't m
      - Support when tokens have null ranges ([brighterscript#1072](https://github.com/rokucommunity/brighterscript/pull/1072))
      - Support whitespace in conditional compile keywords ([brighterscript#1090](https://github.com/rokucommunity/brighterscript/pull/1090))
      - Allow negative patterns in diagnostic filters ([brighterscript#1078](https://github.com/rokucommunity/brighterscript/pull/1078))
+
+
+## [0.8.31](https://github.com/rokucommunity/bslint/compare/0.8.30...v0.8.31) - 2025-05-12
+### Changed
+ - upgrade to [brighterscript@0.69.9](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0699---2025-05-09). Notable changes since 0.69.8:
+     - removed no-throw-literal lint rule ([brighterscript#1489](https://github.com/rokucommunity/brighterscript/pull/1489))
+     - Add `bsc0` cli binary name ([brighterscript#1490](https://github.com/rokucommunity/brighterscript/pull/1490))
+
+
+
+## [0.8.30](https://github.com/rokucommunity/bslint/compare/0.8.29...v0.8.30) - 2025-05-06
+### Changed
+ - upgrade to [brighterscript@0.69.8](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0698---2025-05-05). Notable changes since 0.69.7:
+
 
 
 ## [0.8.29](https://github.com/rokucommunity/bslint/compare/0.8.28...v0.8.29) - 2025-04-24
