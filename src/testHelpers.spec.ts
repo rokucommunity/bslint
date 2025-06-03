@@ -1,12 +1,12 @@
-import { BsDiagnostic, BscFile, DiagnosticSeverity, DiagnosticTag, Range } from 'brighterscript';
-import { CodeDescription, DiagnosticRelatedInformation, Diagnostic } from 'vscode-languageserver-types';
+import { BsDiagnostic, DiagnosticSeverity, DiagnosticTag, Location } from 'brighterscript';
+import { CodeDescription, DiagnosticRelatedInformation } from 'vscode-languageserver-types';
 import { expect } from 'chai';
 import { firstBy } from 'thenby';
 
-type DiagnosticCollection = { getDiagnostics: () => Array<Diagnostic> } | { diagnostics: Diagnostic[] } | Diagnostic[];
+type DiagnosticCollection = { getDiagnostics: () => Array<BsDiagnostic> } | { diagnostics: BsDiagnostic[] } | BsDiagnostic[];
 function getDiagnostics(arg: DiagnosticCollection): BsDiagnostic[] {
     if (Array.isArray(arg)) {
-        return arg as BsDiagnostic[];
+        return arg;
     } else if ((arg as any).getDiagnostics) {
         return (arg as any).getDiagnostics();
     } else if ((arg as any).diagnostics) {
@@ -20,10 +20,10 @@ function sortDiagnostics(diagnostics: BsDiagnostic[]) {
     return diagnostics.sort(
         firstBy<BsDiagnostic>('code')
             .thenBy<BsDiagnostic>('message')
-            .thenBy<BsDiagnostic>((a, b) => (a.range?.start?.line ?? 0) - (b.range?.start?.line ?? 0))
-            .thenBy<BsDiagnostic>((a, b) => (a.range?.start?.character ?? 0) - (b.range?.start?.character ?? 0))
-            .thenBy<BsDiagnostic>((a, b) => (a.range?.end?.line ?? 0) - (b.range?.end?.line ?? 0))
-            .thenBy<BsDiagnostic>((a, b) => (a.range?.end?.character ?? 0) - (b.range?.end?.character ?? 0))
+            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.start?.line ?? 0) - (b.location.range?.start?.line ?? 0))
+            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.start?.character ?? 0) - (b.location.range?.start?.character ?? 0))
+            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.end?.line ?? 0) - (b.location.range?.end?.line ?? 0))
+            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.end?.character ?? 0) - (b.location.range?.end?.character ?? 0))
     );
 }
 
@@ -41,7 +41,7 @@ function cloneObject<TOriginal, TTemplate>(original: TOriginal, template: TTempl
 }
 
 interface PartialDiagnostic {
-    range?: Range;
+    location?: Partial<Location>;
     severity?: DiagnosticSeverity;
     code?: number | string;
     codeDescription?: Partial<CodeDescription>;
@@ -50,7 +50,6 @@ interface PartialDiagnostic {
     tags?: Partial<DiagnosticTag>[];
     relatedInformation?: Partial<DiagnosticRelatedInformation>[];
     data?: unknown;
-    file?: Partial<BscFile>;
 }
 
 /**
@@ -60,7 +59,7 @@ function cloneDiagnostic(actualDiagnosticInput: BsDiagnostic, expectedDiagnostic
     const actualDiagnostic = cloneObject(
         actualDiagnosticInput,
         expectedDiagnostic,
-        ['message', 'code', 'range', 'severity', 'relatedInformation']
+        ['message', 'code', 'location', 'severity', 'relatedInformation']
     );
     // deep clone relatedInformation if available
     if (actualDiagnostic.relatedInformation) {
@@ -73,11 +72,11 @@ function cloneDiagnostic(actualDiagnosticInput: BsDiagnostic, expectedDiagnostic
         }
     }
     // deep clone file info if available
-    if (actualDiagnostic.file) {
-        actualDiagnostic.file = cloneObject(
-            actualDiagnostic.file,
-            expectedDiagnostic?.file,
-            ['srcPath', 'pkgPath']
+    if (actualDiagnostic.location) {
+        actualDiagnostic.location = cloneObject(
+            actualDiagnostic.location,
+            expectedDiagnostic?.location,
+            ['uri', 'range']
         ) as any;
     }
     return actualDiagnostic;
@@ -122,8 +121,10 @@ function pad(n: number) {
 export function fmtDiagnostics(diagnostics: BsDiagnostic[]) {
     return diagnostics
         .filter((d) => d.severity && d.severity < 4)
-        .sort((a, b) => a.range.start.line - b.range.start.line)
-        .map((d) => `${pad(d.range.start.line + 1)}:${d.code}:${d.message}`);
+        .sort((a, b) => a.location.range.start.line - b.location.range.start.line)
+        .map((d) => `${pad(d.location.range.start.line + 1)}:${d.code}:${d.message}`)
+        .map(d => d.trim())
+        .sort();
 }
 
 /**

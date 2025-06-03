@@ -29,6 +29,8 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'no-print': 'off',
         'no-assocarray-component-field-type': 'off',
         'no-array-component-field-type': 'off',
+        'name-shadowing': 'off',
+        'type-reassignment': 'off',
         'no-regex-duplicates': 'off'
     };
 }
@@ -125,15 +127,15 @@ export function createContext(program: Program): PluginWrapperContext {
         todoPattern: rules['todo-pattern'] ? new RegExp(rules['todo-pattern']) : /TODO|todo|FIXME/,
         globals,
         ignores: (file: BscFile) => {
-            return !file || ignorePatterns.some(pattern => minimatch(file.pathAbsolute, pattern));
+            return !file || ignorePatterns.some(pattern => minimatch(file.srcPath, pattern));
         },
         fix,
         checkUsage,
         addFixes: (file: BscFile, entry: ChangeEntry) => {
-            if (!pendingFixes.has(file.pathAbsolute)) {
-                pendingFixes.set(file.pathAbsolute, entry.changes);
+            if (!pendingFixes.has(file.srcPath)) {
+                pendingFixes.set(file.srcPath, entry.changes);
             } else {
-                pendingFixes.get(file.pathAbsolute).push(...entry.changes);
+                pendingFixes.get(file.srcPath).push(...entry.changes);
             }
         },
         applyFixes: () => addJob(applyFixes(fix, pendingFixes)),
@@ -168,6 +170,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         colorCertCompliant: rules['color-cert'],
         noAssocarrayComponentFieldType: ruleToSeverity(rules['no-assocarray-component-field-type']),
         noArrayComponentFieldType: ruleToSeverity(rules['no-array-component-field-type']),
+        nameShadowing: ruleToSeverity(rules['name-shadowing']),
+        typeReassignment: ruleToSeverity(rules['type-reassignment']),
         noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates'])
     };
 }

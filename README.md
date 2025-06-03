@@ -266,7 +266,13 @@ Default rules:
     - `all`: enforce both arguments and return type annotations
     - `return`: enforce return type annotations
     - `args`: enforce arguments type annotations
+    - `all-allow-implicit`: enforce argument and return type annotations, but allows arguments with default values to not have an annotation
+    - `args-allow-implicit`: enforce arguments type annotations, but allows arguments with default values to not have an annotation
     - `off`: do not validate (**default**)
+
+- `name-shadowing`: enforces that no two items have the same name (`error | warn | info | off`)
+
+- `type-reassignment`: enforces that a variable is not used to reference multiple types (`error | warn | info | off`)
 
 ### Code flow rules
 
