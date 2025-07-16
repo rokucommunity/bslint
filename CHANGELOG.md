@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.48](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.47...v1.0.0-alpha.48) - 2025-07-16
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.48](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha48---2025-07-16). Notable changes since 1.0.0-alpha.47:
+     - Union Return type consistency ([#1508](https://github.com/rokucommunity/bslint/pull/1508))
+     - Fix issues with undefined/null trivia items ([#1531](https://github.com/rokucommunity/bslint/pull/1531))
+     - Fix ForEach variable typing issues ([#1498](https://github.com/rokucommunity/bslint/pull/1498))
+     - `Dynamic` and `Function` do not need semantic tokens in Type expressions ([#1500](https://github.com/rokucommunity/bslint/pull/1500))
+
+
+
 ## [1.0.0-alpha.47](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.46...v1.0.0-alpha.47) - 2025-06-03
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.47](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha47---2025-05-22). Notable changes since 1.0.0-alpha.46:
