@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.35](https://github.com/rokucommunity/bslint/compare/0.8.34...v0.8.35) - 2025-09-12
+### Changed
+ - upgrade to [brighterscript@0.70.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0701---2025-09-11). Notable changes since 0.69.13:
+     - Flag param names that are reserved words ([#1556](https://github.com/rokucommunity/bslint/pull/1556))
+
+
+
 ## [0.8.34](https://github.com/rokucommunity/bslint/compare/0.8.33...v0.8.34) - 2025-08-04
 ### Changed
  - upgrade to [brighterscript@0.69.13](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06913---2025-08-04). Notable changes since 0.69.11:
