@@ -352,13 +352,19 @@ export function createVarLinter(
     }
 
     function finalize(locals: Map<string, VarInfo>) {
-        locals.forEach(local => {
-            if (!local.isUsed && !local.restriction) {
+        // check for unused variables (both locals and function parameters)
+        const allVariables = [...locals.values(), ...args.values()];
+
+        allVariables.forEach(variable => {
+            const isUnusedLocal = !variable.isParam && !variable.isUsed && !variable.restriction;
+            const isUnusedParam = variable.isParam && !variable.isUsed && variable.name !== 'm' && variable.name !== 'super';
+
+            if (isUnusedLocal || isUnusedParam) {
                 diagnostics.push({
                     severity: severity.unusedVariable,
                     code: VarLintError.UnusedVariable,
-                    message: `Variable '${local.name}' is set but value is never used`,
-                    range: local.range,
+                    message: `Variable '${variable.name}' is set but value is never used`,
+                    range: variable.range,
                     file: file
                 });
             }
