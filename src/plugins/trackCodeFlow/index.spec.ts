@@ -161,7 +161,8 @@ describe('trackCodeFlow', () => {
                 ...project1,
                 files: ['source/namespace-functions-outside-namespace.bs'],
                 rules: {
-                    'unused-variable': 'error'
+                    'unused-variable': 'error',
+                    'unused-parameter': 'off'
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
