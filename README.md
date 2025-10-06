@@ -303,9 +303,9 @@ Valid values for the rules severity are: `error | warn | info | off`.
 
 - `case-sensitivity`: inform of inconsistent variable casing
 
-- `unused-parameter`: inform of function parameter never being used
-
 - `unused-variable`: inform of variable being set but never used
+
+- `unused-parameter`: inform of function parameter never being used
 
 - `unreachable-code`: inform of unreachable code
     ```vb
