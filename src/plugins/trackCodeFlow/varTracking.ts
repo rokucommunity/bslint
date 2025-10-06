@@ -8,7 +8,7 @@ export enum VarLintError {
     UnsafeInitialization = 'LINT1003',
     CaseMismatch = 'LINT1004',
     UnusedVariable = 'LINT1005',
-    UnusedParameter = 'LINT1006',
+    UnusedParameter = 'LINT1006'
 }
 
 enum ValidationKind {
@@ -353,27 +353,25 @@ export function createVarLinter(
     }
 
     function finalize(locals: Map<string, VarInfo>) {
-        // check for unused local variables
-        locals.forEach(variable => {
-            if (!variable.isUsed && !variable.restriction) {
+        locals.forEach(local => {
+            if (!local.isUsed && !local.restriction) {
                 diagnostics.push({
                     severity: severity.unusedVariable,
                     code: VarLintError.UnusedVariable,
-                    message: `Variable '${variable.name}' is set but value is never used`,
-                    range: variable.range,
+                    message: `Variable '${local.name}' is set but value is never used`,
+                    range: local.range,
                     file: file
                 });
             }
         });
 
-        // check for unused function parameters
-        args.forEach(variable => {
-            if (!variable.isUsed && variable.name !== 'm' && variable.name !== 'super') {
+        args.forEach(arg => {
+            if (!arg.isUsed) {
                 diagnostics.push({
-                    severity: severity.unusedVariable,
+                    severity: severity.unusedParameter,
                     code: VarLintError.UnusedParameter,
-                    message: `Parameter '${variable.name}' is set but value is never used`,
-                    range: variable.range,
+                    message: `Parameter '${arg.name}' is set but value is never used`,
+                    range: arg.range,
                     file: file
                 });
             }
