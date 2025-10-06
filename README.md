@@ -161,6 +161,7 @@ Default rules:
         "unreachable-code": "info",
         "case-sensitivity": "warn",
         "unused-variable": "warn",
+        "unused-parameter": "warn",
         "consistent-return": "error",
 
         "no-assocarray-component-field-type": "off",
@@ -301,6 +302,8 @@ Valid values for the rules severity are: `error | warn | info | off`.
     ```
 
 - `case-sensitivity`: inform of inconsistent variable casing
+
+- `unused-parameter`: inform of function parameter never being used
 
 - `unused-variable`: inform of variable being set but never used
 

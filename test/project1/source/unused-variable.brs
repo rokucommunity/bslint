@@ -21,11 +21,6 @@ sub error3()
     d = 30 ' error
 end sub
 
-sub error4(unusedArg) ' error
-    a = 10
-    print a
-end sub
-
 sub ok1()
     a = 10
     print a

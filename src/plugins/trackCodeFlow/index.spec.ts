@@ -357,7 +357,21 @@ describe('trackCodeFlow', () => {
             `08:LINT1005:Variable 'a' is set but value is never used`,
             `12:LINT1005:Variable 'a' is set but value is never used`,
             `21:LINT1005:Variable 'd' is set but value is never used`,
-            "24:LINT1005:Variable 'unusedArg' is set but value is never used",
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('implements unused-parameter', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/unused-parameter.brs'],
+            rules: {
+                'unused-parameter': 'error'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            "01:LINT1006:Parameter 'unusedParam' is set but value is never used",
         ];
         expect(actual).deep.equal(expected);
     });
