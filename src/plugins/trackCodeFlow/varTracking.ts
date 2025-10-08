@@ -7,7 +7,8 @@ export enum VarLintError {
     UnsafeIteratorVar = 'LINT1002',
     UnsafeInitialization = 'LINT1003',
     CaseMismatch = 'LINT1004',
-    UnusedVariable = 'LINT1005'
+    UnusedVariable = 'LINT1005',
+    UnusedParameter = 'LINT1006'
 }
 
 enum ValidationKind {
@@ -359,6 +360,18 @@ export function createVarLinter(
                     code: VarLintError.UnusedVariable,
                     message: `Variable '${local.name}' is set but value is never used`,
                     range: local.range,
+                    file: file
+                });
+            }
+        });
+
+        args.forEach(arg => {
+            if (!arg.isUsed) {
+                diagnostics.push({
+                    severity: severity.unusedParameter,
+                    code: VarLintError.UnusedParameter,
+                    message: `Parameter '${arg.name}' is set but value is never used`,
+                    range: arg.range,
                     file: file
                 });
             }

@@ -29,6 +29,7 @@ describe('codeStyle', () => {
                 'unreachable-code': 'off',
                 'case-sensitivity': 'off',
                 'unused-variable': 'off',
+                'unused-parameter': 'off',
                 'consistent-return': 'off',
                 'no-stop': 'off',
                 'inline-if-style': 'off',

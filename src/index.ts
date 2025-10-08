@@ -28,6 +28,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'unreachable-code'?: RuleSeverity;
         'case-sensitivity'?: RuleSeverity;
         'unused-variable'?: RuleSeverity;
+        'unused-parameter'?: RuleSeverity;
         'consistent-return'?: RuleSeverity;
         'no-stop'?: RuleSeverity;
         // 'only-function'?: RuleSeverity,
@@ -68,6 +69,7 @@ export interface BsLintRules {
     unreachableCode: BsLintSeverity;
     caseSensitivity: BsLintSeverity;
     unusedVariable: BsLintSeverity;
+    unusedParameter: BsLintSeverity;
     consistentReturn: BsLintSeverity;
     inlineIfStyle: RuleInlineIf;
     blockIfStyle: RuleBlockIf;
