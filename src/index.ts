@@ -69,6 +69,7 @@ export interface BsLintRules {
     unreachableCode: BsLintSeverity;
     caseSensitivity: BsLintSeverity;
     unusedVariable: BsLintSeverity;
+    unusedParameter: BsLintSeverity;
     consistentReturn: BsLintSeverity;
     inlineIfStyle: RuleInlineIf;
     blockIfStyle: RuleBlockIf;
