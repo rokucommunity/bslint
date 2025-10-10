@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [0.8.36](https://github.com/rokucommunity/bslint/compare/0.8.35...v0.8.36) - 2025-10-10
-### Changed
+### Added
  - Identify unused function parameters ([#163](https://github.com/rokucommunity/bslint/pull/163))
+### Changed
  - upgrade to [brighterscript@0.70.2](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0702---2025-10-10). Notable changes since 0.70.1:
      - Add manual entries for roUtils and roRenderThreadQueue ([#1574](https://github.com/rokucommunity/bslint/pull/1574))
      - Roku sdk updates ([#1573](https://github.com/rokucommunity/bslint/pull/1573))
