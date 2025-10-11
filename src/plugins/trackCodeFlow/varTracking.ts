@@ -366,7 +366,8 @@ export function createVarLinter(
         });
 
         args.forEach(arg => {
-            if (!arg.isUsed) {
+            // treat a leading underscore as an intentionally unused parameter
+            if (!arg.isUsed && !arg.name.startsWith('_')) {
                 diagnostics.push({
                     severity: severity.unusedParameter,
                     code: VarLintError.UnusedParameter,
