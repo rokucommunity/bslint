@@ -9,3 +9,8 @@ sub ok1(x)
         print a
     end if
 end sub
+
+sub ok2(_explicitlyUnused)
+    a = 10
+    print a
+end sub
