@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.37](https://github.com/rokucommunity/bslint/compare/0.8.36...v0.8.37) - 2025-10-16
+### Changed
+ - Ignore unused parameters if they begin with leading underscore ([#165](https://github.com/rokucommunity/bslint/pull/165))
+
+
+
 ## [0.8.36](https://github.com/rokucommunity/bslint/compare/0.8.35...v0.8.36) - 2025-10-10
 ### Added
  - Identify unused function parameters ([#163](https://github.com/rokucommunity/bslint/pull/163))
