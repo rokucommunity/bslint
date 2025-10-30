@@ -32,7 +32,7 @@
   "homepage": "https://github.com/rokucommunity/bslint",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rokucommunity/bslint.git"
+    "url": "https://github.com/rokucommunity/bslint"
   },
   "dependencies": {
     "fs-extra": "^10.0.0",
