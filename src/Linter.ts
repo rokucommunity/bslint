@@ -23,9 +23,7 @@ export default class Linter {
     async run(config: BsLintConfig) {
         try {
             const options: BsConfig = {
-                ...config,
-                createPackage: false,
-                copyToStaging: false
+                ...config
             };
             await this.builder.run(options);
             await Promise.all(pendingJobs);
