@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.49](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.48...v1.0.0-alpha.49) - 2025-12-11
+### Changed
+ - Update for v49 ([#169](https://github.com/rokucommunity/bslint/pull/169))
+ - upgrade to [brighterscript@1.0.0-alpha.49](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha49---2025-12-10). Notable changes since 1.0.0-alpha.48:
+     - Adds TypeStatement for declaring new types ([#1597](https://github.com/rokucommunity/brighterscript/pull/1597))
+     - Adds Inline interfaces ([#1591](https://github.com/rokucommunity/brighterscript/pull/1591))
+     - Make Invalid compatible with typed arrays ([#1596](https://github.com/rokucommunity/brighterscript/pull/1596))
+     - Merge branch 'master' into 'v1' ([#1590](https://github.com/rokucommunity/brighterscript/pull/1590))
+     - Limit scope Validation ([#1586](https://github.com/rokucommunity/brighterscript/pull/1586))
+     - Interface extending node includes callfuncs ([#1585](https://github.com/rokucommunity/brighterscript/pull/1585))
+     - Fix validation exception when calling roFunction ([#1588](https://github.com/rokucommunity/brighterscript/pull/1588))
+     - Remove unused util functions ([#1565](https://github.com/rokucommunity/brighterscript/pull/1565))
+     - #1555 Remove zip and sideload ([#1562](https://github.com/rokucommunity/brighterscript/pull/1562))
+     - Fix `MaskGroup.maskUri` type ([#1559](https://github.com/rokucommunity/brighterscript/pull/1559))
+
+
+
 ## [1.0.0-alpha.48](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.47...v1.0.0-alpha.48) - 2025-07-16
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.48](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha48---2025-07-16). Notable changes since 1.0.0-alpha.47:
