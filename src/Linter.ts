@@ -23,7 +23,8 @@ export default class Linter {
     async run(config: BsLintConfig) {
         try {
             const options: BsConfig = {
-                ...config
+                ...config,
+                noEmit: true
             };
             await this.builder.run(options);
             await Promise.all(pendingJobs);
