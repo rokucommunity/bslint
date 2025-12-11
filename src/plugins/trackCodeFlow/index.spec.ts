@@ -213,8 +213,8 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`,
-                `11:cannot-find-function:Cannot find function 'one'`
+                `18:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`,
+                `18:cannot-find-function:Cannot find function 'one'`
             ];
             expect(actual).deep.equal(expected);
         });
