@@ -1,0 +1,24 @@
+
+namespace alpha
+    namespace bravo
+        namespace charlie
+            namespace delta
+                namespace TestNamespace
+                    function one() as integer
+                        return alpha.HUNDRED
+                    end function
+                end namespace
+            end namespace
+        end namespace
+    end namespace
+    const HUNDRED = 100
+end namespace
+
+function two() as integer
+    return one() + 1
+end function
+
+
+function three() as integer
+    return alpha.bravo.charlie.delta.TestNamespace.one() + alpha.HUNDRED
+end function

@@ -482,19 +482,6 @@ function deferredVarLinter(
  *
  */
 export function getRootNamespaceName(namespace: NamespaceStatement) {
-    // there are more concise ways to accomplish this, but this is a hot function so it's been optimized.
-    while (true) {
-        const parent = namespace.parent?.parent as NamespaceStatement;
-        if (isNamespaceStatement(parent)) {
-            namespace = parent;
-        } else {
-            break;
-        }
-    }
-    const result = util.getDottedGetPath(namespace.nameExpression)[0]?.tokens.name?.text;
-    // const name = namespace.getName(ParseMode.BrighterScript).toLowerCase();
-    // if (name.includes('imigx')) {
-    //     console.log([name, result]);
-    // }
-    return result;
+    const nameParts = namespace.getNameParts();
+    return nameParts[0].text;
 }

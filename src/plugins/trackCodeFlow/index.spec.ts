@@ -202,6 +202,22 @@ describe('trackCodeFlow', () => {
             ];
             expect(actual).deep.equal(expected);
         });
+
+        it('does mark as uninitialised vars when used outside of namespace with multiple levels', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/namespace-functions-outside-namespace-multiple-levels.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `18:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`,
+                `18:cannot-find-function:Cannot find function 'one'`
+            ];
+            expect(actual).deep.equal(expected);
+        });
     });
 
     it('implements assign-all-paths', async () => {

@@ -24,8 +24,7 @@ export default class Linter {
         try {
             const options: BsConfig = {
                 ...config,
-                createPackage: false,
-                copyToStaging: false
+                noEmit: true
             };
             await this.builder.run(options);
             await Promise.all(pendingJobs);
