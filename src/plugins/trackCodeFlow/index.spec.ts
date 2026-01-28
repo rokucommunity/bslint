@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AfterProgramCreateEvent, Program, util } from 'brighterscript';
+import { AfterProvideProgramEvent, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
@@ -20,11 +20,11 @@ describe('trackCodeFlow', () => {
         linter = new Linter();
         program = new Program({});
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', { builder: undefined, program: program });
+        program.plugins.emit('afterProvideProgram', { builder: undefined, program: program });
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+            afterProvideProgram: (event: AfterProvideProgramEvent) => {
                 const { program } = event;
                 lintContext = createContext(program);
                 const trackCodeFlow = new TrackCodeFlow(lintContext);

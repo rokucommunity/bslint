@@ -1,4 +1,4 @@
-import { AfterProgramCreateEvent } from 'brighterscript';
+import { AfterProvideProgramEvent } from 'brighterscript';
 import * as path from 'path';
 import Linter from '../../Linter';
 import { createContext, PluginWrapperContext } from '../../util';
@@ -16,7 +16,7 @@ describe('checkUsage', () => {
         linter = new Linter();
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (event: AfterProgramCreateEvent) => {
+            afterProvideProgram: (event: AfterProvideProgramEvent) => {
                 const { program } = event;
                 lintContext = createContext(program);
                 const checkUsage = new CheckUsage(lintContext);

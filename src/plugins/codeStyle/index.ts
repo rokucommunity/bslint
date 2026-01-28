@@ -9,10 +9,10 @@ import {
     WalkMode,
     CancellationTokenSource,
     DiagnosticSeverity,
-    OnGetCodeActionsEvent,
+    ProvideCodeActionsEvent,
     AALiteralExpression,
     BrsFile,
-    AfterFileValidateEvent,
+    AfterValidateFileEvent,
     Expression,
     isVoidType,
     Statement,
@@ -24,7 +24,6 @@ import {
     util,
     isAnyReferenceType,
     ExtraSymbolData,
-    OnScopeValidateEvent,
     InternalWalkMode,
     isCallableType,
     AssignmentStatement,
@@ -38,7 +37,8 @@ import {
     isLiteralExpression,
     isVariableExpression,
     isWhileStatement,
-    isCallExpression
+    isCallExpression,
+    ValidateScopeEvent
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixesToEvent } from '../../textEdit';
@@ -56,7 +56,7 @@ export default class CodeStyle implements Plugin {
     constructor(private lintContext: PluginContext) {
     }
 
-    onGetCodeActions(event: OnGetCodeActionsEvent) {
+    provideCodeActions(event: ProvideCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
         extractFixes(event.file, addFixes, event.diagnostics);
     }
@@ -323,7 +323,7 @@ export default class CodeStyle implements Plugin {
         }
     }
 
-    afterFileValidate(event: AfterFileValidateEvent) {
+    afterValidateFile(event: AfterValidateFileEvent) {
         const { file } = event;
         if (this.lintContext.ignores(file)) {
             return;
@@ -353,7 +353,7 @@ export default class CodeStyle implements Plugin {
         event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
     }
 
-    onScopeValidate(event: OnScopeValidateEvent) {
+    validateScope(event: ValidateScopeEvent) {
         for (const file of event.scope.getOwnFiles()) {
             if (this.lintContext.ignores(file)) {
                 return;

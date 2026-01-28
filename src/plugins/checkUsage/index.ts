@@ -1,4 +1,4 @@
-import { AfterFileValidateEvent, AfterProgramValidateEvent, AfterScopeValidateEvent, CompilerPlugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util } from 'brighterscript';
+import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 import { BsLintDiagnosticContext } from '../../Linter';
@@ -10,7 +10,7 @@ export enum UnusedCode {
     UnusedScript = 'LINT4002'
 }
 
-export default class CheckUsage implements CompilerPlugin {
+export default class CheckUsage implements Plugin {
 
     name = 'checkUsage';
 
@@ -70,7 +70,7 @@ export default class CheckUsage implements CompilerPlugin {
         });
     }
 
-    afterFileValidate(event: AfterFileValidateEvent) {
+    afterValidateFile(event: AfterValidateFileEvent) {
         const { file } = event;
         // collect all XML components
         if (isXmlFile(file)) {
@@ -115,7 +115,7 @@ export default class CheckUsage implements CompilerPlugin {
         this.functionExpressionCache.clear();
     }
 
-    afterScopeValidate(event: AfterScopeValidateEvent) {
+    afterValidateScope(event: AfterValidateScopeEvent) {
         const { scope } = event;
         const files = scope.getAllFiles();
         const pkgPath = scope.name.toLowerCase();
@@ -197,7 +197,7 @@ export default class CheckUsage implements CompilerPlugin {
         });
     }
 
-    afterProgramValidate(_: AfterProgramValidateEvent) {
+    afterValidateProgram(_: AfterValidateProgramEvent) {
         if (!this.main) {
             throw new Error('No `main.brs`');
         }

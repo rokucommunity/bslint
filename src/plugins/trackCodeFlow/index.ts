@@ -1,4 +1,4 @@
-import { BsDiagnostic, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterScopeValidateEvent, AfterFileValidateEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
+import { BsDiagnostic, BrsFile, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateFileEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -60,12 +60,12 @@ export default class TrackCodeFlow implements CompilerPlugin {
     constructor(private lintContext: PluginContext) {
     }
 
-    onGetCodeActions(event: OnGetCodeActionsEvent) {
+    provideCodeActions(event: ProvideCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
         extractFixes(event.file, addFixes, event.diagnostics);
     }
 
-    afterScopeValidate(event: AfterScopeValidateEvent) {
+    afterValidateScope(event: AfterValidateScopeEvent) {
         const { scope } = event;
         const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
         const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
@@ -75,7 +75,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         });
     }
 
-    afterFileValidate(event: AfterFileValidateEvent) {
+    afterValidateFile(event: AfterValidateFileEvent) {
         const { file } = event;
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
