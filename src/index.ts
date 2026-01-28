@@ -1,4 +1,4 @@
-import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin, AfterProgramCreateEvent, AfterProgramValidateEvent } from 'brighterscript';
+import { BsConfig, Program, DiagnosticSeverity, Plugin, AfterProvideProgramEvent, AfterValidateProgramEvent } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
@@ -96,11 +96,11 @@ export interface BsLintRules {
 
 export { Linter };
 
-export default function factory(): CompilerPlugin {
+export default function factory(): Plugin {
     const contextMap = new WeakMap<Program, PluginWrapperContext>();
     return {
         name: 'bslint',
-        afterProgramCreate: (event: AfterProgramCreateEvent) => {
+        afterProvideProgram: (event: AfterProvideProgramEvent) => {
             const { program } = event;
             const context = createContext(program);
             contextMap.set(program, context);
@@ -116,7 +116,7 @@ export default function factory(): CompilerPlugin {
                 program.plugins.add(checkUsage);
             }
         },
-        afterProgramValidate: async (event: AfterProgramValidateEvent) => {
+        afterValidateProgram: async (event: AfterValidateProgramEvent) => {
             const context = contextMap.get(event.program);
             await context.applyFixes();
         }
