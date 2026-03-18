@@ -63,16 +63,7 @@
     "brighterscript": ">= 0.59.0 < 1"
   },
   "mocha": {
-    "spec": "src/**/*.spec.ts",
-    "require": [
-      "source-map-support/register",
-      "ts-node/register"
-    ],
-    "fullTrace": true,
-    "watchExtensions": [
-      "ts"
-    ],
-    "timeout": "10000"
+    "config": ".mocharc.cjs"
   },
   "nyc": {
     "include": [
