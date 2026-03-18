@@ -212,10 +212,13 @@ export function createVarLinter(
     function closeBlock(closed: StatementInfo) {
         const { locals, branches, returns } = closed;
         const { parent } = state;
-        if (!locals || !parent) {
-            if (locals) {
-                finalize(locals);
-            }
+        if (!parent) {
+            // always finalize when closing the function body (no parent)
+            // this ensures parameters are checked even if there are no local variables
+            finalize(locals ?? new Map());
+            return;
+        }
+        if (!locals) {
             return;
         }
         // when closing a branched statement, evaluate vars with partial branches covered
