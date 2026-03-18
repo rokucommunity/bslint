@@ -299,7 +299,8 @@ describe('trackCodeFlow', () => {
             files: ['source/case-sensitivity.brs'],
             rules: {
                 'case-sensitivity': 'error',
-                'unused-variable': 'off'
+                'unused-variable': 'off',
+                'unused-parameter': 'off'
             },
             diagnosticFilters: [1001]
         } as any);
@@ -412,7 +413,8 @@ describe('trackCodeFlow', () => {
                 ...project1,
                 files: ['source/case-sensitivity-temp.brs'],
                 rules: {
-                    'case-sensitivity': 'error'
+                    'case-sensitivity': 'error',
+                    'unused-parameter': 'off'
                 },
                 fix: true
             });
