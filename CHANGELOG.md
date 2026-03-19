@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.39](https://github.com/rokucommunity/bslint/compare/0.8.38...v0.8.39) - 2026-03-19
+### Fixed
+ - Fix parameters not getting flagged as unused ([#174](https://github.com/rokucommunity/bslint/pull/174))
+ - Fixes issue with running tests on newer node versions ([#175](https://github.com/rokucommunity/bslint/pull/175))
+
+
+
 ## [0.8.38](https://github.com/rokucommunity/bslint/compare/0.8.37...v0.8.38) - 2025-10-31
 ### Changed
  - upgrade to [brighterscript@0.70.3](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0703---2025-10-31). Notable changes since 0.70.2:
