@@ -3,6 +3,10 @@ sub error1(unusedParam) ' error
     print a
 end sub
 
+sub error2(hey as string) ' error
+    print "nope"
+end sub
+
 sub ok1(x)
     a = 8
     if a > x

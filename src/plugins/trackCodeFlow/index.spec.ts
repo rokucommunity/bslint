@@ -299,7 +299,8 @@ describe('trackCodeFlow', () => {
             files: ['source/case-sensitivity.brs'],
             rules: {
                 'case-sensitivity': 'error',
-                'unused-variable': 'off'
+                'unused-variable': 'off',
+                'unused-parameter': 'off'
             },
             diagnosticFilters: [1001]
         } as any);
@@ -372,7 +373,8 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `01:LINT1006:Parameter 'unusedParam' is set but value is never used`
+            `01:LINT1006:Parameter 'unusedParam' is set but value is never used`,
+            `06:LINT1006:Parameter 'hey' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -411,7 +413,8 @@ describe('trackCodeFlow', () => {
                 ...project1,
                 files: ['source/case-sensitivity-temp.brs'],
                 rules: {
-                    'case-sensitivity': 'error'
+                    'case-sensitivity': 'error',
+                    'unused-parameter': 'off'
                 },
                 fix: true
             });
