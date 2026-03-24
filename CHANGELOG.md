@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.40](https://github.com/rokucommunity/bslint/compare/0.8.39...v0.8.40) - 2026-03-24
+### Changed
+ - upgrade to [brighterscript@0.70.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0704---2026-03-24). Notable changes since 0.70.3:
+     - Add AI agent instructions ([#1654](https://github.com/rokucommunity/brighterscript/pull/1654))
+     - Bump flatted from 3.2.2 to 3.4.2 ([#1653](https://github.com/rokucommunity/brighterscript/pull/1653))
+     - Set up comprehensive Copilot coding agent instructions ([#1650](https://github.com/rokucommunity/brighterscript/pull/1650))
+     - perf(ProjectManager): cache PathCollection per project in flushDocumentChanges ([#1628](https://github.com/rokucommunity/brighterscript/pull/1628))
+     - Fixes issue with running tests on newer node versions ([#1644](https://github.com/rokucommunity/brighterscript/pull/1644))
+     - feat(LanguageServer): debounce onDidChangeWatchedFiles events ([#1626](https://github.com/rokucommunity/brighterscript/pull/1626))
+     - Bump minimatch in /benchmarks ([#1640](https://github.com/rokucommunity/brighterscript/pull/1640))
+     - Ensure we have consistent line endings ([#1642](https://github.com/rokucommunity/brighterscript/pull/1642))
+     - Typedef namespace param fix ([#1641](https://github.com/rokucommunity/brighterscript/pull/1641))
+     - Bump minimatch from 3.1.2 to 3.1.5 ([#1639](https://github.com/rokucommunity/brighterscript/pull/1639))
+     - Backport V1 Typed function type syntax to v0 ([#1623](https://github.com/rokucommunity/brighterscript/pull/1623))
+     - spelling fix ([#1621](https://github.com/rokucommunity/brighterscript/pull/1621))
+     - Backport `for each` type syntax from V1 -> V0 ([#1617](https://github.com/rokucommunity/brighterscript/pull/1617))
+     - Back ports intersection type and grouped type expressions ([#1608](https://github.com/rokucommunity/brighterscript/pull/1608))
+     - Bump lodash from 4.17.21 to 4.17.23 ([#1611](https://github.com/rokucommunity/brighterscript/pull/1611))
+     - Bump lodash from 4.17.21 to 4.17.23 in /benchmarks ([#1612](https://github.com/rokucommunity/brighterscript/pull/1612))
+     - Add TKSS Software Inc logo to README ([#1604](https://github.com/rokucommunity/brighterscript/pull/1604))
+     - Backports TypeStatement syntax from v1 to v0 ([#1600](https://github.com/rokucommunity/brighterscript/pull/1600))
+     - Backported v1 inline interface syntax ([#1592](https://github.com/rokucommunity/brighterscript/pull/1592))
+     - Add definition provider for import statement ([#1595](https://github.com/rokucommunity/brighterscript/pull/1595))
+     - Fix confusing diagnostic when dottedGet follows function call in ExpressionStatement ([#1598](https://github.com/rokucommunity/brighterscript/pull/1598))
+     - Bump glob from 10.2.1 to 10.5.0 in /benchmarks ([#1593](https://github.com/rokucommunity/brighterscript/pull/1593))
+
+
+
 ## [0.8.39](https://github.com/rokucommunity/bslint/compare/0.8.38...v0.8.39) - 2026-03-19
 ### Fixed
  - Fix parameters not getting flagged as unused ([#174](https://github.com/rokucommunity/bslint/pull/174))
