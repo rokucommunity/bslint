@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.40](https://github.com/rokucommunity/bslint/compare/0.8.39...v0.8.40) - 2026-03-24
+### Changed
+ - upgrade to [brighterscript@0.70.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0704---2026-03-24). Notable changes since 0.70.3:
+     - Typedef namespace param fix ([#1641](https://github.com/rokucommunity/brighterscript/pull/1641))
+     - Backport V1 Typed function type syntax to v0 ([#1623](https://github.com/rokucommunity/brighterscript/pull/1623))
+     - Backport `for each` type syntax from V1 -> V0 ([#1617](https://github.com/rokucommunity/brighterscript/pull/1617))
+     - Backport intersection type and grouped type expressions ([#1608](https://github.com/rokucommunity/brighterscript/pull/1608))
+     - Backports TypeStatement syntax from v1 to v0 ([#1600](https://github.com/rokucommunity/brighterscript/pull/1600))
+     - Backported v1 inline interface syntax ([#1592](https://github.com/rokucommunity/brighterscript/pull/1592))
+     - Fix confusing diagnostic when dottedGet follows function call in ExpressionStatement ([#1598](https://github.com/rokucommunity/brighterscript/pull/1598))
+
+
+
 ## [0.8.39](https://github.com/rokucommunity/bslint/compare/0.8.38...v0.8.39) - 2026-03-19
 ### Fixed
  - Fix parameters not getting flagged as unused ([#174](https://github.com/rokucommunity/bslint/pull/174))
