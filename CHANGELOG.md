@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.41](https://github.com/rokucommunity/bslint/compare/0.8.40...v0.8.41) - 2026-03-25
+### Added
+ - Add support for "fix all" to most code actions ([#178](https://github.com/rokucommunity/bslint/pull/178))
+
+
+
 ## [0.8.40](https://github.com/rokucommunity/bslint/compare/0.8.39...v0.8.40) - 2026-03-24
 ### Changed
  - upgrade to [brighterscript@0.70.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0704---2026-03-24). Notable changes since 0.70.3:
