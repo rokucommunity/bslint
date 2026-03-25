@@ -28,11 +28,11 @@ import {
     Expression
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
-import { addFixesToEvent } from '../../textEdit';
+import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
-import { extractFixes } from './styleFixes';
+import { extractFixes, getFixes } from './styleFixes';
 
 export default class CodeStyle {
     name: 'codeStyle';
@@ -43,6 +43,21 @@ export default class CodeStyle {
     onGetCodeActions(event: OnGetCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
         extractFixes(addFixes, event.diagnostics);
+
+        // For each fixable code touched by the cursor, offer "fix all" if there are
+        // multiple occurrences of that code across the whole file
+        const handledCodes = new Set<string | number>();
+        for (const diagnostic of event.diagnostics) {
+            if (handledCodes.has(diagnostic.code) || !getFixes(diagnostic)) {
+                continue;
+            }
+            const allInFile = event.program.getDiagnostics()
+                .filter(x => x.file === event.file && x.code === diagnostic.code);
+            if (allInFile.length > 1) {
+                handledCodes.add(diagnostic.code);
+                addFixAllToEvent(event, allInFile.map(d => getFixes(d)).filter(Boolean));
+            }
+        }
     }
 
     validateXMLFile(file: XmlFile) {
