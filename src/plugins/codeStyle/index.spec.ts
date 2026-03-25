@@ -1336,4 +1336,96 @@ describe('codeStyle', () => {
             expect(actualSrc).to.equal(expectedSrc);
         });
     });
+
+    describe('onGetCodeActions', () => {
+        function getCodeActions(srcPath: string, line: number) {
+            const range = { start: { line, character: 0 }, end: { line, character: 999 } } as any;
+            return program.getCodeActions(srcPath, range);
+        }
+
+        it('does not offer fix-all when only one occurrence exists', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(1);
+
+            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            expect(actions.map(a => a.title)).to.deep.equal(['Add comma after the expression']);
+        });
+
+        it('offers fix-all when multiple occurrences exist', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                        p2: 2
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(2);
+
+            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            expect(actions.map(a => a.title)).to.include('Fix all: Add comma after the expression');
+        });
+
+        it('fix-all action contains changes for all occurrences in the file', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                        p2: 2
+                        p3: 3
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(3);
+
+            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            const fixAll = actions.find(a => a.title === 'Fix all: Add comma after the expression');
+            expect(fixAll).to.not.equal(undefined);
+
+            const allEdits = Object.values(fixAll.edit.changes as Record<string, unknown[]>).flat();
+            expect(allEdits).to.have.length(3);
+        });
+
+        it('fix-all covers occurrences outside the cursor range', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                        p2: 2
+                    }
+                    b = {
+                        q1: 1
+                        q2: 2
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(4);
+
+            // Only request actions at the first diagnostic — cursor is not near q1/q2
+            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            const fixAll = actions.find(a => a.title === 'Fix all: Add comma after the expression');
+            expect(fixAll).to.not.equal(undefined);
+
+            const allEdits = Object.values(fixAll.edit.changes as Record<string, unknown[]>).flat();
+            expect(allEdits).to.have.length(4);
+        });
+    });
 });
