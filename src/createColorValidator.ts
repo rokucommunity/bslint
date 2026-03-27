@@ -1,5 +1,6 @@
 import { BsDiagnostic, Range } from 'brighterscript';
 import { messages } from './plugins/codeStyle/diagnosticMessages';
+import config from './config/config';
 import { BsLintRules, RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorAlphaDefaults, RuleColorCertCompliant } from './index';
 
 export function createColorValidator(severity: Readonly<BsLintRules>) {
@@ -81,10 +82,8 @@ function validateColorCase(matches: RegExpMatchArray, range: Range, diagnostics:
 function validateColorCertCompliance(matches: RegExpMatchArray, range: Range, diagnostics: (Omit<BsDiagnostic, 'file'>)[], colorFormat: RuleColorFormat, certCompliant: RuleColorCertCompliant) {
     const validateCertCompliant = certCompliant === 'always';
     if (validateCertCompliant && matches) {
-        const BROADCAST_SAFE_BLACK = '161616';
-        const BROADCAST_SAFE_WHITE = 'EBEBEB';
-        const MAX_BLACK_LUMA = getColorLuma(BROADCAST_SAFE_BLACK);
-        const MAX_WHITE_LUMA = getColorLuma(BROADCAST_SAFE_WHITE);
+        const MAX_BLACK_LUMA = getColorLuma(config.colors.broadcastSafe.black);
+        const MAX_WHITE_LUMA = getColorLuma(config.colors.broadcastSafe.white);
         let colorValue = matches[0];
         const charsToStrip = (colorFormat === 'hash-hex') ? 1 : 2;
         colorValue = colorValue.substring(charsToStrip);
