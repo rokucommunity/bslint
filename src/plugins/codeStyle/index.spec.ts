@@ -451,6 +451,16 @@ describe('codeStyle', () => {
             const expected = ['19:LINT3015:Code style: Avoid using TODO comments'];
             expect(actual).deep.equal(expected);
         });
+
+        it('catches top-level todo comment via inner plugin', () => {
+            // 'todo-pattern' must not be set to 'off' (init() default) or it becomes the regex /off/
+            program = new Program({ rules: { 'no-todo': 'warn' } } as BsLintConfig);
+            program.plugins.add(bslintFactory());
+            program.plugins.emit('afterProgramCreate', program);
+            program.setFile('source/main.brs', `' TODO: fix this later\nsub init()\nend sub\n`);
+            program.validate();
+            expectDiagnosticsFmt(program, ['01:LINT3015:Code style: Avoid using TODO comments']);
+        });
     });
     it('enforce no stop', async () => {
         const diagnostics = await linter.run({
@@ -734,6 +744,21 @@ describe('codeStyle', () => {
             expectDiagnosticsFmt(program, ['08:LINT3026:Avoid redeclaring identical regular expressions']);
         });
 
+        it('no error when regex args are not literals', () => {
+            init({
+                'no-regex-duplicates': 'warn'
+            });
+            program.setFile('source/main.brs', `
+                sub init()
+                    myPattern = "test"
+                    for i = 0 to 10
+                        CreateObject("roRegex", myPattern, "")
+                    end for
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
 
     });
 
@@ -1426,6 +1451,57 @@ describe('codeStyle', () => {
 
             const allEdits = Object.values(fixAll.edit.changes as Record<string, unknown[]>).flat();
             expect(allEdits).to.have.length(4);
+        });
+
+        it('skips diagnostics with no available fix', () => {
+            // Use a fresh program without todo-pattern:'off' so the todo regex works correctly
+            program = new Program({ rules: { 'no-todo': 'warn' } } as BsLintConfig);
+            program.plugins.add(bslintFactory());
+            program.plugins.emit('afterProgramCreate', program);
+            program.setFile('source/main.brs', `
+                sub init()
+                    ' TODO: fix this
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3015');
+            expect(diagnostics).to.have.length(1);
+            // no-todo diagnostics have no fix — this exercises the continue branch in onGetCodeActions
+            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            expect(actions.map(a => a.title)).to.not.include('Fix all:');
+        });
+    });
+
+    describe('inner plugin coverage', () => {
+        it('ignores files matching ignores pattern', () => {
+            program = new Program({ ignores: ['source/ignored.brs'], rules: {
+                'no-todo': 'warn'
+            } } as BsLintConfig);
+            program.plugins.add(bslintFactory());
+            program.plugins.emit('afterProgramCreate', program);
+            program.setFile('source/ignored.brs', `' TODO: fix this\nsub init()\nend sub`);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('validates xml files', () => {
+            init({ 'no-assocarray-component-field-type': 'warn' });
+            program.setFile('components/test.xml', `<?xml version="1.0" encoding="utf-8" ?>\n<component name="Test" extends="Group">\n  <interface>\n    <field id="data" type="assocarray" />\n  </interface>\n</component>`);
+            program.validate();
+            expectDiagnosticsFmt(program, [`04:LINT3024:Avoid using field type 'assocarray'`]);
+        });
+
+        it('extracts style fixes in fix mode', () => {
+            program = new Program({ fix: true, rules: {
+                'named-function-style': 'no-function',
+                'anon-function-style': 'off'
+            } } as BsLintConfig);
+            program.plugins.add(bslintFactory());
+            program.plugins.emit('afterProgramCreate', program);
+            program.setFile('source/main.brs', `function init()\nend function`);
+            program.validate();
+            // fix mode extracts fixable diagnostics — they should not appear in getDiagnostics()
+            expectDiagnosticsFmt(program, []);
         });
     });
 });
