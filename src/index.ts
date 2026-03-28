@@ -1,8 +1,9 @@
-import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin } from 'brighterscript';
+import { BsConfig, Program, DiagnosticSeverity, CompilerPlugin, BscFile, isBrsFile, isXmlFile, BsDiagnostic, Scope, CallableContainerMap, OnGetCodeActionsEvent } from 'brighterscript';
 import Linter from './Linter';
 import CheckUsage from './plugins/checkUsage';
 import CodeStyle from './plugins/codeStyle';
 import TrackCodeFlow from './plugins/trackCodeFlow';
+import { extractFixes as extractStyleFixes } from './plugins/codeStyle/styleFixes';
 import { PluginWrapperContext, createContext } from './util';
 
 export type RuleSeverity = 'error' | 'warn' | 'info' | 'off';
@@ -96,6 +97,8 @@ export { Linter };
 
 export default function factory(): CompilerPlugin {
     const contextMap = new WeakMap<Program, PluginWrapperContext>();
+    const checkUsageMap = new WeakMap<Program, CheckUsage>();
+
     return {
         name: 'bslint',
         afterProgramCreate: (program: Program) => {
@@ -103,18 +106,60 @@ export default function factory(): CompilerPlugin {
             contextMap.set(program, context);
 
             const trackCodeFlow = new TrackCodeFlow(context);
-            program.plugins.add(trackCodeFlow);
-
             const codeStyle = new CodeStyle(context);
-            program.plugins.add(codeStyle);
-
-            if (context.checkUsage) {
-                const checkUsage = new CheckUsage(context);
-                program.plugins.add(checkUsage);
+            const checkUsage = context.checkUsage ? new CheckUsage(context) : null;
+            if (checkUsage) {
+                checkUsageMap.set(program, checkUsage);
             }
+
+            // Register a single inner plugin per program — uses closure, no WeakMap lookups needed
+            program.plugins.add({
+                name: 'bslint-inner',
+                afterFileValidate(file: BscFile) {
+                    if (context.ignores(file)) {
+                        return;
+                    }
+                    if (isXmlFile(file)) {
+                        // XML: CodeStyle field-type checks + CheckUsage component graph collection
+                        const xmlDiags: BsDiagnostic[] = codeStyle.validateXMLFile(file).map(d => ({ ...d, file }));
+                        file.addDiagnostics(xmlDiags);
+                        checkUsage?.afterFileValidate(file);
+                    } else if (isBrsFile(file)) {
+                        const styleDiags: Omit<BsDiagnostic, 'file'>[] = [];
+
+                        // Eol-last and regex (no AST walk needed)
+                        codeStyle.collectBrsPreWalkDiagnostics(file, styleDiags);
+                        // Top-level comments — outside function bodies, missed by per-function walk below
+                        codeStyle.checkTopLevelComments(file, styleDiags);
+
+                        // Single combined walk: TrackCodeFlow drives it, CodeStyle visitor runs inside
+                        const styleVisitor = codeStyle.createBrsVisitor(styleDiags);
+                        trackCodeFlow.afterFileValidate(file, styleVisitor);
+
+                        // Post-walk: function keyword / type annotation checks
+                        codeStyle.collectBrsFunctionDiagnostics(file, styleDiags);
+
+                        // Apply style fixes and add style diagnostics to file
+                        let bsDiags: BsDiagnostic[] = styleDiags.map(d => ({ ...d, file }));
+                        if (context.fix) {
+                            bsDiags = extractStyleFixes(context.addFixes, bsDiags);
+                        }
+                        file.addDiagnostics(bsDiags);
+                    }
+                },
+                afterScopeValidate(scope: Scope, files: BscFile[], callables: CallableContainerMap) {
+                    trackCodeFlow.afterScopeValidate(scope, files, callables);
+                    checkUsage?.afterScopeValidate(scope, files, callables);
+                },
+                onGetCodeActions(event: OnGetCodeActionsEvent) {
+                    trackCodeFlow.onGetCodeActions(event);
+                    codeStyle.onGetCodeActions(event);
+                }
+            });
         },
         afterProgramValidate: async (program: Program) => {
             const context = contextMap.get(program);
+            checkUsageMap.get(program)?.afterProgramValidate(program);
             await context.applyFixes();
         }
     };
