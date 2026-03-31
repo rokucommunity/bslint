@@ -94,79 +94,6 @@ export default class CodeStyle {
         return diagnostics;
     }
 
-
-    validateRegex(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
-        for (const fun of file.parser.references.functionExpressions) {
-            const regexes = new Set();
-            for (const callExpression of fun.callExpressions) {
-                if (!this.isCreateObject(callExpression)) {
-                    continue;
-                }
-
-                // Check if all args are literals and get them as string
-                const callArgs = this.getLiteralArgs(callExpression.args);
-
-                // CreateObject for roRegex expects 3 params,
-                // they should be literals because only in this case we can guarante that call regex is the same
-                if (callArgs?.length === 3 && callArgs[0] === 'roRegex') {
-                    const parentStatement = callExpression.findAncestor((node, cancel) => {
-                        if (isIfStatement(node)) {
-                            cancel.cancel();
-                        } else if (this.isLoop(node) || isFunctionExpression(node)) {
-                            return true;
-                        }
-                    });
-
-                    const joinedArgs = callArgs.join();
-                    const isRegexAlreadyExist = regexes.has(joinedArgs);
-                    if (!isRegexAlreadyExist) {
-                        regexes.add(joinedArgs);
-                    }
-
-                    if (isFunctionExpression(parentStatement)) {
-                        if (isRegexAlreadyExist) {
-                            diagnostics.push(messages.noRegexRedeclaring(callExpression.range, severity));
-                        }
-                    } else if (this.isLoop(parentStatement)) {
-                        diagnostics.push(messages.noIdenticalRegexInLoop(callExpression.range, severity));
-                    }
-                }
-            }
-        }
-    }
-
-    afterFileValidate(file: BscFile) {
-        if (this.lintContext.ignores(file)) {
-            return;
-        }
-
-        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
-
-        if (isXmlFile(file)) {
-            diagnostics.push(...this.validateXMLFile(file));
-        } else if (isBrsFile(file)) {
-            // Eol-last and regex (token/reference scan — no AST walk needed)
-            this.collectBrsPreWalkDiagnostics(file, diagnostics);
-
-            // Full-file walk: covers all statements and expressions including top-level comments
-            const { aaCommaStyle, colorFormat } = this.lintContext.severity;
-            const walkExpressions = aaCommaStyle !== 'off' ||
-                colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never';
-            file.ast.walk(this.createBrsVisitor(diagnostics), {
-                walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive
-            });
-
-            // Function keyword / type annotation checks
-            this.collectBrsFunctionDiagnostics(file, diagnostics);
-        }
-
-        let bsDiagnostics: BsDiagnostic[] = diagnostics.map(d => ({ ...d, file }));
-        if (this.lintContext.fix) {
-            bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
-        }
-        file.addDiagnostics(bsDiagnostics);
-    }
-
     /**
      * Collect BRS diagnostics that don't require an AST walk (eol-last, regex).
      * Called from both afterFileValidate (full-file walk) and the merged-walk path in bslint-inner.
@@ -333,6 +260,78 @@ export default class CodeStyle {
         for (const fun of file.parser.references.functionExpressions) {
             this.validateFunctionStyle(fun, diagnostics);
         }
+    }
+
+    validateRegex(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        for (const fun of file.parser.references.functionExpressions) {
+            const regexes = new Set();
+            for (const callExpression of fun.callExpressions) {
+                if (!this.isCreateObject(callExpression)) {
+                    continue;
+                }
+
+                // Check if all args are literals and get them as string
+                const callArgs = this.getLiteralArgs(callExpression.args);
+
+                // CreateObject for roRegex expects 3 params,
+                // they should be literals because only in this case we can guarante that call regex is the same
+                if (callArgs?.length === 3 && callArgs[0] === 'roRegex') {
+                    const parentStatement = callExpression.findAncestor((node, cancel) => {
+                        if (isIfStatement(node)) {
+                            cancel.cancel();
+                        } else if (this.isLoop(node) || isFunctionExpression(node)) {
+                            return true;
+                        }
+                    });
+
+                    const joinedArgs = callArgs.join();
+                    const isRegexAlreadyExist = regexes.has(joinedArgs);
+                    if (!isRegexAlreadyExist) {
+                        regexes.add(joinedArgs);
+                    }
+
+                    if (isFunctionExpression(parentStatement)) {
+                        if (isRegexAlreadyExist) {
+                            diagnostics.push(messages.noRegexRedeclaring(callExpression.range, severity));
+                        }
+                    } else if (this.isLoop(parentStatement)) {
+                        diagnostics.push(messages.noIdenticalRegexInLoop(callExpression.range, severity));
+                    }
+                }
+            }
+        }
+    }
+
+    afterFileValidate(file: BscFile) {
+        if (this.lintContext.ignores(file)) {
+            return;
+        }
+
+        const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
+
+        if (isXmlFile(file)) {
+            diagnostics.push(...this.validateXMLFile(file));
+        } else if (isBrsFile(file)) {
+            // Eol-last and regex (token/reference scan — no AST walk needed)
+            this.collectBrsPreWalkDiagnostics(file, diagnostics);
+
+            // Full-file walk: covers all statements and expressions including top-level comments
+            const { aaCommaStyle, colorFormat } = this.lintContext.severity;
+            const walkExpressions = aaCommaStyle !== 'off' ||
+                colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never';
+            file.ast.walk(this.createBrsVisitor(diagnostics), {
+                walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive
+            });
+
+            // Function keyword / type annotation checks
+            this.collectBrsFunctionDiagnostics(file, diagnostics);
+        }
+
+        let bsDiagnostics: BsDiagnostic[] = diagnostics.map(d => ({ ...d, file }));
+        if (this.lintContext.fix) {
+            bsDiagnostics = extractFixes(this.lintContext.addFixes, bsDiagnostics);
+        }
+        file.addDiagnostics(bsDiagnostics);
     }
 
     validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
