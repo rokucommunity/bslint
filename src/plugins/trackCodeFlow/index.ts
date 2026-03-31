@@ -1,4 +1,4 @@
-import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement } from 'brighterscript';
+import { BscFile, Scope, BsDiagnostic, CallableContainerMap, BrsFile, OnGetCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, Range, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, AstNode } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -67,7 +67,7 @@ export default class TrackCodeFlow {
         scope.addDiagnostics(diagnostics);
     }
 
-    afterFileValidate(file: BscFile) {
+    afterFileValidate(file: BscFile, extraVisitor?: (node: AstNode, parent: AstNode | undefined) => void) {
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
@@ -146,6 +146,7 @@ export default class TrackCodeFlow {
                     } else if (parent) {
                         varLinter.visitExpression(elem, parent, curr);
                     }
+                    extraVisitor?.(elem, parent);
                 }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions });
             } else {
                 // ensure empty functions are finalized
