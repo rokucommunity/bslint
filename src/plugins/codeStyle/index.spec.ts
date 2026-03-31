@@ -452,7 +452,7 @@ describe('codeStyle', () => {
             expect(actual).deep.equal(expected);
         });
 
-        it('catches top-level todo comment via inner plugin', () => {
+        it('catches top-level todo comment', () => {
             // 'todo-pattern' must not be set to 'off' (init() default) or it becomes the regex /off/
             program = new Program({ rules: { 'no-todo': 'warn' } } as BsLintConfig);
             program.plugins.add(bslintFactory());
@@ -1472,7 +1472,7 @@ describe('codeStyle', () => {
         });
     });
 
-    describe('inner plugin coverage', () => {
+    describe('bslint plugin integration', () => {
         it('ignores files matching ignores pattern', () => {
             program = new Program({ ignores: ['source/ignored.brs'], rules: {
                 'no-todo': 'warn'

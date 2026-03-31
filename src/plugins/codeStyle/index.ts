@@ -96,9 +96,8 @@ export default class CodeStyle {
 
     /**
      * Collect BRS diagnostics that don't require an AST walk (eol-last, regex).
-     * Called from both afterFileValidate (full-file walk) and the merged-walk path in bslint-inner.
-     * Top-level comment checks are NOT included here — the full-file walk handles them via the
-     * CommentStatement visitor, while the merged-walk path calls checkTopLevelComments separately.
+     * Top-level comment checks are NOT included here — those are handled separately
+     * via checkTopLevelComments before the combined AST walk.
      */
     collectBrsPreWalkDiagnostics(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
         const { severity } = this.lintContext;
@@ -141,9 +140,7 @@ export default class CodeStyle {
 
     /**
      * Check top-level comment statements (outside function bodies) for TODO patterns.
-     * Only needed in the merged-walk path (bslint-inner) where the per-function walk
-     * doesn't reach top-level statements. The full-file walk in afterFileValidate handles
-     * these automatically via the CommentStatement visitor.
+     * The combined AST walk is per-function, so top-level statements must be checked separately.
      */
     checkTopLevelComments(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[]) {
         const { noTodo } = this.lintContext.severity;
