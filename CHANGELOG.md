@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.42](https://github.com/rokucommunity/bslint/compare/0.8.41...v0.8.42) - 2026-05-01
+### Changed
+ - upgrade to [brighterscript@0.72.0](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0720---2026-04-30). Notable changes since 0.70.4:
+     - Support minFirmwareVersion in bsconfig.json ([#1678](https://github.com/rokucommunity/brighterscript/pull/1678))
+     - perf: Share per-file namespace data via lazy ScopeNamespaceLookup view ([#1684](https://github.com/rokucommunity/brighterscript/pull/1684))
+     - perf: Lazy-allocate NamespaceContainer's optional fields ([#1683](https://github.com/rokucommunity/brighterscript/pull/1683))
+     - perf: Share BscSymbol references in SymbolTable.mergeSymbolTable ([#1682](https://github.com/rokucommunity/brighterscript/pull/1682))
+     - Report const cycle diagnostic per node to match class convention ([#1681](https://github.com/rokucommunity/brighterscript/pull/1681))
+     - Support line continuation ([#1667](https://github.com/rokucommunity/brighterscript/pull/1667))
+     - Fix cross-file const inlining and flag const cycles ([#1680](https://github.com/rokucommunity/brighterscript/pull/1680))
+     - bugfix/small perf improvements ([#1663](https://github.com/rokucommunity/brighterscript/pull/1663))
+     - Add computed property names (compile-time support only) ([#1658](https://github.com/rokucommunity/brighterscript/pull/1658))
+
+
+
 ## [0.8.41](https://github.com/rokucommunity/bslint/compare/0.8.40...v0.8.41) - 2026-03-25
 ### Added
  - Add support for "fix all" to most code actions ([#178](https://github.com/rokucommunity/bslint/pull/178))
