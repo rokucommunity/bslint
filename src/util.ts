@@ -50,10 +50,7 @@ export function mergeConfigs(a: BsLintConfig, b: BsLintConfig): BsLintConfig {
     return {
         ...a,
         ...b,
-        rules: {
-            ...(a.rules || {}),
-            ...(b.rules || {})
-        }
+        rules: { ...(a.rules || {}), ...(b.rules || {}) }
     };
 }
 
@@ -89,7 +86,6 @@ function tryLoadConfig(filename: string): BsLintConfig | undefined {
     if (!existsSync(filename)) {
         return undefined;
     }
-
     const bserrors = [];
     const bsconfig = parse(readFileSync(filename).toString(), bserrors);
     if (bserrors.length) {
@@ -116,17 +112,41 @@ export interface PluginWrapperContext extends PluginContext {
 
 export function createContext(program: Program): PluginWrapperContext {
     const { rules, fix, checkUsage, globals, ignores } = normalizeConfig(program.options);
+
+    const normalizePathForGlob = (value?: string) => {
+        if (!value) {
+            return value;
+        }
+        // minimatch expects forward slashes; strip leading slashes so repo-relative globs match
+        return value.replace(/\\/g, '/').replace(/^\/+/, '');
+    };
+
     const ignorePatterns = (ignores || []).map(pattern => {
-        return pattern.startsWith('**/') ? pattern : '**/' + pattern;
+        const normalizedPattern = normalizePathForGlob(pattern) ?? '';
+        return normalizedPattern.startsWith('**/') ? normalizedPattern : '**/' + normalizedPattern;
     });
+
     const pendingFixes = new Map<string, TextEdit[]>();
+
     return {
         program: program,
         severity: rulesToSeverity(rules),
         todoPattern: rules['todo-pattern'] ? new RegExp(rules['todo-pattern']) : /TODO|todo|FIXME/,
         globals,
         ignores: (file: BscFile) => {
-            return !file || ignorePatterns.some(pattern => minimatch(file.pathAbsolute, pattern));
+            if (!file) {
+                return true;
+            }
+
+            const candidatePaths = [
+                normalizePathForGlob((file as any).pkgPath),
+                normalizePathForGlob((file as any).srcPath),
+                normalizePathForGlob(file.pathAbsolute)
+            ].filter(Boolean) as string[];
+
+            return candidatePaths.some(candidatePath =>
+                ignorePatterns.some(pattern => minimatch(candidatePath, pattern))
+            );
         },
         fix,
         checkUsage,
@@ -134,7 +154,7 @@ export function createContext(program: Program): PluginWrapperContext {
             if (!pendingFixes.has(file.pathAbsolute)) {
                 pendingFixes.set(file.pathAbsolute, entry.changes);
             } else {
-                pendingFixes.get(file.pathAbsolute).push(...entry.changes);
+                pendingFixes.get(file.pathAbsolute)!.push(...entry.changes);
             }
         },
         applyFixes: () => addJob(applyFixes(fix, pendingFixes)),
