@@ -26,7 +26,9 @@ export enum CodeStyleError {
     ColorCertCompliant = 'LINT3023',
     NoAssocarrayFieldType = 'LINT3024',
     NoArrayFieldType = 'LINT3025',
-    NoRegexDuplicates = 'LINT3026'
+    NoRegexDuplicates = 'LINT3026',
+    ForTerminatorEndForExpected = 'LINT3027',
+    ForTerminatorNextExpected = 'LINT3028'
 }
 
 const CS = 'Code style:';
@@ -229,6 +231,20 @@ export const messages = {
         code: CodeStyleError.NoRegexDuplicates,
         severity: severity,
         source: 'bslint',
+        range
+    }),
+    expectedEndForTerminator: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.ForTerminatorEndForExpected,
+        source: 'bslint',
+        message: `${CS} expected 'end for' terminator`,
+        range
+    }),
+    expectedNextTerminator: (range: Range) => ({
+        severity: DiagnosticSeverity.Error,
+        code: CodeStyleError.ForTerminatorNextExpected,
+        source: 'bslint',
+        message: `${CS} expected 'next' terminator`,
         range
     })
 };
