@@ -25,7 +25,8 @@ import {
     isIfStatement,
     isFunctionExpression,
     AstNode,
-    Expression
+    Expression,
+    Range
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
@@ -97,7 +98,7 @@ export default class CodeStyle {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
@@ -111,6 +112,8 @@ export default class CodeStyle {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
+        const validateForTerminator = forTerminatorStyle !== 'off';
+        const requireForTerminatorNext = forTerminatorStyle === 'next';
         const walkExpressions = validateAAStyle || validateColorFormat;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
@@ -231,6 +234,16 @@ export default class CodeStyle {
             StopStatement: s => {
                 if (validateNoStop) {
                     diagnostics.push(messages.noStop(s.tokens.stop.range, noStop));
+                }
+            },
+            ForStatement: s => {
+                if (validateForTerminator) {
+                    validateForTerminatorToken(s.endForToken, requireForTerminatorNext, diagnostics);
+                }
+            },
+            ForEachStatement: s => {
+                if (validateForTerminator) {
+                    validateForTerminatorToken(s.tokens.endFor, requireForTerminatorNext, diagnostics);
                 }
             }
         }), { walkMode: walkExpressions ? WalkMode.visitAllRecursive : WalkMode.visitStatementsRecursive });
@@ -421,6 +434,22 @@ export default class CodeStyle {
         }
 
         return argsStringValue;
+    }
+}
+
+function validateForTerminatorToken(
+    token: { kind: TokenKind; range: Range } | undefined,
+    requireNext: boolean,
+    diagnostics: (Omit<BsDiagnostic, 'file'>)[]
+) {
+    if (!token) {
+        return;
+    }
+    const isNext = token.kind === TokenKind.Next;
+    if (requireNext && !isNext) {
+        diagnostics.push(messages.expectedNextTerminator(token.range));
+    } else if (!requireNext && isNext) {
+        diagnostics.push(messages.expectedEndForTerminator(token.range));
     }
 }
 

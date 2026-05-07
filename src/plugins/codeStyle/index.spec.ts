@@ -7,6 +7,8 @@ import bslintFactory, { BsLintConfig } from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
 import { expectDiagnostics, expectDiagnosticsFmt, fmtDiagnostics } from '../../testHelpers.spec';
 import { messages } from './diagnosticMessages';
+import { getFixes } from './styleFixes';
+import { applyEdits } from '../../textEdit';
 
 describe('codeStyle', () => {
     let linter: Linter;
@@ -49,6 +51,7 @@ describe('codeStyle', () => {
                 'color-alpha-defaults': 'off',
                 'color-cert': 'off',
                 'no-regex-duplicates': 'off',
+                'for-terminator-style': 'off',
                 ...(rules ?? {})
             }
         } as BsLintConfig);
@@ -255,6 +258,222 @@ describe('codeStyle', () => {
                 `14:LINT3007:Code style: remove parenthesis around condition`
             ];
             expect(actual).deep.equal(expected);
+        });
+    });
+
+    describe('validate for terminator style', () => {
+        const mixedSource = `
+            sub test()
+                for i = 0 to 5
+                    print i
+                end for
+
+                for i = 0 to 5
+                    print i
+                next
+
+                for each x in [1, 2, 3]
+                    print x
+                end for
+
+                for each x in [1, 2, 3]
+                    print x
+                next
+
+                while true
+                    print "loop"
+                end while
+
+                for i = 0 to 2
+                    for j = 0 to 2
+                        print j
+                    next
+                end for
+            end sub
+        `;
+
+        it('does nothing when set to off', () => {
+            init({ 'for-terminator-style': 'off' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it(`flags 'next' under end-for mode (default)`, () => {
+            init({ 'for-terminator-style': 'end-for' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `09:LINT3027:Code style: expected 'end for' terminator`,
+                `17:LINT3027:Code style: expected 'end for' terminator`,
+                `26:LINT3027:Code style: expected 'end for' terminator`
+            ]);
+        });
+
+        it(`flags 'end for' under next mode`, () => {
+            init({ 'for-terminator-style': 'next' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `05:LINT3028:Code style: expected 'next' terminator`,
+                `13:LINT3028:Code style: expected 'next' terminator`,
+                `27:LINT3028:Code style: expected 'next' terminator`
+            ]);
+        });
+
+        it('never flags while loops regardless of mode', () => {
+            for (const mode of ['end-for', 'next', 'off'] as const) {
+                init({ 'for-terminator-style': mode });
+                program.setFile('source/main.brs', `
+                    sub test()
+                        while true
+                            print "loop"
+                        end while
+                    end sub
+                `);
+                program.validate();
+                expectDiagnosticsFmt(program, []);
+            }
+        });
+
+        it('flags nested loops independently', () => {
+            // outer `end for` and inner `next` under end-for mode → only inner is flagged
+            init({ 'for-terminator-style': 'end-for' });
+            program.setFile('source/main.brs', `
+                sub test()
+                    for i = 0 to 2
+                        for j = 0 to 2
+                            print j
+                        next
+                    end for
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `06:LINT3027:Code style: expected 'end for' terminator`
+            ]);
+        });
+
+        function applyAllFixes(src: string, code: string): string {
+            const diagnostics = program.getDiagnostics().filter(d => d.code === code);
+            const allChanges = diagnostics.flatMap(d => getFixes(d as any).changes);
+            return applyEdits(src, allChanges);
+        }
+
+        it(`fix replaces 'next' with 'end for' under end-for mode`, () => {
+            init({ 'for-terminator-style': 'end-for' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+
+            const fixed = applyAllFixes(mixedSource, 'LINT3027');
+            const expected = `
+            sub test()
+                for i = 0 to 5
+                    print i
+                end for
+
+                for i = 0 to 5
+                    print i
+                end for
+
+                for each x in [1, 2, 3]
+                    print x
+                end for
+
+                for each x in [1, 2, 3]
+                    print x
+                end for
+
+                while true
+                    print "loop"
+                end while
+
+                for i = 0 to 2
+                    for j = 0 to 2
+                        print j
+                    end for
+                end for
+            end sub
+        `;
+            expect(fixed).to.equal(expected);
+        });
+
+        it(`fix replaces 'end for' with 'next' under next mode`, () => {
+            init({ 'for-terminator-style': 'next' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+
+            const fixed = applyAllFixes(mixedSource, 'LINT3028');
+            const expected = `
+            sub test()
+                for i = 0 to 5
+                    print i
+                next
+
+                for i = 0 to 5
+                    print i
+                next
+
+                for each x in [1, 2, 3]
+                    print x
+                next
+
+                for each x in [1, 2, 3]
+                    print x
+                next
+
+                while true
+                    print "loop"
+                end while
+
+                for i = 0 to 2
+                    for j = 0 to 2
+                        print j
+                    next
+                next
+            end sub
+        `;
+            expect(fixed).to.equal(expected);
+        });
+
+        it('fix preserves indentation and trailing comment', () => {
+            init({ 'for-terminator-style': 'end-for' });
+            const src = `
+                sub test()
+                    for i = 0 to 2
+                        print i
+                    next ' done iterating
+                end sub
+            `;
+            program.setFile('source/main.brs', src);
+            program.validate();
+
+            const fixed = applyAllFixes(src, 'LINT3027');
+            // 'next' replaced in place; preceding indent and trailing comment stay
+            expect(fixed).to.contain(`                    end for ' done iterating\n`);
+        });
+
+        it(`fix on nested loops only touches the targeted terminator`, () => {
+            init({ 'for-terminator-style': 'end-for' });
+            const src = `
+                sub test()
+                    for i = 0 to 2
+                        for j = 0 to 2
+                            print j
+                        next
+                    end for
+                end sub
+            `;
+            program.setFile('source/main.brs', src);
+            program.validate();
+
+            const fixed = applyAllFixes(src, 'LINT3027');
+            // outer 'end for' was already correct; inner 'next' became 'end for'
+            const innerEndFor = fixed.indexOf('                        end for');
+            const outerEndFor = fixed.indexOf('                    end for');
+            expect(innerEndFor).to.be.greaterThan(0);
+            expect(outerEndFor).to.be.greaterThan(0);
+            expect(fixed).to.not.contain('next');
         });
     });
 

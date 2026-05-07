@@ -18,6 +18,7 @@ export type RuleColorCase = 'upper' | 'lower' | 'off';
 export type RuleColorAlpha = 'always' | 'allowed' | 'never' | 'off';
 export type RuleColorAlphaDefaults = 'allowed' | 'only-hidden' | 'never' | 'off';
 export type RuleColorCertCompliant = 'always' | 'off'; // Roku cert requirement for broadcast safe colors. 6.4
+export type RuleForTerminator = 'end-for' | 'next' | 'off';
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
     lintConfig?: string;
@@ -53,6 +54,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'no-assocarray-component-field-type'?: RuleSeverity;
         'no-array-component-field-type'?: RuleSeverity;
         'no-regex-duplicates'?: RuleSeverity;
+        'for-terminator-style'?: RuleForTerminator;
     };
     globals?: string[];
     ignores?: string[];
@@ -90,6 +92,7 @@ export interface BsLintRules {
     noAssocarrayComponentFieldType: BsLintSeverity;
     noArrayComponentFieldType: BsLintSeverity;
     noRegexDuplicates: BsLintSeverity;
+    forTerminatorStyle: RuleForTerminator;
 }
 
 export { Linter };

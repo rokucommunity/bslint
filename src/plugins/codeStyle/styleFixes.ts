@@ -41,9 +41,22 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return addEolLast(diagnostic);
         case CodeStyleError.EolLastFound:
             return removeEolLast(diagnostic);
+        case CodeStyleError.ForTerminatorEndForExpected:
+            return replaceForTerminator(diagnostic, 'end for');
+        case CodeStyleError.ForTerminatorNextExpected:
+            return replaceForTerminator(diagnostic, 'next');
         default:
             return null;
     }
+}
+
+function replaceForTerminator(diagnostic: BsDiagnostic, text: string): ChangeEntry {
+    return {
+        diagnostic,
+        changes: [
+            replaceText(diagnostic.range, text)
+        ]
+    };
 }
 
 function addAAComma(diagnostic: BsDiagnostic) {
