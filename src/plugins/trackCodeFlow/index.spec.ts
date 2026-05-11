@@ -7,6 +7,7 @@ import bslintFactory from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
 import { expectDiagnostics, fmtDiagnostics } from '../../testHelpers.spec';
 import { VarLintError } from './varTracking';
+import * as path from 'path';
 
 describe('trackCodeFlow', () => {
     let linter: Linter;
@@ -196,8 +197,8 @@ describe('trackCodeFlow', () => {
             program.validate();
             const actual = fmtDiagnostics(program.getDiagnostics());
             const expected = [
-                `05:LINT1001:Using uninitialised variable 'doThing' when this file is included in scope 'components/Comp.xml'`,
-                `05:LINT1001:Using uninitialised variable 'doThing' when this file is included in scope 'components/Comp2.xml'`,
+                `05:LINT1001:Using uninitialised variable 'doThing' when this file is included in scope 'components${path.sep}Comp.xml'`,
+                `05:LINT1001:Using uninitialised variable 'doThing' when this file is included in scope 'components${path.sep}Comp2.xml'`,
                 `05:cannot-find-function:Cannot find function 'doThing'`,
                 `05:cannot-find-function:Cannot find function 'doThing'`
             ];
