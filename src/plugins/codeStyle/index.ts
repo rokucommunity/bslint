@@ -38,8 +38,7 @@ import {
     isVariableExpression,
     isWhileStatement,
     isCallExpression,
-    ValidateScopeEvent,
-    Range
+    ValidateScopeEvent
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
@@ -129,7 +128,6 @@ export default class CodeStyle implements Plugin {
         const validateAAStyle = aaCommaStyle !== 'off';
         const validateForTerminator = forTerminatorStyle !== 'off';
         const requireForTerminatorNext = forTerminatorStyle === 'next';
-        const walkExpressions = validateAAStyle || validateColorFormat;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
