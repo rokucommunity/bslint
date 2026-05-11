@@ -4,7 +4,7 @@ import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
 import { extractFixes } from './trackFixes';
 import { addFixesToEvent } from '../../textEdit';
-import { BsLintDiagnosticContext } from '../../Linter';
+import { BsLintDiagnosticContext, BsLintScopeDiagnosticContext, BsLintScopeDiagnosticTag } from '../../Linter';
 import type { Location } from 'vscode-languageserver-types'; // TODO: Get this from brighterscript
 
 export interface NarrowingInfo {
@@ -67,10 +67,11 @@ export default class TrackCodeFlow implements CompilerPlugin {
 
     afterValidateScope(event: AfterValidateScopeEvent) {
         const { scope } = event;
+        event.program.diagnostics.clearByFilter({ tag: BsLintScopeDiagnosticTag, scope: scope });
         const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
         const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
         event.program.diagnostics.register(diagnostics as any, {
-            ...BsLintDiagnosticContext,
+            ...BsLintScopeDiagnosticContext,
             scope: scope
         });
     }
