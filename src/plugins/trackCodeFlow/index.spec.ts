@@ -7,6 +7,7 @@ import bslintFactory from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
 import { expectDiagnostics, fmtDiagnostics } from '../../testHelpers.spec';
 import { VarLintError } from './varTracking';
+import * as path from 'path';
 
 describe('trackCodeFlow', () => {
     let linter: Linter;
@@ -157,6 +158,59 @@ describe('trackCodeFlow', () => {
             const actual = fmtDiagnostics(diagnostics);
             const expected = [];
             expect(actual).deep.equal(expected);
+        });
+    });
+
+    describe('removes uninitialized var diagnostics after dependent code updates', () => {
+        it('after fixing uninitialized var', () => {
+            program.setFile('components/Comp.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Comp" extends="Group">
+                    <script uri="Comp.bs"/>
+                </component>
+            `);
+            program.setFile('components/Comp.bs', `
+                import "pkg:/source/common.bs"
+
+                sub init()
+                    print doThing()
+                end sub
+            `);
+
+            program.setFile('components/Comp2.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Comp2" extends="Group">
+                    <script uri="Comp2.bs"/>
+                </component>
+            `);
+            program.setFile('components/Comp2.bs', `
+                import "pkg:/source/common.bs"
+
+                sub init()
+                    print doThing()
+                end sub
+            `);
+
+            program.setFile('source/common.bs', `
+                function doOtherThing() as string
+                    return "hello"
+                end function
+            `);
+            program.validate();
+            const actual = fmtDiagnostics(program.getDiagnostics());
+            const expected = [
+                `05:LINT1001:Using uninitialised variable 'doThing' when this file is included in scope 'components${path.sep}Comp.xml'`,
+                `05:LINT1001:Using uninitialised variable 'doThing' when this file is included in scope 'components${path.sep}Comp2.xml'`,
+                `05:cannot-find-function:Cannot find function 'doThing'`,
+                `05:cannot-find-function:Cannot find function 'doThing'`
+            ];
+            expect(actual).deep.equal(expected);
+
+            program.setFile('source/common.bs', `
+                function doThing() as string
+                    return "hello"
+                end function
+            `);
+            program.validate();
+            expectDiagnostics(program, []);
         });
     });
 

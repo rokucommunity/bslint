@@ -2,7 +2,9 @@ import { BsLintConfig } from './index';
 import { ProgramBuilder, BsConfig } from 'brighterscript';
 
 export const BsLintDiagnosticTag = 'BSLint';
+export const BsLintScopeDiagnosticTag = 'BSLint_Scope';
 export const BsLintDiagnosticContext = { tags: [BsLintDiagnosticTag] };
+export const BsLintScopeDiagnosticContext = { tags: [BsLintDiagnosticTag, BsLintScopeDiagnosticTag] };
 
 
 const pendingJobs: Promise<void>[] = [];
