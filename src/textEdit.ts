@@ -142,3 +142,19 @@ export function addFixesToEvent(event: ProvideCodeActionsEvent) {
         event.codeActions.push(codeActionUtil.createCodeAction(action));
     };
 }
+
+export function addFixAllToEvent(event: ProvideCodeActionsEvent, entries: ChangeEntry[]) {
+    const changes: LintCodeAction[] = entries.flatMap(entry => entry.changes.map(change => ({
+        type: 'replace',
+        filePath: entry.diagnostic.location.uri,
+        range: change.range,
+        newText: change.text
+    })));
+    event.codeActions.push(
+        codeActionUtil.createCodeAction({
+            title: `Fix all: ${entries[0].diagnostic.message}`,
+            kind: CodeActionKind.QuickFix,
+            changes
+        })
+    );
+}
