@@ -21,7 +21,7 @@ sub error3()
     d = 30 ' error
 end sub
 
-sub ok1(usageNotChecked)
+sub ok1()
     a = 10
     print a
     b = 20

@@ -15,6 +15,7 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'unreachable-code': 'info',
         'case-sensitivity': 'warn',
         'unused-variable': 'warn',
+        'unused-parameter': 'warn',
         // 'no-stop': 'off',
         'consistent-return': 'error',
         // 'only-function': 'off',
@@ -31,7 +32,8 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'no-array-component-field-type': 'off',
         'name-shadowing': 'off',
         'type-reassignment': 'off',
-        'no-regex-duplicates': 'off'
+        'no-regex-duplicates': 'off',
+        'for-terminator-style': 'end-for'
     };
 }
 
@@ -151,6 +153,7 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         unsafeIterators: ruleToSeverity(rules['unsafe-iterators']),
         caseSensitivity: ruleToSeverity(rules['case-sensitivity']),
         unusedVariable: ruleToSeverity(rules['unused-variable']),
+        unusedParameter: ruleToSeverity(rules['unused-parameter']),
         consistentReturn: ruleToSeverity(rules['consistent-return']),
         inlineIfStyle: rules['inline-if-style'],
         blockIfStyle: rules['block-if-style'],
@@ -172,7 +175,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         noArrayComponentFieldType: ruleToSeverity(rules['no-array-component-field-type']),
         nameShadowing: ruleToSeverity(rules['name-shadowing']),
         typeReassignment: ruleToSeverity(rules['type-reassignment']),
-        noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates'])
+        noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates']),
+        forTerminatorStyle: rules['for-terminator-style']
     };
 }
 

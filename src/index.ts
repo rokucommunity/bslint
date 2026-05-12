@@ -18,6 +18,7 @@ export type RuleColorCase = 'upper' | 'lower' | 'off';
 export type RuleColorAlpha = 'always' | 'allowed' | 'never' | 'off';
 export type RuleColorAlphaDefaults = 'allowed' | 'only-hidden' | 'never' | 'off';
 export type RuleColorCertCompliant = 'always' | 'off'; // Roku cert requirement for broadcast safe colors. 6.4
+export type RuleForTerminator = 'end-for' | 'next' | 'off';
 
 export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd' | 'watch'> & {
     lintConfig?: string;
@@ -28,6 +29,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'unreachable-code'?: RuleSeverity;
         'case-sensitivity'?: RuleSeverity;
         'unused-variable'?: RuleSeverity;
+        'unused-parameter'?: RuleSeverity;
         'consistent-return'?: RuleSeverity;
         'no-stop'?: RuleSeverity;
         // 'only-function'?: RuleSeverity,
@@ -54,6 +56,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'name-shadowing'?: RuleSeverity;
         'type-reassignment'?: RuleSeverity;
         'no-regex-duplicates'?: RuleSeverity;
+        'for-terminator-style'?: RuleForTerminator;
     };
     globals?: string[];
     ignores?: string[];
@@ -70,6 +73,7 @@ export interface BsLintRules {
     unreachableCode: BsLintSeverity;
     caseSensitivity: BsLintSeverity;
     unusedVariable: BsLintSeverity;
+    unusedParameter: BsLintSeverity;
     consistentReturn: BsLintSeverity;
     inlineIfStyle: RuleInlineIf;
     blockIfStyle: RuleBlockIf;
@@ -92,6 +96,7 @@ export interface BsLintRules {
     nameShadowing: BsLintSeverity;
     typeReassignment: BsLintSeverity;
     noRegexDuplicates: BsLintSeverity;
+    forTerminatorStyle: RuleForTerminator;
 }
 
 export { Linter };

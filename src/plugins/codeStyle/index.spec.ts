@@ -7,6 +7,8 @@ import bslintFactory, { BsLintConfig } from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
 import { expectDiagnostics, expectDiagnosticsFmt, fmtDiagnostics } from '../../testHelpers.spec';
 import { messages } from './diagnosticMessages';
+import { getFixes } from './styleFixes';
+import { applyEdits } from '../../textEdit';
 
 describe('codeStyle', () => {
     let linter: Linter;
@@ -29,6 +31,7 @@ describe('codeStyle', () => {
                 'unreachable-code': 'off',
                 'case-sensitivity': 'off',
                 'unused-variable': 'off',
+                'unused-parameter': 'off',
                 'consistent-return': 'off',
                 'no-stop': 'off',
                 'inline-if-style': 'off',
@@ -48,6 +51,7 @@ describe('codeStyle', () => {
                 'color-alpha-defaults': 'off',
                 'color-cert': 'off',
                 'no-regex-duplicates': 'off',
+                'for-terminator-style': 'off',
                 ...(rules ?? {})
             }
         } as BsLintConfig);
@@ -255,6 +259,222 @@ describe('codeStyle', () => {
                 `14:LINT3007:Code style: remove parenthesis around condition`
             ];
             expect(actual).deep.equal(expected);
+        });
+    });
+
+    describe('validate for terminator style', () => {
+        const mixedSource = `
+            sub test()
+                for i = 0 to 5
+                    print i
+                end for
+
+                for i = 0 to 5
+                    print i
+                next
+
+                for each x in [1, 2, 3]
+                    print x
+                end for
+
+                for each x in [1, 2, 3]
+                    print x
+                next
+
+                while true
+                    print "loop"
+                end while
+
+                for i = 0 to 2
+                    for j = 0 to 2
+                        print j
+                    next
+                end for
+            end sub
+        `;
+
+        it('does nothing when set to off', () => {
+            init({ 'for-terminator-style': 'off' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it(`flags 'next' under end-for mode (default)`, () => {
+            init({ 'for-terminator-style': 'end-for' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `09:LINT3027:Code style: expected 'end for' terminator`,
+                `17:LINT3027:Code style: expected 'end for' terminator`,
+                `26:LINT3027:Code style: expected 'end for' terminator`
+            ]);
+        });
+
+        it(`flags 'end for' under next mode`, () => {
+            init({ 'for-terminator-style': 'next' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `05:LINT3028:Code style: expected 'next' terminator`,
+                `13:LINT3028:Code style: expected 'next' terminator`,
+                `27:LINT3028:Code style: expected 'next' terminator`
+            ]);
+        });
+
+        it('never flags while loops regardless of mode', () => {
+            for (const mode of ['end-for', 'next', 'off'] as const) {
+                init({ 'for-terminator-style': mode });
+                program.setFile('source/main.brs', `
+                    sub test()
+                        while true
+                            print "loop"
+                        end while
+                    end sub
+                `);
+                program.validate();
+                expectDiagnosticsFmt(program, []);
+            }
+        });
+
+        it('flags nested loops independently', () => {
+            // outer `end for` and inner `next` under end-for mode → only inner is flagged
+            init({ 'for-terminator-style': 'end-for' });
+            program.setFile('source/main.brs', `
+                sub test()
+                    for i = 0 to 2
+                        for j = 0 to 2
+                            print j
+                        next
+                    end for
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `06:LINT3027:Code style: expected 'end for' terminator`
+            ]);
+        });
+
+        function applyAllFixes(src: string, code: string): string {
+            const diagnostics = program.getDiagnostics().filter(d => d.code === code);
+            const allChanges = diagnostics.flatMap(d => getFixes(d as any).changes);
+            return applyEdits(src, allChanges);
+        }
+
+        it(`fix replaces 'next' with 'end for' under end-for mode`, () => {
+            init({ 'for-terminator-style': 'end-for' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+
+            const fixed = applyAllFixes(mixedSource, 'LINT3027');
+            const expected = `
+            sub test()
+                for i = 0 to 5
+                    print i
+                end for
+
+                for i = 0 to 5
+                    print i
+                end for
+
+                for each x in [1, 2, 3]
+                    print x
+                end for
+
+                for each x in [1, 2, 3]
+                    print x
+                end for
+
+                while true
+                    print "loop"
+                end while
+
+                for i = 0 to 2
+                    for j = 0 to 2
+                        print j
+                    end for
+                end for
+            end sub
+        `;
+            expect(fixed).to.equal(expected);
+        });
+
+        it(`fix replaces 'end for' with 'next' under next mode`, () => {
+            init({ 'for-terminator-style': 'next' });
+            program.setFile('source/main.brs', mixedSource);
+            program.validate();
+
+            const fixed = applyAllFixes(mixedSource, 'LINT3028');
+            const expected = `
+            sub test()
+                for i = 0 to 5
+                    print i
+                next
+
+                for i = 0 to 5
+                    print i
+                next
+
+                for each x in [1, 2, 3]
+                    print x
+                next
+
+                for each x in [1, 2, 3]
+                    print x
+                next
+
+                while true
+                    print "loop"
+                end while
+
+                for i = 0 to 2
+                    for j = 0 to 2
+                        print j
+                    next
+                next
+            end sub
+        `;
+            expect(fixed).to.equal(expected);
+        });
+
+        it('fix preserves indentation and trailing comment', () => {
+            init({ 'for-terminator-style': 'end-for' });
+            const src = `
+                sub test()
+                    for i = 0 to 2
+                        print i
+                    next ' done iterating
+                end sub
+            `;
+            program.setFile('source/main.brs', src);
+            program.validate();
+
+            const fixed = applyAllFixes(src, 'LINT3027');
+            // 'next' replaced in place; preceding indent and trailing comment stay
+            expect(fixed).to.contain(`                    end for ' done iterating\n`);
+        });
+
+        it(`fix on nested loops only touches the targeted terminator`, () => {
+            init({ 'for-terminator-style': 'end-for' });
+            const src = `
+                sub test()
+                    for i = 0 to 2
+                        for j = 0 to 2
+                            print j
+                        next
+                    end for
+                end sub
+            `;
+            program.setFile('source/main.brs', src);
+            program.validate();
+
+            const fixed = applyAllFixes(src, 'LINT3027');
+            // outer 'end for' was already correct; inner 'next' became 'end for'
+            const innerEndFor = fixed.indexOf('                        end for');
+            const outerEndFor = fixed.indexOf('                    end for');
+            expect(innerEndFor).to.be.greaterThan(0);
+            expect(outerEndFor).to.be.greaterThan(0);
+            expect(fixed).to.not.contain('next');
         });
     });
 
@@ -1086,11 +1306,11 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '15:LINT3027:Strictness: Class has same name as Class \'TestClass\'',
-                '18:LINT3027:Strictness: Enum has same name as Enum \'TestEnum\'',
-                '21:LINT3027:Strictness: Interface has same name as Interface \'TestInterface\'',
-                '24:LINT3027:Strictness: Const has same name as Const \'TestConst\'',
-                '26:LINT3027:Strictness: Const has same name as Namespace \'TestNamespace\''
+                '15:LINT3127:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3127:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3127:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3127:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3127:Strictness: Const has same name as Namespace \'TestNamespace\''
             ]);
         });
 
@@ -1103,15 +1323,15 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '02:LINT3027:Strictness: Class has same name as Class \'TestImportClass\'',
-                '05:LINT3027:Strictness: Enum has same name as Enum \'TestImportEnum\'',
-                '08:LINT3027:Strictness: Interface has same name as Interface \'TestImportInterface\'',
-                '11:LINT3027:Strictness: Const has same name as Const \'TestImportConst\'',
-                '15:LINT3027:Strictness: Class has same name as Class \'TestClass\'',
-                '18:LINT3027:Strictness: Enum has same name as Enum \'TestEnum\'',
-                '21:LINT3027:Strictness: Interface has same name as Interface \'TestInterface\'',
-                '24:LINT3027:Strictness: Const has same name as Const \'TestConst\'',
-                '26:LINT3027:Strictness: Const has same name as Namespace \'TestNamespace\''
+                '02:LINT3127:Strictness: Class has same name as Class \'TestImportClass\'',
+                '05:LINT3127:Strictness: Enum has same name as Enum \'TestImportEnum\'',
+                '08:LINT3127:Strictness: Interface has same name as Interface \'TestImportInterface\'',
+                '11:LINT3127:Strictness: Const has same name as Const \'TestImportConst\'',
+                '15:LINT3127:Strictness: Class has same name as Class \'TestClass\'',
+                '18:LINT3127:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:LINT3127:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:LINT3127:Strictness: Const has same name as Const \'TestConst\'',
+                '26:LINT3127:Strictness: Const has same name as Namespace \'TestNamespace\''
 
             ]);
         });
@@ -1125,8 +1345,8 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '02:LINT3027:Strictness: Const has same name as Function \'TestFunction\'',
-                '03:LINT3027:Strictness: Const has same name as Global Function \'Lcase\''
+                '02:LINT3127:Strictness: Const has same name as Function \'TestFunction\'',
+                '03:LINT3127:Strictness: Const has same name as Global Function \'Lcase\''
             ]);
         });
     });
@@ -1141,10 +1361,10 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '12:LINT3027:Strictness: Reassignment of the type of \'param\' from string to integer',
-                '18:LINT3027:Strictness: Reassignment of the type of \'value\' from integer to string',
-                '27:LINT3027:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
-                '53:LINT3027:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
+                '12:LINT3127:Strictness: Reassignment of the type of \'param\' from string to integer',
+                '18:LINT3127:Strictness: Reassignment of the type of \'value\' from integer to string',
+                '27:LINT3127:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
+                '53:LINT3127:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
             ]);
         });
 
@@ -1157,8 +1377,8 @@ describe('codeStyle', () => {
                 }
             });
             expectDiagnosticsFmt(diagnostics, [
-                '30:LINT3027:Strictness: Reassignment of the type of \'arg\' from Iface1 to roAssociativeArray',
-                '44:LINT3027:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
+                '30:LINT3127:Strictness: Reassignment of the type of \'arg\' from Iface1 to roAssociativeArray',
+                '44:LINT3127:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
             ]);
         });
     });
@@ -1484,6 +1704,98 @@ describe('codeStyle', () => {
             const actualSrc = fs.readFileSync(`${project1.rootDir}/source/eol-last-temp.brs`).toString();
             const expectedSrc = fs.readFileSync(`${project1.rootDir}/source/no-eol-last.brs`).toString();
             expect(actualSrc).to.equal(expectedSrc);
+        });
+    });
+
+    describe('onGetCodeActions', () => {
+        function getCodeActions(srcPath: string, line: number) {
+            const range = { start: { line, character: 0 }, end: { line, character: 999 } } as any;
+            return program.getCodeActions(srcPath, range);
+        }
+
+        it('does not offer fix-all when only one occurrence exists', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(1);
+
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
+            expect(actions.map(a => a.title)).to.deep.equal(['Add comma after the expression']);
+        });
+
+        it('offers fix-all when multiple occurrences exist', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                        p2: 2
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(2);
+
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
+            expect(actions.map(a => a.title)).to.include('Fix all: Add comma after the expression');
+        });
+
+        it('fix-all action contains changes for all occurrences in the file', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                        p2: 2
+                        p3: 3
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(3);
+
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
+            const fixAll = actions.find(a => a.title === 'Fix all: Add comma after the expression');
+            expect(fixAll).to.not.equal(undefined);
+
+            const allEdits = Object.values(fixAll.edit.changes as Record<string, unknown[]>).flat();
+            expect(allEdits).to.have.length(3);
+        });
+
+        it('fix-all covers occurrences outside the cursor range', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('source/main.brs', `
+                sub init()
+                    a = {
+                        p1: 1
+                        p2: 2
+                    }
+                    b = {
+                        q1: 1
+                        q2: 2
+                    }
+                end sub
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            expect(diagnostics).to.have.length(4);
+
+            // Only request actions at the first diagnostic — cursor is not near q1/q2
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
+            const fixAll = actions.find(a => a.title === 'Fix all: Add comma after the expression');
+            expect(fixAll).to.not.equal(undefined);
+
+            const allEdits = Object.values(fixAll.edit.changes as Record<string, unknown[]>).flat();
+            expect(allEdits).to.have.length(4);
         });
     });
 });

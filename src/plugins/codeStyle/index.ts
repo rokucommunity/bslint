@@ -41,11 +41,11 @@ import {
     ValidateScopeEvent
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
-import { addFixesToEvent } from '../../textEdit';
+import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
 import { PluginContext } from '../../util';
 import { createColorValidator } from '../../createColorValidator';
 import { messages } from './diagnosticMessages';
-import { extractFixes } from './styleFixes';
+import { extractFixes, getFixes } from './styleFixes';
 import { BsLintDiagnosticContext } from '../../Linter';
 import { Location } from 'vscode-languageserver-types';
 
@@ -59,6 +59,21 @@ export default class CodeStyle implements Plugin {
     provideCodeActions(event: ProvideCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
         extractFixes(event.file, addFixes, event.diagnostics);
+
+        // For each fixable code touched by the cursor, offer "fix all" if there are
+        // multiple occurrences of that code across the whole file
+        const handledCodes = new Set<string | number>();
+        for (const diagnostic of event.diagnostics) {
+            if (handledCodes.has(diagnostic.code) || !getFixes(diagnostic)) {
+                continue;
+            }
+            const allInFile = event.program.getDiagnostics()
+                .filter(x => x.location.uri === util.pathToUri(event.file.srcPath) && x.code === diagnostic.code);
+            if (allInFile.length > 1) {
+                handledCodes.add(diagnostic.code);
+                addFixAllToEvent(event, allInFile.map(d => getFixes(d)).filter(Boolean));
+            }
+        }
     }
 
     validateXMLFile(file: XmlFile) {
@@ -97,7 +112,7 @@ export default class CodeStyle implements Plugin {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
@@ -111,6 +126,8 @@ export default class CodeStyle implements Plugin {
         const validateCondition = conditionStyle !== 'off';
         const requireConditionGroup = conditionStyle === 'group';
         const validateAAStyle = aaCommaStyle !== 'off';
+        const validateForTerminator = forTerminatorStyle !== 'off';
+        const requireForTerminatorNext = forTerminatorStyle === 'next';
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
@@ -237,6 +254,16 @@ export default class CodeStyle implements Plugin {
                             diagnostics.push(messages.noTodo(e.location, noTodo));
                         }
                     }
+                }
+            },
+            ForStatement: s => {
+                if (validateForTerminator) {
+                    validateForTerminatorToken(s.tokens.endFor, requireForTerminatorNext, diagnostics);
+                }
+            },
+            ForEachStatement: s => {
+                if (validateForTerminator) {
+                    validateForTerminatorToken(s.tokens.endFor, requireForTerminatorNext, diagnostics);
                 }
             }
         }), { walkMode: WalkMode.visitAllRecursive });
@@ -574,6 +601,22 @@ export default class CodeStyle implements Plugin {
         }
 
         return argsStringValue;
+    }
+}
+
+function validateForTerminatorToken(
+    token: { kind: TokenKind; location: Location } | undefined,
+    requireNext: boolean,
+    diagnostics: (Omit<BsDiagnostic, 'file'>)[]
+) {
+    if (!token) {
+        return;
+    }
+    const isNext = token.kind === TokenKind.Next;
+    if (requireNext && !isNext) {
+        diagnostics.push(messages.expectedNextTerminator(token.location));
+    } else if (!requireNext && isNext) {
+        diagnostics.push(messages.expectedEndForTerminator(token.location));
     }
 }
 

@@ -329,7 +329,8 @@ describe('trackCodeFlow', () => {
             rules: {
                 'assign-all-paths': 'error',
                 'consistent-return': 'off',
-                'unused-variable': 'off'
+                'unused-variable': 'off',
+                'unused-parameter': 'off'
             },
             diagnosticFilters: [1001]
         } as any);
@@ -423,7 +424,8 @@ describe('trackCodeFlow', () => {
             files: ['source/case-sensitivity.brs'],
             rules: {
                 'case-sensitivity': 'error',
-                'unused-variable': 'off'
+                'unused-variable': 'off',
+                'unused-parameter': 'off'
             },
             diagnosticFilters: [1001]
         } as any);
@@ -491,6 +493,22 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
+    it('implements unused-parameter', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/unused-parameter.brs'],
+            rules: {
+                'unused-parameter': 'error'
+            }
+        });
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `01:LINT1006:Parameter 'unusedParam' is set but value is never used`,
+            `06:LINT1006:Parameter 'hey' is set but value is never used`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
     it('implements globals', async () => {
         const diagnostics = await linter.run({
             ...project1,
@@ -525,7 +543,8 @@ describe('trackCodeFlow', () => {
                 ...project1,
                 files: ['source/case-sensitivity-temp.brs'],
                 rules: {
-                    'case-sensitivity': 'error'
+                    'case-sensitivity': 'error',
+                    'unused-parameter': 'off'
                 },
                 fix: true
             });

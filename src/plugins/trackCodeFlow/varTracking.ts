@@ -8,7 +8,8 @@ export enum VarLintError {
     UnsafeIteratorVar = 'LINT1002',
     UnsafeInitialization = 'LINT1003',
     CaseMismatch = 'LINT1004',
-    UnusedVariable = 'LINT1005'
+    UnusedVariable = 'LINT1005',
+    UnusedParameter = 'LINT1006'
 }
 
 enum ValidationKind {
@@ -245,10 +246,13 @@ export function createVarLinter(
     function closeBlock(closed: StatementInfo) {
         const { locals, branches, returns } = closed;
         const { parent } = state;
-        if (!locals || !parent) {
-            if (locals) {
-                finalize(locals);
-            }
+        if (!parent) {
+            // always finalize when closing the function body (no parent)
+            // this ensures parameters are checked even if there are no local variables
+            finalize(locals ?? new Map());
+            return;
+        }
+        if (!locals) {
             return;
         }
         // when closing a branched statement, evaluate vars with partial branches covered
@@ -388,6 +392,18 @@ export function createVarLinter(
                     ...VarTrackingMessages.unusedVariable(local.name),
                     severity: severity.unusedVariable,
                     location: local.location
+                });
+            }
+        });
+
+        args.forEach(arg => {
+            // treat a leading underscore as an intentionally unused parameter
+            if (!arg.isUsed && !arg.name.startsWith('_')) {
+                diagnostics.push({
+                    severity: severity.unusedParameter,
+                    code: VarLintError.UnusedParameter,
+                    message: `Parameter '${arg.name}' is set but value is never used`,
+                    location: arg.location
                 });
             }
         });
