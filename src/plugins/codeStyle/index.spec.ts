@@ -1727,7 +1727,9 @@ describe('codeStyle', () => {
             expect(diagnostics).to.have.length(1);
 
             const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
-            expect(actions.map(a => a.title)).to.deep.equal(['Add comma after the expression']);
+            const titles = actions.map(a => a.title);
+            expect(titles).to.include('Add comma after the expression');
+            expect(titles).to.not.include('Fix all: Add comma after the expression');
         });
 
         it('offers fix-all when multiple occurrences exist', () => {

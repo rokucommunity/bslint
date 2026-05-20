@@ -19,11 +19,11 @@ function getDiagnostics(arg: DiagnosticCollection): BsDiagnostic[] {
 function sortDiagnostics(diagnostics: BsDiagnostic[]) {
     return diagnostics.sort(
         firstBy<BsDiagnostic>('code')
-            .thenBy<BsDiagnostic>('message')
-            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.start?.line ?? 0) - (b.location.range?.start?.line ?? 0))
-            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.start?.character ?? 0) - (b.location.range?.start?.character ?? 0))
-            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.end?.line ?? 0) - (b.location.range?.end?.line ?? 0))
-            .thenBy<BsDiagnostic>((a, b) => (a.location.range?.end?.character ?? 0) - (b.location.range?.end?.character ?? 0))
+            .thenBy('message')
+            .thenBy((a, b) => (a.location.range?.start?.line ?? 0) - (b.location.range?.start?.line ?? 0))
+            .thenBy((a, b) => (a.location.range?.start?.character ?? 0) - (b.location.range?.start?.character ?? 0))
+            .thenBy((a, b) => (a.location.range?.end?.line ?? 0) - (b.location.range?.end?.line ?? 0))
+            .thenBy((a, b) => (a.location.range?.end?.character ?? 0) - (b.location.range?.end?.character ?? 0))
     );
 }
 
