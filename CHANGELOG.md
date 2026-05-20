@@ -208,17 +208,7 @@ Skipped a few brighterscript releases because there were some bugs we couldn't m
 ## [0.9.0-alpha.1](https://github.com/rokucommunity/bslint/compare/v0.9.0-alpha.0...v0.9.0-alpha.1) - 2023-09-21
 ### Changed
 - fixes for brighterscript v0.66.0-alpha.5 through v0.66.0-alpha.6
-## [0.8.16](https://github.com/rokucommunity/bslint/compare/v0.8.15...v0.8.16) - 2024-01-25
-### Changed
- - upgrade to [brighterscript@0.65.18](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06518---2024-01-25). Notable changes since 0.65.17:
-     - Prevent overwriting the Program._manifest if already set on startup ([brighterscript#1027](https://github.com/rokucommunity/brighterscript/pull/1027))
-     - Improving null safety: Add FinalizedBsConfig and tweak plugin events ([brighterscript#1000](https://github.com/rokucommunity/brighterscript/pull/1000))
-## [0.8.19](https://github.com/rokucommunity/bslint/compare/v0.8.18...v0.8.19) - 2024-03-07
-### Changed
- - upgrade to [brighterscript@0.65.25](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06525---2024-03-07). Notable changes since 0.65.23:
-     - Support when tokens have null ranges ([brighterscript#1072](https://github.com/rokucommunity/brighterscript/pull/1072))
-     - Support whitespace in conditional compile keywords ([brighterscript#1090](https://github.com/rokucommunity/brighterscript/pull/1090))
-     - Allow negative patterns in diagnostic filters ([brighterscript#1078](https://github.com/rokucommunity/brighterscript/pull/1078))
+
 
 
 
