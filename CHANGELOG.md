@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.51](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.50...v1.0.0-alpha.51) - 2026-05-20
+### Changed
+ - Update to latest from master and Brighterscript-1.0.0-alpha.51 ([#187](https://github.com/rokucommunity/bslint/pull/187))
+ - Merges v0.8.43 into V1 ([#185](https://github.com/rokucommunity/bslint/pull/185))
+ - Make sure scope-based diagnostics are cleared when needed ([#183](https://github.com/rokucommunity/bslint/pull/183))
+ - upgrade to [brighterscript@1.0.0-alpha.51](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha51---2026-05-20). Notable changes since 1.0.0-alpha.50:
+     - Merges latest v0.72.2 into v1 ([#1717](https://github.com/rokucommunity/brighterscript/pull/1717))
+     - Token leadingTrivia handling and reduce memory retention in long-lived compiler/LSP caches ([#1705](https://github.com/rokucommunity/brighterscript/pull/1705))
+     - Merge/master 0.72.0 ([#1702](https://github.com/rokucommunity/brighterscript/pull/1702))
+     - Fix for each validation error ([#1646](https://github.com/rokucommunity/brighterscript/pull/1646))
+     - Allow typed functions in type expressions ([#1620](https://github.com/rokucommunity/brighterscript/pull/1620))
+     - Fixes issue with forEach iterating over a union of iterables ([#1629](https://github.com/rokucommunity/brighterscript/pull/1629))
+     - Allow typecast statement on all variables ([#1622](https://github.com/rokucommunity/brighterscript/pull/1622))
+     - Documentation updates ([#1616](https://github.com/rokucommunity/brighterscript/pull/1616))
+
+
+
 ## [1.0.0-alpha.50](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.49...v1.0.0-alpha.50) - 2026-01-28
 ### Changed
  - upgrade to [brighterscript@1.0.0-alpha.50](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha50---2026-01-28). Notable changes since 1.0.0-alpha.49:
