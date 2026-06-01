@@ -344,5 +344,9 @@ Running `bslint` with `--checkUsage` parameter will attempt to identify unused c
 - All the component's explicit children (under `<children>` tag) are walked,
 - Any script/component not walked will produce a warning.
 
+## Accepted security advisories
+
+Dependencies flagged by `npm audit` that we have reviewed and chosen not to upgrade are tracked in [audit-ci.jsonc](https://github.com/RokuCommunity/bslint/blob/master/audit-ci.jsonc). Each entry includes the advisory ID, the date it was added, and the reason it does not apply to this project.
+
 ## Changelog
 Click [here](CHANGELOG.md) to view the changelog

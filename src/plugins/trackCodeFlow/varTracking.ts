@@ -407,6 +407,18 @@ export function createVarLinter(
                 });
             }
         });
+
+        args.forEach(arg => {
+            // treat a leading underscore as an intentionally unused parameter
+            if (!arg.isUsed && !arg.name.startsWith('_')) {
+                diagnostics.push({
+                    severity: severity.unusedParameter,
+                    code: VarLintError.UnusedParameter,
+                    message: `Parameter '${arg.name}' is set but value is never used`,
+                    location: arg.location
+                });
+            }
+        });
     }
 
     return {

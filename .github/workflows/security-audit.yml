@@ -6,7 +6,7 @@ on:
   pull_request:
   schedule:
     #nightly at 06:00 UTC (1am EST / 2am EDT)
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
 
 jobs:
   audit:
@@ -18,3 +18,12 @@ jobs:
           node-version: "18.20.4"
       - run: npm ci
       - run: npm run audit
+
+  security-audit-required:
+    needs: audit
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'release/')
+        run: if [ "${{ needs.audit.result }}" = "failure" ]; then exit 1; fi

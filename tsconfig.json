@@ -12,13 +12,17 @@
     "strictNullChecks": false,
     "forceConsistentCasingInFileNames": true,
     "preserveConstEnums": true,
-    "downlevelIteration": true,
     "noUnusedLocals": true,
     "allowSyntheticDefaultImports": true,
     "lib": [
       "es2017",
       "es2019.array",
       "es2020.promise"
+    ],
+    "types": [
+      "node",
+      "mocha",
+      "chai"
     ]
   },
   "include": [
