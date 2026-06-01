@@ -227,96 +227,19 @@ Skipped a few brighterscript releases because there were some bugs we couldn't m
 - fixes for brighterscript v0.66.0-alpha.5 through v0.66.0-alpha.6
 
 
-
-
-## [0.8.42](https://github.com/rokucommunity/bslint/compare/0.8.41...v0.8.42) - 2026-05-01
-### Changed
- - upgrade to [brighterscript@0.72.0](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0720---2026-04-30). Notable changes since 0.70.4:
-     - Support minFirmwareVersion in bsconfig.json ([#1678](https://github.com/rokucommunity/brighterscript/pull/1678))
-     - perf: Share per-file namespace data via lazy ScopeNamespaceLookup view ([#1684](https://github.com/rokucommunity/brighterscript/pull/1684))
-     - perf: Lazy-allocate NamespaceContainer's optional fields ([#1683](https://github.com/rokucommunity/brighterscript/pull/1683))
-     - perf: Share BscSymbol references in SymbolTable.mergeSymbolTable ([#1682](https://github.com/rokucommunity/brighterscript/pull/1682))
-     - Report const cycle diagnostic per node to match class convention ([#1681](https://github.com/rokucommunity/brighterscript/pull/1681))
-     - Support line continuation ([#1667](https://github.com/rokucommunity/brighterscript/pull/1667))
-     - Fix cross-file const inlining and flag const cycles ([#1680](https://github.com/rokucommunity/brighterscript/pull/1680))
-     - bugfix/small perf improvements ([#1663](https://github.com/rokucommunity/brighterscript/pull/1663))
-     - Add computed property names (compile-time support only) ([#1658](https://github.com/rokucommunity/brighterscript/pull/1658))
-
-
-
-## [0.8.41](https://github.com/rokucommunity/bslint/compare/0.8.40...v0.8.41) - 2026-03-25
+## [0.8.43](https://github.com/rokucommunity/bslint/compare/0.8.42...v0.8.43) - 2026-05-11
 ### Added
- - Add support for "fix all" to most code actions ([#178](https://github.com/rokucommunity/bslint/pull/178))
-
-
-
-## [0.8.40](https://github.com/rokucommunity/bslint/compare/0.8.39...v0.8.40) - 2026-03-24
+ - Add for-terminator-style rule ([#182](https://github.com/rokucommunity/bslint/pull/182))
 ### Changed
- - upgrade to [brighterscript@0.70.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0704---2026-03-24). Notable changes since 0.70.3:
-     - Typedef namespace param fix ([#1641](https://github.com/rokucommunity/brighterscript/pull/1641))
-     - Backport V1 Typed function type syntax to v0 ([#1623](https://github.com/rokucommunity/brighterscript/pull/1623))
-     - Backport `for each` type syntax from V1 -> V0 ([#1617](https://github.com/rokucommunity/brighterscript/pull/1617))
-     - Backport intersection type and grouped type expressions ([#1608](https://github.com/rokucommunity/brighterscript/pull/1608))
-     - Backports TypeStatement syntax from v1 to v0 ([#1600](https://github.com/rokucommunity/brighterscript/pull/1600))
-     - Backported v1 inline interface syntax ([#1592](https://github.com/rokucommunity/brighterscript/pull/1592))
-     - Fix confusing diagnostic when dottedGet follows function call in ExpressionStatement ([#1598](https://github.com/rokucommunity/brighterscript/pull/1598))
-
-
-
-## [0.8.39](https://github.com/rokucommunity/bslint/compare/0.8.38...v0.8.39) - 2026-03-19
-### Fixed
- - Fix parameters not getting flagged as unused ([#174](https://github.com/rokucommunity/bslint/pull/174))
- - chore: Fixes issue with running tests on newer node versions ([#175](https://github.com/rokucommunity/bslint/pull/175))
-
-
-
-## [0.8.38](https://github.com/rokucommunity/bslint/compare/0.8.37...v0.8.38) - 2025-10-31
-### Changed
- - upgrade to [brighterscript@0.70.3](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0703---2025-10-31). Notable changes since 0.70.2:
-     - Fix crash when bsc plugin in worker loads another version of bsc ([#1579](https://github.com/rokucommunity/bslint/pull/1579))
-     - Fix recursive const and enum resolution during transpilation ([#1578](https://github.com/rokucommunity/bslint/pull/1578))
-
-
-
-## [0.8.37](https://github.com/rokucommunity/bslint/compare/0.8.36...v0.8.37) - 2025-10-16
-### Changed
- - Ignore unused parameters if they begin with leading underscore ([#165](https://github.com/rokucommunity/bslint/pull/165))
-
-
-
-## [0.8.36](https://github.com/rokucommunity/bslint/compare/0.8.35...v0.8.36) - 2025-10-10
-### Added
- - Identify unused function parameters ([#163](https://github.com/rokucommunity/bslint/pull/163))
-### Changed
- - upgrade to [brighterscript@0.70.2](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0702---2025-10-10). Notable changes since 0.70.1:
-     - Add manual entries for roUtils and roRenderThreadQueue ([#1574](https://github.com/rokucommunity/bslint/pull/1574))
-     - Roku sdk updates ([#1573](https://github.com/rokucommunity/bslint/pull/1573))
-
-
-
-## [0.8.35](https://github.com/rokucommunity/bslint/compare/0.8.34...v0.8.35) - 2025-09-12
-### Changed
- - upgrade to [brighterscript@0.70.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0701---2025-09-11). Notable changes since 0.69.13:
-     - Flag param names that are reserved words ([#1556](https://github.com/rokucommunity/bslint/pull/1556))
-
-
-
-## [0.8.34](https://github.com/rokucommunity/bslint/compare/0.8.33...v0.8.34) - 2025-08-04
-### Changed
- - upgrade to [brighterscript@0.69.13](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06913---2025-08-04). Notable changes since 0.69.11:
-
-
-
-## [0.8.33](https://github.com/rokucommunity/bslint/compare/0.8.32...v0.8.33) - 2025-07-03
-### Changed
- - upgrade to [brighterscript@0.69.11](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#06911---2025-07-03). Notable changes since 0.69.10:
-
-
-
-## [0.8.32](https://github.com/rokucommunity/bslint/compare/0.8.31...v0.8.32) - 2025-06-03
-### Added
- - added [brighterscript@0.69.10](https://github.com/rokucommunity/brighterscript) as a dependency instead of a devDependency
-
+ - upgrade to [brighterscript@0.72.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0721---2026-05-11). Notable changes since 0.72.0:
+     - Recover from mismatched loop terminators with quick fixes ([#1696](https://github.com/rokucommunity/brighterscript/pull/1696))
+     - Add diagnosticReporter config option ([#1701](https://github.com/rokucommunity/brighterscript/pull/1701))
+     - Diagnose reserved BrightScript builtins used as values ([#1697](https://github.com/rokucommunity/brighterscript/pull/1697))
+     - Add bs:disable / bs:enable block directives and diagnostic suppression quick fixes ([#1699](https://github.com/rokucommunity/brighterscript/pull/1699))
+     - feat: add `validate` bsconfig flag to skip validation phase ([#1687](https://github.com/rokucommunity/brighterscript/pull/1687))
+     - feat: allow line continuation in .brs files when minFirmwareVersion >= 15.3 ([#1693](https://github.com/rokucommunity/brighterscript/pull/1693))
+     - Reload projects when manifest file changes ([#1700](https://github.com/rokucommunity/brighterscript/pull/1700))
+     - Set up Copilot coding agent instructions ([#1695](https://github.com/rokucommunity/brighterscript/pull/1695))
 
 
 
