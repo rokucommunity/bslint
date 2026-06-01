@@ -1,6 +1,6 @@
 {
   "name": "@rokucommunity/bslint",
-  "version": "1.0.0-alpha.51",
+  "version": "1.0.0-alpha.52",
   "description": "BrighterScript linter plugin",
   "main": "dist/index.js",
   "bin": {
@@ -60,9 +60,6 @@
     "thenby": "^1.3.4",
     "ts-node": "^10.7.0",
     "typescript": "^4.9.4"
-  },
-  "overrides": {
-    "serialize-javascript": "^7.0.5"
   },
   "overrides": {
     "serialize-javascript": "^7.0.5"
