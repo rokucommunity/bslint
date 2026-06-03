@@ -6,6 +6,11 @@ import { BsLintDiagnosticContext } from '../../Linter';
 const isWin = process.platform === 'win32';
 
 export enum UnusedCode {
+    UnusedComponent = 'unused-component',
+    UnusedScript = 'unused-script'
+}
+
+export enum UnusedLegacyCode {
     UnusedComponent = 'LINT4001',
     UnusedScript = 'LINT4002'
 }

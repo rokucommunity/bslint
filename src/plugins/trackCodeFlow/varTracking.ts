@@ -4,6 +4,15 @@ import { PluginContext } from '../../util';
 import { Location } from 'vscode-languageserver-types';
 
 export enum VarLintError {
+    UninitializedVar = 'uninitialized-variable',
+    UnsafeIteratorVar = 'unsafe-iterator-variable',
+    UnsafeInitialization = 'unsafe-initialization',
+    CaseMismatch = 'case-mismatch',
+    UnusedVariable = 'unused-variable',
+    UnusedParameter = 'unused-parameter'
+}
+
+export enum VarLintLegacyError {
     UninitializedVar = 'LINT1001',
     UnsafeIteratorVar = 'LINT1002',
     UnsafeInitialization = 'LINT1003',
@@ -24,6 +33,7 @@ export const VarTrackingMessages = {
         severity: DiagnosticSeverity.Warning,
         source: 'bslint',
         code: VarLintError.CaseMismatch,
+        legacyCode: VarLintLegacyError.CaseMismatch,
         message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
         data: {
             name: curr.name,
@@ -34,24 +44,28 @@ export const VarTrackingMessages = {
         severity: DiagnosticSeverity.Error,
         source: 'bslint',
         code: VarLintError.UnsafeIteratorVar,
+        legacyCode: VarLintLegacyError.UnsafeIteratorVar,
         message: `Using iterator variable '${name}' outside loop`
     }),
     unusedVariable: (name: string) => ({
         severity: DiagnosticSeverity.Warning,
         source: 'bslint',
         code: VarLintError.UnusedVariable,
+        legacyCode: VarLintLegacyError.UnusedVariable,
         message: `Variable '${name}' is set but value is never used`
     }),
     unsafeInitialization: (name: string) => ({
         severity: DiagnosticSeverity.Error,
         source: 'bslint',
         code: VarLintError.UnsafeInitialization,
+        legacyCode: VarLintLegacyError.UnsafeInitialization,
         message: `Not all the code paths assign '${name}'`
     }),
     uninitializedVariable: (name: string, scopeName: string) => ({
         severity: DiagnosticSeverity.Error,
         source: 'bslint',
         code: VarLintError.UninitializedVar,
+        legacyCode: VarLintLegacyError.UninitializedVar,
         message: `Using uninitialised variable '${name}' when this file is included in scope '${scopeName}'`
     })
 };
@@ -402,18 +416,7 @@ export function createVarLinter(
                 diagnostics.push({
                     severity: severity.unusedParameter,
                     code: VarLintError.UnusedParameter,
-                    message: `Parameter '${arg.name}' is set but value is never used`,
-                    location: arg.location
-                });
-            }
-        });
-
-        args.forEach(arg => {
-            // treat a leading underscore as an intentionally unused parameter
-            if (!arg.isUsed && !arg.name.startsWith('_')) {
-                diagnostics.push({
-                    severity: severity.unusedParameter,
-                    code: VarLintError.UnusedParameter,
+                    legacyCode: VarLintLegacyError.UnusedParameter,
                     message: `Parameter '${arg.name}' is set but value is never used`,
                     location: arg.location
                 });
