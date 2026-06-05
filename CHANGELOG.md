@@ -6,6 +6,236 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.52](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.51...v1.0.0-alpha.52) - 2026-06-01
+### Changed
+ - Updated to Brighterscript-v1.0.0.alpha-52 ([#192](https://github.com/rokucommunity/bslint/pull/192))
+ - upgrade to [brighterscript@1.0.0-alpha.52](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha52---2026-06-01). Notable changes since 1.0.0-alpha.51:
+     - Guard transpileComments against undefined trivia tokens ([#1725](https://github.com/rokucommunity/brighterscript/pull/1725))
+     - Merge master into v1 ([#1726](https://github.com/rokucommunity/brighterscript/pull/1726))
+
+
+
+## [1.0.0-alpha.51](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.50...v1.0.0-alpha.51) - 2026-05-20
+### Changed
+ - Update to latest from master and Brighterscript-1.0.0-alpha.51 ([#187](https://github.com/rokucommunity/bslint/pull/187))
+ - Merges v0.8.43 into V1 ([#185](https://github.com/rokucommunity/bslint/pull/185))
+ - Make sure scope-based diagnostics are cleared when needed ([#183](https://github.com/rokucommunity/bslint/pull/183))
+ - upgrade to [brighterscript@1.0.0-alpha.51](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha51---2026-05-20). Notable changes since 1.0.0-alpha.50:
+     - Merges latest v0.72.2 into v1 ([#1717](https://github.com/rokucommunity/brighterscript/pull/1717))
+     - Token leadingTrivia handling and reduce memory retention in long-lived compiler/LSP caches ([#1705](https://github.com/rokucommunity/brighterscript/pull/1705))
+     - Merge/master 0.72.0 ([#1702](https://github.com/rokucommunity/brighterscript/pull/1702))
+     - Fix for each validation error ([#1646](https://github.com/rokucommunity/brighterscript/pull/1646))
+     - Allow typed functions in type expressions ([#1620](https://github.com/rokucommunity/brighterscript/pull/1620))
+     - Fixes issue with forEach iterating over a union of iterables ([#1629](https://github.com/rokucommunity/brighterscript/pull/1629))
+     - Allow typecast statement on all variables ([#1622](https://github.com/rokucommunity/brighterscript/pull/1622))
+     - Documentation updates ([#1616](https://github.com/rokucommunity/brighterscript/pull/1616))
+
+
+
+## [1.0.0-alpha.50](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.49...v1.0.0-alpha.50) - 2026-01-28
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.50](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha50---2026-01-28). Notable changes since 1.0.0-alpha.49:
+     - Adds ability to declare type on "For Each" loop item ([#1614](https://github.com/rokucommunity/brighterscript/pull/1614))
+     - Intersection Type ([#1603](https://github.com/rokucommunity/brighterscript/pull/1603))
+     - Re-ran Doc scraper ([#1609](https://github.com/rokucommunity/brighterscript/pull/1609))
+     - #1397 Align event names ([#1557](https://github.com/rokucommunity/brighterscript/pull/1557))
+     - Fix bug with stagingDir fallback not working ([#1606](https://github.com/rokucommunity/brighterscript/pull/1606))
+     - Fix bug with normalizing `virtual:/` path scheme ([#1607](https://github.com/rokucommunity/brighterscript/pull/1607))
+     - Fixes getting types from pocket tables in Try/Catch ([#1602](https://github.com/rokucommunity/brighterscript/pull/1602))
+
+
+
+## [1.0.0-alpha.49](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.48...v1.0.0-alpha.49) - 2025-12-11
+### Changed
+ - Update for brighterscript `v1.0.0-alpha.49` ([#169](https://github.com/rokucommunity/bslint/pull/169))
+ - upgrade to [brighterscript@1.0.0-alpha.49](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha49---2025-12-10). Notable changes since 1.0.0-alpha.48:
+     - Adds TypeStatement for declaring new types ([#1597](https://github.com/rokucommunity/brighterscript/pull/1597))
+     - Adds Inline interfaces ([#1591](https://github.com/rokucommunity/brighterscript/pull/1591))
+     - Make Invalid compatible with typed arrays ([#1596](https://github.com/rokucommunity/brighterscript/pull/1596))
+     - Limit scope Validation ([#1586](https://github.com/rokucommunity/brighterscript/pull/1586))
+     - Interface extending node includes callfuncs ([#1585](https://github.com/rokucommunity/brighterscript/pull/1585))
+     - Fix validation exception when calling roFunction ([#1588](https://github.com/rokucommunity/brighterscript/pull/1588))
+     - Remove unused util functions ([#1565](https://github.com/rokucommunity/brighterscript/pull/1565))
+     - Remove zip and sideload ([#1562](https://github.com/rokucommunity/brighterscript/pull/1562))
+     - Fix `MaskGroup.maskUri` type ([#1559](https://github.com/rokucommunity/brighterscript/pull/1559))
+
+
+
+## [1.0.0-alpha.48](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.47...v1.0.0-alpha.48) - 2025-07-16
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.48](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha48---2025-07-16). Notable changes since 1.0.0-alpha.47:
+     - Union Return type consistency ([#1508](https://github.com/rokucommunity/bslint/pull/1508))
+     - Fix issues with undefined/null trivia items ([#1531](https://github.com/rokucommunity/bslint/pull/1531))
+     - Fix ForEach variable typing issues ([#1498](https://github.com/rokucommunity/bslint/pull/1498))
+     - `Dynamic` and `Function` do not need semantic tokens in Type expressions ([#1500](https://github.com/rokucommunity/bslint/pull/1500))
+
+
+
+## [1.0.0-alpha.47](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.46...v1.0.0-alpha.47) - 2025-06-03
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.47](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha47---2025-05-22). Notable changes since 1.0.0-alpha.46:
+     - Type Tracking within a Function ([#1468](https://github.com/rokucommunity/bslint/pull/1468))
+     - Better Support for Union of Functions and CallFuncs ([#1485](https://github.com/rokucommunity/bslint/pull/1485))
+     - Better diagnostic null location handling ([#1491](https://github.com/rokucommunity/bslint/pull/1491))
+     - bsc1 cli binary ([#1492](https://github.com/rokucommunity/bslint/pull/1492))
+     - Merge branch 'master' of https://github.com/rokucommunity/brighterscript into v1 ([31e93246](https://github.com/rokucommunity/bslint/commit/31e93246))
+
+
+
+## [1.0.0-alpha.46](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.45...v1.0.0-alpha.46) - 2025-04-24
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.46](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha46---2025-04-24). Notable changes since 1.0.0-alpha.45:
+   - Add missing content node fields ([#1481](https://github.com/rokucommunity/brighterscript/pull/1481))
+   - Add `DialogBase` to types ([#1470](https://github.com/rokucommunity/brighterscript/pull/1470))
+   - Do not validate typedef files for return type mismatch ([#1459](https://github.com/rokucommunity/brighterscript/pull/1459))
+   - Fix erroneous diagnostic for component name on first validation ([#1477](https://github.com/rokucommunity/brighterscript/pull/1477))
+   - Fix ScopeValidator crash ([#1465](https://github.com/rokucommunity/brighterscript/pull/1465))
+   - Import `performance` from `perf_hooks` to work on node <16 ([#1462](https://github.com/rokucommunity/brighterscript/pull/1462))
+   - Change type of 'version' parameter from String to Integer in the Type ([#1453](https://github.com/rokucommunity/brighterscript/pull/1453))
+ - Elevate brighterscript to a prod dependency. ([8763ee1](https://github.com/rokucommunity/bslint/commit/8763ee1))
+
+
+
+## [1.0.0-alpha.45](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.44...v1.0.0-alpha.45) - 2025-04-04
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.45](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha45---2025-04-04). Notable changes since 1.0.0-alpha.44:
+   - new `diagnosticFiltersV0Compatibility` bsconfig.json option ([#1424](https://github.com/rokucommunity/brighterscript/pull/1424))
+   - Merge latest `master` which includes the language server rewrite ([#1428](https://github.com/rokucommunity/brighterscript/pull/1428))
+   - reduce `BscType` creation ([#1417](https://github.com/rokucommunity/brighterscript/pull/1417))
+   - add lookup tables to `DiagnosticsManager` to speed up diagnostic clearing ([#1411](https://github.com/rokucommunity/brighterscript/pull/1411))
+
+
+
+## [1.0.0-alpha.44](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.43...v1.0.0-alpha.44) - 2024-02-06
+### Fixed
+ - issue if `getSymbol()` returns undefined ([#141](https://github.com/rokucommunity/bslint/pull/141))
+
+
+
+## [1.0.0-alpha.43](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.42...v1.0.0-alpha.43) - 2024-02-03
+### Added
+ - diagnostic for when a variables type changes ([#130](https://github.com/rokucommunity/bslint/pull/130))
+
+
+
+## [1.0.0-alpha.42](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.41...v1.0.0-alpha.42) - 2024-01-21
+### Added
+ - Adds `allow-implicit` for type annotations ([#133](https://github.com/rokucommunity/bslint/pull/133))
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.42](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha42---2025-01-17)
+### Fixed
+ - Actually add name property to plugin classes ([#137](https://github.com/rokucommunity/bslint/pull/137))
+
+
+
+## [1.0.0-alpha.41](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.40...v1.0.0-alpha.41) - 2024-10-20
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.41](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha41---2024-10-20)
+
+
+
+## [1.0.0-alpha.40](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.39...v1.0.0-alpha.40) - 2024-10-20
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.40](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha40---2024-10-19)
+
+
+
+## [1.0.0-alpha.39](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.38...v1.0.0-alpha.39) - 2024-10-03
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.39](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha39---2024-10-03)
+
+
+
+## [1.0.0-alpha.38](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.37...v1.0.0-alpha.38) - 2024-10-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.38](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha38---2024-10-01)
+### Fixed
+ - crash when comment is missing trivia array ([#134](https://github.com/rokucommunity/bslint/pull/134))
+
+
+
+## [1.0.0-alpha.37](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.36...v1.0.0-alpha.37) - 2024-09-25
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.37](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha37---2024-09-25)
+### Fixed
+ - Conditional compile code flow - var tracking ([#132](https://github.com/rokucommunity/bslint/pull/132))
+
+
+
+## [1.0.0-alpha.36](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.35...v1.0.0-alpha.36) - 2024-08-09
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.36](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha36---2024-08-09)
+ - Removed brighterscript as a peer-dependency because it keeps causing issues with the alpha releases ([#126](https://github.com/rokucommunity/bslint/pull/126))
+
+
+
+## [1.0.0-alpha.35](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.34...v1.0.0-alpha.35) - 2024-08-01
+### Added
+ - name shadowing lint rule ([#124](https://github.com/rokucommunity/bslint/pull/124))
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.35](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha35---2024-07-31)
+### Fixed
+ - check if in `TypeExpression` before doing `VariableExpression` checks ([#122](https://github.com/rokucommunity/bslint/pull/122))
+
+
+
+## [1.0.0-alpha.34](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.33...v1.0.0-alpha.34) - 2024-07-24
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.34](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha34---2024-07-24)
+### Fixed
+ - fix bugs with new conditional compile blocks ([#114](https://github.com/rokucommunity/bslint/pull/114))
+
+
+
+## [1.0.0-alpha.33](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.32...v1.0.0-alpha.33) - 2024-06-21
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.33](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha33---2024-06-14)
+
+
+
+## [1.0.0-alpha.32](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.31...v1.0.0-alpha.32) - 2024-06-05
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.32](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha32---2024-06-05)
+
+
+
+## [1.0.0-alpha.31](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.30...v1.0.0-alpha.31) - 2024-06-04
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.31](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha31---2024-06-04)
+
+
+
+## [1.0.0-alpha.30](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.27...v1.0.0-alpha.30) - 2024-05-16
+Skipped a few brighterscript releases because there were some bugs we couldn't mitigate. This release tracks bsc@1.0.0-alpha.30
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.30](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha30---2024-05-16)
+
+
+
+## [1.0.0-alpha.27](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.26...v1.0.0-alpha.27) - 2024-02-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.27](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha27---2024-02-27)
+
+
+
+## [1.0.0-alpha.26](https://github.com/rokucommunity/bslint/compare/v1.0.0-alpha.25...v1.0.0-alpha.26) - 2024-02-01
+### Changed
+ - upgrade to [brighterscript@1.0.0-alpha.26](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha26---2024-02-01)
+
+
+
+## [1.0.0-alpha.25](https://github.com/rokucommunity/bslint/compare/v0.9.0-alpha.1...v1.0.0-alpha.25) - 2024-02-01
+### Changed
+ - Align with the brighterscript alpha prerelease numbers
+ - upgrade to [brighterscript@1.0.0-alpha.25](https://github.com/rokucommunity/brighterscript/blob/release-1.0.0/CHANGELOG.md#100-alpha25---2024-01-25)
+
+
+
+## [0.9.0-alpha.1](https://github.com/rokucommunity/bslint/compare/v0.9.0-alpha.0...v0.9.0-alpha.1) - 2023-09-21
+### Changed
+- fixes for brighterscript v0.66.0-alpha.5 through v0.66.0-alpha.6
+
+
 ## [0.8.43](https://github.com/rokucommunity/bslint/compare/0.8.42...v0.8.43) - 2026-05-11
 ### Added
  - Add for-terminator-style rule ([#182](https://github.com/rokucommunity/bslint/pull/182))
@@ -384,7 +614,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      - Fix namespace-relative items ([brighterscript#789](https://github.com/rokucommunity/brighterscript/pull/789))
      - Wrap transpiled template strings in parens ([brighterscript#788](https://github.com/rokucommunity/brighterscript/pull/788))
      - Simplify the ast range logic ([brighterscript#784](https://github.com/rokucommunity/brighterscript/pull/784))
-### Fixed 
+### Fixed
  - do not consider consts as unused variables ([#85](https://github.com/rokucommunity/bslint/pull/85))
 
 

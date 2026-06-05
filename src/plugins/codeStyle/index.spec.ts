@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AssignmentStatement, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -56,7 +56,7 @@ describe('codeStyle', () => {
             }
         } as BsLintConfig);
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProvideProgram', { builder: {} as any, program: program });
         return program;
     }
 
@@ -66,7 +66,8 @@ describe('codeStyle', () => {
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProvideProgram: (event: AfterProvideProgramEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const codeStyle = new CodeStyle(lintContext);
                 program.plugins.add(codeStyle);
@@ -104,8 +105,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `02:LINT3001:Code style: no inline if statement allowed`,
-                `06:LINT3001:Code style: no inline if statement allowed`
+                `02:inline-if-found:Code style: no inline if statement allowed`,
+                `06:inline-if-found:Code style: no inline if statement allowed`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -123,7 +124,7 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `06:LINT3002:Code style: add 'then' keyword`
+                `06:missing-inline-if-then:Code style: add 'then' keyword`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -141,7 +142,7 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `02:LINT3003:Code style: remove 'then' keyword`
+                `02:inline-if-then-found:Code style: remove 'then' keyword`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -178,8 +179,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `10:LINT3004:Code style: add 'then' keyword`,
-                `12:LINT3004:Code style: add 'then' keyword`
+                `10:missing-block-if-then:Code style: add 'then' keyword`,
+                `12:missing-block-if-then:Code style: add 'then' keyword`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -197,8 +198,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `02:LINT3005:Code style: remove 'then' keyword`,
-                `04:LINT3005:Code style: remove 'then' keyword`
+                `02:block-if-then-found:Code style: remove 'then' keyword`,
+                `04:block-if-then-found:Code style: remove 'then' keyword`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -235,8 +236,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `03:LINT3006:Code style: add parenthesis around condition`,
-                `05:LINT3006:Code style: add parenthesis around condition`
+                `03:missing-condition-group:Code style: add parenthesis around condition`,
+                `05:missing-condition-group:Code style: add parenthesis around condition`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -254,8 +255,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `12:LINT3007:Code style: remove parenthesis around condition`,
-                `14:LINT3007:Code style: remove parenthesis around condition`
+                `12:condition-group-found:Code style: remove parenthesis around condition`,
+                `14:condition-group-found:Code style: remove parenthesis around condition`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -304,9 +305,9 @@ describe('codeStyle', () => {
             program.setFile('source/main.brs', mixedSource);
             program.validate();
             expectDiagnosticsFmt(program, [
-                `09:LINT3027:Code style: expected 'end for' terminator`,
-                `17:LINT3027:Code style: expected 'end for' terminator`,
-                `26:LINT3027:Code style: expected 'end for' terminator`
+                `09:missing-end-for:Code style: expected 'end for' terminator`,
+                `17:missing-end-for:Code style: expected 'end for' terminator`,
+                `26:missing-end-for:Code style: expected 'end for' terminator`
             ]);
         });
 
@@ -315,9 +316,9 @@ describe('codeStyle', () => {
             program.setFile('source/main.brs', mixedSource);
             program.validate();
             expectDiagnosticsFmt(program, [
-                `05:LINT3028:Code style: expected 'next' terminator`,
-                `13:LINT3028:Code style: expected 'next' terminator`,
-                `27:LINT3028:Code style: expected 'next' terminator`
+                `05:missing-next:Code style: expected 'next' terminator`,
+                `13:missing-next:Code style: expected 'next' terminator`,
+                `27:missing-next:Code style: expected 'next' terminator`
             ]);
         });
 
@@ -350,12 +351,12 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                `06:LINT3027:Code style: expected 'end for' terminator`
+                `06:missing-end-for:Code style: expected 'end for' terminator`
             ]);
         });
 
         function applyAllFixes(src: string, code: string): string {
-            const diagnostics = program.getDiagnostics().filter(d => d.code === code);
+            const diagnostics = program.getDiagnostics().filter(d => d.code === code || d.legacyCode === code);
             const allChanges = diagnostics.flatMap(d => getFixes(d as any).changes);
             return applyEdits(src, allChanges);
         }
@@ -365,7 +366,7 @@ describe('codeStyle', () => {
             program.setFile('source/main.brs', mixedSource);
             program.validate();
 
-            const fixed = applyAllFixes(mixedSource, 'LINT3027');
+            const fixed = applyAllFixes(mixedSource, 'missing-end-for');
             const expected = `
             sub test()
                 for i = 0 to 5
@@ -403,7 +404,7 @@ describe('codeStyle', () => {
             program.setFile('source/main.brs', mixedSource);
             program.validate();
 
-            const fixed = applyAllFixes(mixedSource, 'LINT3028');
+            const fixed = applyAllFixes(mixedSource, 'missing-next');
             const expected = `
             sub test()
                 for i = 0 to 5
@@ -448,7 +449,7 @@ describe('codeStyle', () => {
             program.setFile('source/main.brs', src);
             program.validate();
 
-            const fixed = applyAllFixes(src, 'LINT3027');
+            const fixed = applyAllFixes(src, 'missing-end-for');
             // 'next' replaced in place; preceding indent and trailing comment stay
             expect(fixed).to.contain(`                    end for ' done iterating\n`);
         });
@@ -467,7 +468,7 @@ describe('codeStyle', () => {
             program.setFile('source/main.brs', src);
             program.validate();
 
-            const fixed = applyAllFixes(src, 'LINT3027');
+            const fixed = applyAllFixes(src, 'missing-end-for');
             // outer 'end for' was already correct; inner 'next' became 'end for'
             const innerEndFor = fixed.indexOf('                        end for');
             const outerEndFor = fixed.indexOf('                    end for');
@@ -490,9 +491,9 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `08:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`,
-                `10:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`,
-                `16:LINT3008:Code style: expected 'sub' keyword (always use 'sub')`
+                `08:missing-sub-keyword:Code style: expected 'sub' keyword (always use 'sub')`,
+                `10:missing-sub-keyword:Code style: expected 'sub' keyword (always use 'sub')`,
+                `16:missing-sub-keyword:Code style: expected 'sub' keyword (always use 'sub')`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -509,8 +510,8 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `08:LINT3009:Code style: expected 'function' keyword (always use 'function')`,
-                `10:LINT3009:Code style: expected 'function' keyword (always use 'function')`
+                `08:missing-function-keyword:Code style: expected 'function' keyword (always use 'function')`,
+                `10:missing-function-keyword:Code style: expected 'function' keyword (always use 'function')`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -523,18 +524,21 @@ describe('codeStyle', () => {
                     'named-function-style': 'auto',
                     'anon-function-style': 'auto',
                     'no-print': 'off'
-                }
-            });
+                },
+                diagnosticFilters: [1142]
+            } as any);
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `22:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
-                `23:LINT3009:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
-                `24:1141:Void sub may not return a value`,
-                `26:1141:Void sub may not return a value`,
-                `29:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
-                `31:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
-                `36:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
-                `38:LINT3008:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`
+                `22:missing-function-keyword:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
+                `23:missing-function-keyword:Code style: expected 'function' keyword (use 'function' when a value is returned)`,
+                `24:return-type-mismatch:Type 'string' is not compatible with declared return type 'void' '`,
+                `24:unexpected-return-value:Void sub may not return a value`,
+                `26:return-type-mismatch:Type 'string' is not compatible with declared return type 'void' '`,
+                `26:unexpected-return-value:Void sub may not return a value`,
+                `29:missing-sub-keyword:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
+                `31:missing-sub-keyword:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
+                `36:missing-sub-keyword:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`,
+                `38:missing-sub-keyword:Code style: expected 'sub' keyword (use 'sub' when no value is returned)`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -556,67 +560,111 @@ describe('codeStyle', () => {
             const expected = [];
             expect(actual).deep.equal(expected);
         });
-    });
 
-    it('enforce return type only', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'return',
-                'no-print': 'off'
-            }
+        it('enforce return type only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'return',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `05:missing-return-type:Strictness: function should declare the return type`
+            ];
+            expect(actual).deep.equal(expected);
+            // should only highlight the function name
+            expect(diagnostics[0].location.range).to.eql(
+                util.createRange(4, 0, 4, 8)
+            );
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `05:LINT3010:Strictness: function should declare the return type`
-        ];
-        expect(actual).deep.equal(expected);
-        // should only highlight the function name
-        expect(diagnostics[0].range).to.eql(
-            util.createRange(4, 0, 4, 8)
-        );
-    });
 
-    it('enforce arguments type only', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'args',
-                'no-print': 'off'
-            }
+        it('enforce arguments type only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'args',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:missing-type:Strictness: type annotation required`,
+                `05:missing-type:Strictness: type annotation required`,
+                `13:missing-type:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `01:LINT3011:Strictness: type annotation required`,
-            `05:LINT3011:Strictness: type annotation required`
-        ];
-        expect(actual).deep.equal(expected);
-    });
 
-    it('enforce all annotations', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/type-annotations.brs'],
-            rules: {
-                'named-function-style': 'off',
-                'anon-function-style': 'off',
-                'type-annotations': 'all',
-                'no-print': 'off'
-            }
+        it('enforce all annotations', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'all',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:missing-type:Strictness: type annotation required`,
+                `05:missing-return-type:Strictness: function should declare the return type`,
+                `05:missing-type:Strictness: type annotation required`,
+                `13:missing-type:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
         });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `01:LINT3011:Strictness: type annotation required`,
-            `05:LINT3010:Strictness: function should declare the return type`,
-            `05:LINT3011:Strictness: type annotation required`
-        ];
-        expect(actual).deep.equal(expected);
+
+        it('allows implicit type definitions with default values', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations-implicit.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'all-allow-implicit',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:missing-type:Strictness: type annotation required`,
+                `05:missing-return-type:Strictness: function should declare the return type`,
+                `05:missing-type:Strictness: type annotation required`,
+                `17:missing-return-type:Strictness: function should declare the return type`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+
+        it('allows implicit type definitions with default values for args only', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-annotations-implicit.brs'],
+                rules: {
+                    'named-function-style': 'off',
+                    'anon-function-style': 'off',
+                    'type-annotations': 'args-allow-implicit',
+                    'no-print': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `01:missing-type:Strictness: type annotation required`,
+                `05:missing-type:Strictness: type annotation required`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
     });
 
     it('enforce no print', async () => {
@@ -629,12 +677,28 @@ describe('codeStyle', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `02:LINT3012:Code style: Avoid using direct Print statements`,
-            `03:LINT3012:Code style: Avoid using direct Print statements`
+            `02:no-print:Code style: Avoid using direct Print statements`,
+            `03:no-print:Code style: Avoid using direct Print statements`
         ];
         expect(actual).deep.equal(expected);
     });
 
+    it('does not crash when node has no leadingTrivia', () => {
+        (program.options as any).rules['consistent-return'] = 'error';
+        const file = program.setFile<BrsFile>('source/main.bs', `
+            'comment
+            sub test()
+            end sub
+
+            'TODO
+            sub test2()
+            end sub
+        `);
+        (file.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
+        program.validate();
+        const codeStyle = new CodeStyle(createContext(program));
+        codeStyle.validateBrsFile(file);
+    });
 
     describe('enforce no todo', () => {
         it('default todo pattern', async () => {
@@ -647,12 +711,12 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `02:LINT3015:Code style: Avoid using TODO comments`,
-                `04:LINT3015:Code style: Avoid using TODO comments`,
-                `06:LINT3015:Code style: Avoid using TODO comments`,
-                `08:LINT3015:Code style: Avoid using TODO comments`,
-                '10:LINT3015:Code style: Avoid using TODO comments',
-                '12:LINT3015:Code style: Avoid using TODO comments'
+                `02:no-todo:Code style: Avoid using TODO comments`,
+                `04:no-todo:Code style: Avoid using TODO comments`,
+                `06:no-todo:Code style: Avoid using TODO comments`,
+                `08:no-todo:Code style: Avoid using TODO comments`,
+                '10:no-todo:Code style: Avoid using TODO comments',
+                '12:no-todo:Code style: Avoid using TODO comments'
             ];
             expect(actual).deep.equal(expected);
         });
@@ -667,7 +731,7 @@ describe('codeStyle', () => {
                 }
             });
             const actual = fmtDiagnostics(diagnostics);
-            const expected = ['19:LINT3015:Code style: Avoid using TODO comments'];
+            const expected = ['19:no-todo:Code style: Avoid using TODO comments'];
             expect(actual).deep.equal(expected);
         });
     });
@@ -682,7 +746,7 @@ describe('codeStyle', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `03:LINT3016:Code style: STOP statements are not allowed in published applications`
+            `03:no-stop:Code style: STOP statements are not allowed in published applications`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -698,7 +762,7 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `03:LINT3017:Code style: File should end with a newline`
+                `03:missing-eol-last:Code style: File should end with a newline`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -713,7 +777,7 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `03:LINT3018:Code style: File should not end with a newline`
+                `03:eol-last-found:Code style: File should not end with a newline`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -768,8 +832,8 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:LINT3024:Avoid using field type 'assocarray'`,
-            `07:LINT3024:Avoid using field type 'assocarray'`
+            `06:no-assocarray-field-type:Avoid using field type 'assocarray'`,
+            `07:no-assocarray-field-type:Avoid using field type 'assocarray'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -784,8 +848,8 @@ describe('codeStyle', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:LINT3025:Avoid using field type 'array'`,
-            `08:LINT3025:Avoid using field type 'array'`
+            `04:no-array-field-type:Avoid using field type 'array'`,
+            `08:no-array-field-type:Avoid using field type 'array'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -824,8 +888,8 @@ describe('codeStyle', () => {
                 [],
                 [0],
                 [0, 1],
-                [1, 3],
-                [0, 2],
+                [0, 1],
+                [0, 1],
                 [0],
                 [1],
                 [1]
@@ -842,12 +906,12 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `03:LINT3013:Remove optional comma`,
-                `04:LINT3013:Remove optional comma`,
-                `11:LINT3013:Remove optional comma`,
-                `12:LINT3013:Remove optional comma`,
-                `13:LINT3013:Remove optional comma`,
-                `31:LINT3013:Remove optional comma`
+                `03:aa-comma-found:Remove optional comma`,
+                `04:aa-comma-found:Remove optional comma`,
+                `11:aa-comma-found:Remove optional comma`,
+                `12:aa-comma-found:Remove optional comma`,
+                `13:aa-comma-found:Remove optional comma`,
+                `31:aa-comma-found:Remove optional comma`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -862,10 +926,10 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `13:LINT3013:Remove optional comma`,
-                `19:LINT3014:Add comma after the expression`,
-                `20:LINT3014:Add comma after the expression`,
-                `31:LINT3013:Remove optional comma`
+                `13:aa-comma-found:Remove optional comma`,
+                `19:missing-aa-comma:Add comma after the expression`,
+                `20:missing-aa-comma:Add comma after the expression`,
+                `31:aa-comma-found:Remove optional comma`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -880,11 +944,11 @@ describe('codeStyle', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `05:LINT3014:Add comma after the expression`,
-                `19:LINT3014:Add comma after the expression`,
-                `20:LINT3014:Add comma after the expression`,
-                `21:LINT3014:Add comma after the expression`,
-                `31:LINT3013:Remove optional comma`
+                `05:missing-aa-comma:Add comma after the expression`,
+                `19:missing-aa-comma:Add comma after the expression`,
+                `20:missing-aa-comma:Add comma after the expression`,
+                `21:missing-aa-comma:Add comma after the expression`,
+                `31:aa-comma-found:Remove optional comma`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -912,8 +976,8 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '05:LINT3026:Avoid redeclaring identical regular expressions in a loop',
-                '11:LINT3026:Avoid redeclaring identical regular expressions in a loop'
+                '05:no-regex-duplicates:Avoid redeclaring identical regular expressions in a loop',
+                '11:no-regex-duplicates:Avoid redeclaring identical regular expressions in a loop'
             ]);
         });
 
@@ -950,7 +1014,7 @@ describe('codeStyle', () => {
                 end sub
             `);
             program.validate();
-            expectDiagnosticsFmt(program, ['08:LINT3026:Avoid redeclaring identical regular expressions']);
+            expectDiagnosticsFmt(program, ['08:no-regex-duplicates:Avoid redeclaring identical regular expressions']);
         });
 
 
@@ -972,14 +1036,14 @@ describe('codeStyle', () => {
                     'color-format': 'quoted-numeric-hex',
                     'color-case': 'upper'
                 });
-                program.setFile(
+                const file = program.setFile(
                     'source/main.bs',
                     `sub init()\n${code}\nend sub`
                 );
                 program.validate();
                 expectDiagnostics(
                     program,
-                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createRange(1, x[0], 1, x[1])))
+                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createLocationFromFileRange(file, util.createRange(1, x[0], 1, x[1]))))
                 );
             }
             /* eslint-enable no-template-curly-in-string */
@@ -1000,7 +1064,7 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '03:LINT3020:Code style: File should follow color case'
+                '03:color-case:Code style: File should follow color case'
             ]);
         });
 
@@ -1021,7 +1085,7 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '05:LINT3020:Code style: File should follow color case'
+                '05:color-case:Code style: File should follow color case'
             ]);
         });
 
@@ -1043,8 +1107,8 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '04:LINT3020:Code style: File should follow color case',
-                '07:LINT3020:Code style: File should follow color case'
+                '04:color-case:Code style: File should follow color case',
+                '07:color-case:Code style: File should follow color case'
             ]);
         });
 
@@ -1084,9 +1148,9 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '04:LINT3019:Code style: File should follow color format',
-                '05:LINT3019:Code style: File should follow color format',
-                '06:LINT3019:Code style: File should follow color format'
+                '04:color-format:Code style: File should follow color format',
+                '05:color-format:Code style: File should follow color format',
+                '06:color-format:Code style: File should follow color format'
             ]);
         });
 
@@ -1106,8 +1170,8 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '03:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement',
-                '06:LINT3023:Code style: File should follow Roku broadcast safe color cert requirement'
+                '03:color-cert-compliant:Code style: File should follow Roku broadcast safe color cert requirement',
+                '06:color-cert-compliant:Code style: File should follow Roku broadcast safe color cert requirement'
             ]);
         });
 
@@ -1150,8 +1214,8 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '06:LINT3022:Code style: File should follow color alpha defaults rule',
-                '07:LINT3022:Code style: File should follow color alpha defaults rule'
+                '06:color-alpha-defaults:Code style: File should follow color alpha defaults rule',
+                '07:color-alpha-defaults:Code style: File should follow color alpha defaults rule'
             ]);
         });
 
@@ -1176,7 +1240,7 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '07:LINT3022:Code style: File should follow color alpha defaults rule'
+                '07:color-alpha-defaults:Code style: File should follow color alpha defaults rule'
             ]);
         });
 
@@ -1200,9 +1264,9 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '04:LINT3021:Code style: File should follow color alpha rule',
-                '06:LINT3021:Code style: File should follow color alpha rule',
-                '07:LINT3021:Code style: File should follow color alpha rule'
+                '04:color-alpha:Code style: File should follow color alpha rule',
+                '06:color-alpha:Code style: File should follow color alpha rule',
+                '07:color-alpha:Code style: File should follow color alpha rule'
             ]);
         });
 
@@ -1226,8 +1290,95 @@ describe('codeStyle', () => {
             `);
             program.validate();
             expectDiagnosticsFmt(program, [
-                '03:LINT3021:Code style: File should follow color alpha rule',
-                '05:LINT3021:Code style: File should follow color alpha rule'
+                '03:color-alpha:Code style: File should follow color alpha rule',
+                '05:color-alpha:Code style: File should follow color alpha rule'
+            ]);
+        });
+    });
+
+    describe('name-shadowing', () => {
+        it('detects name shadowings', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '15:name-shadowing:Strictness: Class has same name as Class \'TestClass\'',
+                '18:name-shadowing:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:name-shadowing:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:name-shadowing:Strictness: Const has same name as Const \'TestConst\'',
+                '26:name-shadowing:Strictness: Const has same name as Namespace \'TestNamespace\''
+            ]);
+        });
+
+        it('detects name shadowings across scope', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing.bs', 'source/name-shadowing-import.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:name-shadowing:Strictness: Class has same name as Class \'TestImportClass\'',
+                '05:name-shadowing:Strictness: Enum has same name as Enum \'TestImportEnum\'',
+                '08:name-shadowing:Strictness: Interface has same name as Interface \'TestImportInterface\'',
+                '11:name-shadowing:Strictness: Const has same name as Const \'TestImportConst\'',
+                '15:name-shadowing:Strictness: Class has same name as Class \'TestClass\'',
+                '18:name-shadowing:Strictness: Enum has same name as Enum \'TestEnum\'',
+                '21:name-shadowing:Strictness: Interface has same name as Interface \'TestInterface\'',
+                '24:name-shadowing:Strictness: Const has same name as Const \'TestConst\'',
+                '26:name-shadowing:Strictness: Const has same name as Namespace \'TestNamespace\''
+
+            ]);
+        });
+
+        it('detects name shadowing function', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/name-shadowing-functions.bs'],
+                rules: {
+                    'name-shadowing': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '02:name-shadowing:Strictness: Const has same name as Function \'TestFunction\'',
+                '03:name-shadowing:Strictness: Const has same name as Global Function \'Lcase\''
+            ]);
+        });
+    });
+
+    describe('type-reassignment', () => {
+        it('detects type reassignment', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-reassignment.brs'],
+                rules: {
+                    'type-reassignment': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '12:type-reassignment:Strictness: Reassignment of the type of \'param\' from string to integer',
+                '18:type-reassignment:Strictness: Reassignment of the type of \'value\' from integer to string',
+                '27:type-reassignment:Strictness: Reassignment of the type of \'value\' from integer to dynamic',
+                '53:type-reassignment:Strictness: Reassignment of the type of \'obj\' from integer to roAssociativeArray'
+            ]);
+        });
+
+        it('allows type reassignment with custom types', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-reassignment-custom.bs'],
+                rules: {
+                    'type-reassignment': 'error'
+                }
+            });
+            expectDiagnosticsFmt(diagnostics, [
+                '30:type-reassignment:Strictness: Reassignment of the type of \'arg\' from Iface1 to roAssociativeArray',
+                '44:type-reassignment:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
             ]);
         });
     });
@@ -1572,10 +1723,10 @@ describe('codeStyle', () => {
                 end sub
             `);
             program.validate();
-            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'missing-aa-comma');
             expect(diagnostics).to.have.length(1);
 
-            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
             const titles = actions.map(a => a.title);
             expect(titles).to.include('Add comma after the expression');
             expect(titles).to.not.include('Fix all: Add comma after the expression');
@@ -1592,10 +1743,10 @@ describe('codeStyle', () => {
                 end sub
             `);
             program.validate();
-            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'missing-aa-comma');
             expect(diagnostics).to.have.length(2);
 
-            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
             expect(actions.map(a => a.title)).to.include('Fix all: Add comma after the expression');
         });
 
@@ -1611,10 +1762,10 @@ describe('codeStyle', () => {
                 end sub
             `);
             program.validate();
-            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'missing-aa-comma');
             expect(diagnostics).to.have.length(3);
 
-            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
             const fixAll = actions.find(a => a.title === 'Fix all: Add comma after the expression');
             expect(fixAll).to.not.equal(undefined);
 
@@ -1637,11 +1788,11 @@ describe('codeStyle', () => {
                 end sub
             `);
             program.validate();
-            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3014');
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'missing-aa-comma');
             expect(diagnostics).to.have.length(4);
 
             // Only request actions at the first diagnostic — cursor is not near q1/q2
-            const actions = getCodeActions('source/main.brs', diagnostics[0].range.start.line);
+            const actions = getCodeActions('source/main.brs', diagnostics[0].location.range.start.line);
             const fixAll = actions.find(a => a.title === 'Fix all: Add comma after the expression');
             expect(fixAll).to.not.equal(undefined);
 

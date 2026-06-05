@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Range } from 'vscode-languageserver-types';
+import { Range } from 'brighterscript';
 import { applyEdits, compareRanges, getLineOffsets } from './textEdit';
 
 describe('sortByRange', () => {
@@ -8,8 +8,8 @@ describe('sortByRange', () => {
         const bOK = { range: Range.create(1, 0, 1, 0) };
         const aKO = { range: null };
         const bKO = { range: null };
-        const aKO2 = { range: { } };
-        const bKO2 = { range: { } };
+        const aKO2 = { range: {} };
+        const bKO2 = { range: {} };
         const aKO3 = { range: { start: {} } };
         const bKO3 = { range: { start: {} } };
         expect(compareRanges(null, null)).equals(0);

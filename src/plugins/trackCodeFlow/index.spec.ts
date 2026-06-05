@@ -1,12 +1,13 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { Program, util } from 'brighterscript';
+import { AfterProvideProgramEvent, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
 import { createContext, PluginWrapperContext } from '../../util';
 import { expectDiagnostics, fmtDiagnostics } from '../../testHelpers.spec';
 import { VarLintError } from './varTracking';
+import * as path from 'path';
 
 describe('trackCodeFlow', () => {
     let linter: Linter;
@@ -20,11 +21,12 @@ describe('trackCodeFlow', () => {
         linter = new Linter();
         program = new Program({});
         program.plugins.add(bslintFactory());
-        program.plugins.emit('afterProgramCreate', program);
+        program.plugins.emit('afterProvideProgram', { builder: undefined, program: program });
 
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProvideProgram: (event: AfterProvideProgramEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const trackCodeFlow = new TrackCodeFlow(lintContext);
                 program.plugins.add(trackCodeFlow);
@@ -50,7 +52,9 @@ describe('trackCodeFlow', () => {
         expectDiagnostics(program, [{
             code: VarLintError.UnsafeInitialization,
             message: `Not all the code paths assign 'text2'`,
-            range: util.createRange(9, 22, 9, 27)
+            location: {
+                range: util.createRange(9, 22, 9, 27)
+            }
         }]);
     });
 
@@ -62,14 +66,14 @@ describe('trackCodeFlow', () => {
                 'consistent-return': 'off',
                 'unused-variable': 'off'
             },
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `02:LINT1001:Using uninitialised variable 'a' when this file is included in scope 'source'`,
-            `06:LINT1001:Using uninitialised variable 'a' when this file is included in scope 'source'`,
-            `10:LINT1001:Using uninitialised variable 'a' when this file is included in scope 'source'`,
-            `16:LINT1001:Using uninitialised variable 'a' when this file is included in scope 'source'`
+            `02:uninitialized-variable:Using uninitialised variable 'a' when this file is included in scope 'source'`,
+            `06:uninitialized-variable:Using uninitialised variable 'a' when this file is included in scope 'source'`,
+            `10:uninitialized-variable:Using uninitialised variable 'a' when this file is included in scope 'source'`,
+            `16:uninitialized-variable:Using uninitialised variable 'a' when this file is included in scope 'source'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -82,6 +86,34 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             diagnosticFilters: [1001]
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('does not mark inline anonymous functions param types as uninitialised vars', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/inline-functions.bs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            diagnosticFilters: []
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('does not mark typecasts as uninitialised vars', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/typecast-expressions.bs'],
+            rules: {
+                'unused-variable': 'error'
+            },
+            diagnosticFilters: []
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [];
@@ -111,7 +143,7 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                '04:1136:enum must be declared at the root level or within a namespace'
+                '04:invalid-declaration-location:enum must be declared at the root level or within a namespace'
             ];
             expect(actual).deep.equal(expected);
         });
@@ -126,6 +158,59 @@ describe('trackCodeFlow', () => {
             const actual = fmtDiagnostics(diagnostics);
             const expected = [];
             expect(actual).deep.equal(expected);
+        });
+    });
+
+    describe('removes uninitialized var diagnostics after dependent code updates', () => {
+        it('after fixing uninitialized var', () => {
+            program.setFile('components/Comp.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Comp" extends="Group">
+                    <script uri="Comp.bs"/>
+                </component>
+            `);
+            program.setFile('components/Comp.bs', `
+                import "pkg:/source/common.bs"
+
+                sub init()
+                    print doThing()
+                end sub
+            `);
+
+            program.setFile('components/Comp2.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Comp2" extends="Group">
+                    <script uri="Comp2.bs"/>
+                </component>
+            `);
+            program.setFile('components/Comp2.bs', `
+                import "pkg:/source/common.bs"
+
+                sub init()
+                    print doThing()
+                end sub
+            `);
+
+            program.setFile('source/common.bs', `
+                function doOtherThing() as string
+                    return "hello"
+                end function
+            `);
+            program.validate();
+            const actual = fmtDiagnostics(program.getDiagnostics());
+            const expected = [
+                `05:cannot-find-function:Cannot find function 'doThing'`,
+                `05:cannot-find-function:Cannot find function 'doThing'`,
+                `05:uninitialized-variable:Using uninitialised variable 'doThing' when this file is included in scope 'components${path.sep}Comp.xml'`,
+                `05:uninitialized-variable:Using uninitialised variable 'doThing' when this file is included in scope 'components${path.sep}Comp2.xml'`
+            ];
+            expect(actual).deep.equal(expected);
+
+            program.setFile('source/common.bs', `
+                function doThing() as string
+                    return "hello"
+                end function
+            `);
+            program.validate();
+            expectDiagnostics(program, []);
         });
     });
 
@@ -166,8 +251,24 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `11:1140:Cannot find function 'one'`,
-                `11:LINT1001:Using uninitialised variable 'one' when this file is included in scope 'source'`
+                `11:cannot-find-function:Cannot find function 'one'`,
+                `11:uninitialized-variable:Using uninitialised variable 'one' when this file is included in scope 'source'`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('does mark as uninitialised vars when used outside of namespace with multiple levels', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/namespace-functions-outside-namespace-multiple-levels.bs'],
+                rules: {
+                    'unused-variable': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `18:cannot-find-function:Cannot find function 'one'`,
+                `18:uninitialized-variable:Using uninitialised variable 'one' when this file is included in scope 'source'`
             ];
             expect(actual).deep.equal(expected);
         });
@@ -186,15 +287,37 @@ describe('trackCodeFlow', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `06:LINT1003:Not all the code paths assign 'b'`,
-            `16:LINT1003:Not all the code paths assign 'b'`,
-            `25:LINT1003:Not all the code paths assign 'b'`,
-            `42:LINT1003:Not all the code paths assign 'b'`,
-            `51:LINT1003:Not all the code paths assign 'b'`,
-            `62:LINT1003:Not all the code paths assign 'b'`,
-            `71:LINT1003:Not all the code paths assign 'b'`,
-            `83:LINT1003:Not all the code paths assign 'b'`,
-            `85:LINT1003:Not all the code paths assign 'b'`
+            `06:unsafe-initialization:Not all the code paths assign 'b'`,
+            `16:unsafe-initialization:Not all the code paths assign 'b'`,
+            `25:unsafe-initialization:Not all the code paths assign 'b'`,
+            `42:unsafe-initialization:Not all the code paths assign 'b'`,
+            `51:unsafe-initialization:Not all the code paths assign 'b'`,
+            `62:unsafe-initialization:Not all the code paths assign 'b'`,
+            `71:unsafe-initialization:Not all the code paths assign 'b'`,
+            `83:unsafe-initialization:Not all the code paths assign 'b'`,
+            `85:unsafe-initialization:Not all the code paths assign 'b'`
+        ];
+        expect(actual).deep.equal(expected);
+    });
+
+    it('implements assign-all-paths with conditional compilation', async () => {
+        const diagnostics = await linter.run({
+            ...project1,
+            files: ['source/assign-all-paths-conditional-compilation.brs'],
+            rules: {
+                'assign-all-paths': 'error',
+                'consistent-return': 'off',
+                'unused-variable': 'off'
+            },
+            diagnosticFilters: [1001, 1090]
+        } as any);
+        const actual = fmtDiagnostics(diagnostics);
+        const expected = [
+            `15:unsafe-initialization:Not all the code paths assign 'a'`,
+            `23:unsafe-initialization:Not all the code paths assign 'a'`,
+            `42:unsafe-initialization:Not all the code paths assign 'a'`,
+            `65:unsafe-initialization:Not all the code paths assign 'a'`,
+            `76:unsafe-initialization:Not all the code paths assign 'a'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -213,8 +336,10 @@ describe('trackCodeFlow', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `18:LINT1003:Not all the code paths assign 'b'`,
-            `27:LINT1003:Not all the code paths assign 'b'`
+            `18:unsafe-initialization:Not all the code paths assign 'b'`,
+            `27:unsafe-initialization:Not all the code paths assign 'b'`,
+            `67:cannot-find-function:Cannot find function 'Bar'`,
+            `67:not-constructable:Cannot use the 'new' keyword here because 'Bar' is not a constructable type`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -231,8 +356,8 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `05:LINT1003:Not all the code paths assign 'a'`,
-            `15:LINT1003:Not all the code paths assign 'b'`
+            `05:unsafe-initialization:Not all the code paths assign 'a'`,
+            `15:unsafe-initialization:Not all the code paths assign 'b'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -249,8 +374,8 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `05:LINT1002:Using iterator variable 'i' outside loop`,
-            `14:LINT1002:Using iterator variable 'a' outside loop`
+            `05:unsafe-iterator-variable:Using iterator variable 'i' outside loop`,
+            `14:unsafe-iterator-variable:Using iterator variable 'a' outside loop`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -266,8 +391,8 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `02:LINT1001:Using uninitialised variable 'err' when this file is included in scope 'source'`,
-            `08:LINT1001:Using uninitialised variable 'err' when this file is included in scope 'source'`
+            `02:uninitialized-variable:Using uninitialised variable 'err' when this file is included in scope 'source'`,
+            `08:uninitialized-variable:Using uninitialised variable 'err' when this file is included in scope 'source'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -284,11 +409,11 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:LINT2001:Unreachable code`,
-            `10:LINT2001:Unreachable code`,
-            `26:LINT2001:Unreachable code`,
-            `41:LINT2001:Unreachable code`,
-            `50:LINT2001:Unreachable code`
+            `04:unreachable-code:Unreachable code`,
+            `10:unreachable-code:Unreachable code`,
+            `26:unreachable-code:Unreachable code`,
+            `41:unreachable-code:Unreachable code`,
+            `50:unreachable-code:Unreachable code`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -306,12 +431,12 @@ describe('trackCodeFlow', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `03:LINT1004:Variable 'A' was previously set with a different casing as 'a'`,
-            `04:LINT1004:Variable 'A' was previously set with a different casing as 'a'`,
-            `05:LINT1004:Variable 'A' was previously set with a different casing as 'a'`,
-            `06:LINT1004:Variable 'A' was previously set with a different casing as 'a'`,
-            `11:LINT1004:Variable 'A' was previously set with a different casing as 'a'`,
-            `15:LINT1004:Variable 'a' was previously set with a different casing as 'A'`
+            `03:case-mismatch:Variable 'A' was previously set with a different casing as 'a'`,
+            `04:case-mismatch:Variable 'A' was previously set with a different casing as 'a'`,
+            `05:case-mismatch:Variable 'A' was previously set with a different casing as 'a'`,
+            `06:case-mismatch:Variable 'A' was previously set with a different casing as 'a'`,
+            `11:case-mismatch:Variable 'A' was previously set with a different casing as 'a'`,
+            `15:case-mismatch:Variable 'a' was previously set with a different casing as 'A'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -323,24 +448,29 @@ describe('trackCodeFlow', () => {
             rules: {
                 'consistent-return': 'error',
                 'unused-variable': 'off'
-            }
-        });
+            },
+            diagnosticFilters: [1142]
+        } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `04:1141:Void sub may not return a value`,
-            `04:LINT2002:Sub as void should not return a value`,
-            `11:1141:Void function may not return a value`,
-            `11:LINT2002:Function as void should not return a value`,
-            `15:1142:Non-void sub must return a value`,
-            `15:LINT2006:Sub should consistently return a value`,
-            `18:LINT2004:Not all code paths return a value`,
-            `22:1142:Non-void function must return a value`,
-            `22:LINT2006:Function should consistently return a value`,
-            `25:LINT2004:Not all code paths return a value`,
-            `32:LINT2004:Not all code paths return a value`,
-            `39:LINT2004:Not all code paths return a value`,
-            `45:LINT2004:Not all code paths return a value`,
-            `49:LINT2004:Not all code paths return a value`
+            `04:return-type-mismatch:Type 'integer' is not compatible with declared return type 'void' '`,
+            `04:return-value-found:Sub as void should not return a value`,
+            `04:unexpected-return-value:Void sub may not return a value`,
+            `11:return-type-mismatch:Type 'string' is not compatible with declared return type 'void' '`,
+            `11:return-value-found:Function as void should not return a value`,
+            `11:unexpected-return-value:Void function may not return a value`,
+            `151:unsafe-return-value:Not all code paths return a value`,
+            `15:missing-return-value:Sub should consistently return a value`,
+            `15:return-type-mismatch:Type 'void' is not compatible with declared return type 'string' '`,
+            `18:return-type-coercion-mismatch:Function has no return statement and will return 'invalid': 'string' cannot be coerced into 'invalid'`,
+            `18:unsafe-return-value:Not all code paths return a value`,
+            `22:missing-return-value:Function should consistently return a value`,
+            `25:unsafe-return-value:Not all code paths return a value`,
+            `32:unsafe-return-value:Not all code paths return a value`,
+            `39:unsafe-return-value:Not all code paths return a value`,
+            `45:return-type-coercion-mismatch:Function has no return statement and will return 'invalid': 'string' cannot be coerced into 'invalid'`,
+            `45:unsafe-return-value:Not all code paths return a value`,
+            `49:unsafe-return-value:Not all code paths return a value`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -355,10 +485,10 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `02:LINT1005:Variable 'a' is set but value is never used`,
-            `08:LINT1005:Variable 'a' is set but value is never used`,
-            `12:LINT1005:Variable 'a' is set but value is never used`,
-            `21:LINT1005:Variable 'd' is set but value is never used`
+            `02:unused-variable:Variable 'a' is set but value is never used`,
+            `08:unused-variable:Variable 'a' is set but value is never used`,
+            `12:unused-variable:Variable 'a' is set but value is never used`,
+            `21:unused-variable:Variable 'd' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -373,8 +503,8 @@ describe('trackCodeFlow', () => {
         });
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `01:LINT1006:Parameter 'unusedParam' is set but value is never used`,
-            `06:LINT1006:Parameter 'hey' is set but value is never used`
+            `01:unused-parameter:Parameter 'unusedParam' is set but value is never used`,
+            `06:unused-parameter:Parameter 'hey' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -387,11 +517,11 @@ describe('trackCodeFlow', () => {
                 'unused-variable': 'error'
             },
             globals: ['a'],
-            diagnosticFilters: [1001]
+            diagnosticFilters: [1001, 1141]
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `14:LINT1005:Variable 'a' is set but value is never used`
+            `14:unused-variable:Variable 'a' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -420,7 +550,7 @@ describe('trackCodeFlow', () => {
             });
             const actual = fmtDiagnostics(diagnostics);
             const expected = [
-                `11:LINT1005:Variable 'A' is set but value is never used`
+                `11:unused-variable:Variable 'A' is set but value is never used`
             ];
             expect(actual).deep.equal(expected);
 

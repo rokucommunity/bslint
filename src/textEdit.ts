@@ -1,6 +1,6 @@
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs-extra';
-import { BscFile, BsDiagnostic, OnGetCodeActionsEvent, Position, Range } from 'brighterscript';
+import { BscFile, BsDiagnostic, ProvideCodeActionsEvent, Position, Range } from 'brighterscript';
 import { CodeActionKind, codeActionUtil } from 'brighterscript/dist/CodeActionUtil';
 
 interface LintCodeAction {
@@ -124,11 +124,11 @@ export async function applyFixes(fix: boolean, pendingFixes: Map<string, TextEdi
     }
 }
 
-export function addFixesToEvent(event: OnGetCodeActionsEvent) {
+export function addFixesToEvent(event: ProvideCodeActionsEvent) {
     return (file: BscFile, entry: ChangeEntry) => {
         const changes: LintCodeAction[] = entry.changes.map(change => ({
             type: 'replace',
-            filePath: file.pathAbsolute,
+            filePath: file.srcPath,
             range: change.range,
             newText: change.text
         }));
@@ -143,10 +143,10 @@ export function addFixesToEvent(event: OnGetCodeActionsEvent) {
     };
 }
 
-export function addFixAllToEvent(event: OnGetCodeActionsEvent, entries: ChangeEntry[]) {
+export function addFixAllToEvent(event: ProvideCodeActionsEvent, entries: ChangeEntry[]) {
     const changes: LintCodeAction[] = entries.flatMap(entry => entry.changes.map(change => ({
         type: 'replace',
-        filePath: entry.diagnostic.file.pathAbsolute,
+        filePath: entry.diagnostic.location.uri,
         range: change.range,
         newText: change.text
     })));
