@@ -1,6 +1,6 @@
 import { DiagnosticSeverity, FunctionExpression, IfStatement, Location, WhileStatement } from 'brighterscript';
 
-export enum CodeStyleError {
+export enum CodeStyleLegacyError {
     InlineIfFound = 'LINT3001',
     InlineIfThenMissing = 'LINT3002',
     InlineIfThenFound = 'LINT3003',
@@ -32,6 +32,39 @@ export enum CodeStyleError {
     ForTerminatorNextExpected = 'LINT3028'
 }
 
+export enum CodeStyleError {
+    InlineIfFound = 'inline-if-found',
+    InlineIfThenMissing = 'missing-inline-if-then',
+    InlineIfThenFound = 'inline-if-then-found',
+    BlockIfThenMissing = 'missing-block-if-then',
+    BlockIfThenFound = 'block-if-then-found',
+    ConditionGroupMissing = 'missing-condition-group',
+    ConditionGroupFound = 'condition-group-found',
+    SubKeywordExpected = 'missing-sub-keyword',
+    FunctionKeywordExpected = 'missing-function-keyword',
+    ReturnTypeAnnotation = 'missing-return-type',
+    TypeAnnotation = 'missing-type',
+    NoPrint = 'no-print',
+    AACommaFound = 'aa-comma-found',
+    AACommaMissing = 'missing-aa-comma',
+    NoTodo = 'no-todo',
+    NoStop = 'no-stop',
+    EolLastMissing = 'missing-eol-last',
+    EolLastFound = 'eol-last-found',
+    ColorFormat = 'color-format',
+    ColorCase = 'color-case',
+    ColorAlpha = 'color-alpha',
+    ColorAlphaDefaults = 'color-alpha-defaults',
+    ColorCertCompliant = 'color-cert-compliant',
+    NoAssocarrayFieldType = 'no-assocarray-field-type',
+    NoArrayFieldType = 'no-array-field-type',
+    NoRegexDuplicates = 'no-regex-duplicates',
+    NameShadowing = 'name-shadowing',
+    TypeReassignment = 'type-reassignment',
+    ForTerminatorEndForExpected = 'missing-end-for',
+    ForTerminatorNextExpected = 'missing-next'
+}
+
 const CS = 'Code style:';
 const ST = 'Strictness:';
 
@@ -39,6 +72,7 @@ export const messages = {
     addBlockIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.BlockIfThenMissing,
+        legacyCode: CodeStyleLegacyError.BlockIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
         location: stat.tokens.if.location,
@@ -47,6 +81,7 @@ export const messages = {
     removeBlockIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.BlockIfThenFound,
+        legacyCode: CodeStyleLegacyError.BlockIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
         location: stat.tokens.then.location,
@@ -55,6 +90,7 @@ export const messages = {
     inlineIfNotAllowed: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfFound,
+        legacyCode: CodeStyleLegacyError.InlineIfFound,
         source: 'bslint',
         message: `${CS} no inline if statement allowed`,
         location
@@ -62,6 +98,7 @@ export const messages = {
     addInlineIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfThenMissing,
+        legacyCode: CodeStyleLegacyError.InlineIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
         location: stat.tokens.if.location,
@@ -70,6 +107,7 @@ export const messages = {
     removeInlineIfThenKeyword: (stat: IfStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfThenFound,
+        legacyCode: CodeStyleLegacyError.InlineIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
         location: stat.tokens.then.location,
@@ -78,6 +116,7 @@ export const messages = {
     addParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupMissing,
+        legacyCode: CodeStyleLegacyError.ConditionGroupMissing,
         source: 'bslint',
         message: `${CS} add parenthesis around condition`,
         location: stat.condition.location,
@@ -86,6 +125,7 @@ export const messages = {
     removeParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ConditionGroupFound,
+        legacyCode: CodeStyleLegacyError.ConditionGroupFound,
         source: 'bslint',
         message: `${CS} remove parenthesis around condition`,
         location: stat.condition.location,
@@ -94,6 +134,7 @@ export const messages = {
     expectedSubKeyword: (fun: FunctionExpression, reason: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.SubKeywordExpected,
+        legacyCode: CodeStyleLegacyError.SubKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'sub' keyword ${reason}`,
         location: fun.tokens.functionType.location,
@@ -102,6 +143,7 @@ export const messages = {
     expectedFunctionKeyword: (fun: FunctionExpression, reason: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.FunctionKeywordExpected,
+        legacyCode: CodeStyleLegacyError.FunctionKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'function' keyword ${reason}`,
         location: fun.tokens.functionType.location,
@@ -110,6 +152,7 @@ export const messages = {
     expectedReturnTypeAnnotation: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ReturnTypeAnnotation,
+        legacyCode: CodeStyleLegacyError.ReturnTypeAnnotation,
         source: 'bslint',
         message: `${ST} function should declare the return type`,
         location
@@ -117,6 +160,7 @@ export const messages = {
     expectedTypeAnnotation: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.TypeAnnotation,
+        legacyCode: CodeStyleLegacyError.TypeAnnotation,
         source: 'bslint',
         message: `${ST} type annotation required`,
         location
@@ -124,6 +168,7 @@ export const messages = {
     noPrint: (location: Location, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoPrint,
+        legacyCode: CodeStyleLegacyError.NoPrint,
         source: 'bslint',
         message: `${CS} Avoid using direct Print statements`,
         location
@@ -131,6 +176,7 @@ export const messages = {
     noTodo: (location: Location, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoTodo,
+        legacyCode: CodeStyleLegacyError.NoTodo,
         source: 'bslint',
         message: `${CS} Avoid using TODO comments`,
         location
@@ -138,6 +184,7 @@ export const messages = {
     noStop: (location: Location, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoStop,
+        legacyCode: CodeStyleLegacyError.NoStop,
         source: 'bslint',
         message: `${CS} STOP statements are not allowed in published applications`,
         location
@@ -145,6 +192,7 @@ export const messages = {
     removeAAComma: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.AACommaFound,
+        legacyCode: CodeStyleLegacyError.AACommaFound,
         source: 'bslint',
         message: `Remove optional comma`,
         location
@@ -152,6 +200,7 @@ export const messages = {
     addAAComma: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.AACommaMissing,
+        legacyCode: CodeStyleLegacyError.AACommaMissing,
         source: 'bslint',
         message: `Add comma after the expression`,
         location
@@ -159,6 +208,7 @@ export const messages = {
     addEolLast: (location: Location, preferredEol: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.EolLastMissing,
+        legacyCode: CodeStyleLegacyError.EolLastMissing,
         source: 'bslint',
         message: `${CS} File should end with a newline`,
         location,
@@ -167,6 +217,7 @@ export const messages = {
     removeEolLast: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.EolLastFound,
+        legacyCode: CodeStyleLegacyError.EolLastFound,
         source: 'bslint',
         message: `${CS} File should not end with a newline`,
         location
@@ -174,6 +225,7 @@ export const messages = {
     expectedColorFormat: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorFormat,
+        legacyCode: CodeStyleLegacyError.ColorFormat,
         source: 'bslint',
         message: `${CS} File should follow color format`,
         location
@@ -181,6 +233,7 @@ export const messages = {
     expectedColorCase: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorCase,
+        legacyCode: CodeStyleLegacyError.ColorCase,
         source: 'bslint',
         message: `${CS} File should follow color case`,
         location
@@ -188,6 +241,7 @@ export const messages = {
     expectedColorAlpha: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorAlpha,
+        legacyCode: CodeStyleLegacyError.ColorAlpha,
         source: 'bslint',
         message: `${CS} File should follow color alpha rule`,
         location
@@ -195,6 +249,7 @@ export const messages = {
     expectedColorAlphaDefaults: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorAlphaDefaults,
+        legacyCode: CodeStyleLegacyError.ColorAlphaDefaults,
         source: 'bslint',
         message: `${CS} File should follow color alpha defaults rule`,
         location
@@ -202,6 +257,7 @@ export const messages = {
     colorCertCompliance: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorCertCompliant,
+        legacyCode: CodeStyleLegacyError.ColorCertCompliant,
         source: 'bslint',
         message: `${CS} File should follow Roku broadcast safe color cert requirement`,
         location
@@ -209,6 +265,7 @@ export const messages = {
     noAssocarrayFieldType: (location: Location, severity: DiagnosticSeverity) => ({
         message: `Avoid using field type 'assocarray'`,
         code: CodeStyleError.NoAssocarrayFieldType,
+        legacyCode: CodeStyleLegacyError.NoAssocarrayFieldType,
         severity: severity,
         source: 'bslint',
         location
@@ -216,6 +273,7 @@ export const messages = {
     noArrayFieldType: (location: Location, severity: DiagnosticSeverity) => ({
         message: `Avoid using field type 'array'`,
         code: CodeStyleError.NoArrayFieldType,
+        legacyCode: CodeStyleLegacyError.NoArrayFieldType,
         severity: severity,
         source: 'bslint',
         location
@@ -223,12 +281,13 @@ export const messages = {
     nameShadowing: (thisThingKind: string, thatThingKind: string, thatThingName: string, severity: DiagnosticSeverity) => ({
         message: `${ST} ${thisThingKind} has same name as ${thatThingKind ? thatThingKind + ' ' : ''}'${thatThingName}'`,
         code: CodeStyleError.NameShadowing,
+        legacyCode: CodeStyleLegacyError.NameShadowing,
         severity: severity,
         source: 'bslint'
     }),
     typeReassignment: (location: Location, varName: string, previousType: string, newType: string, severity: DiagnosticSeverity) => ({
         message: `${ST} Reassignment of the type of '${varName}' from ${previousType} to ${newType}`,
-        code: CodeStyleError.NameShadowing,
+        code: CodeStyleError.TypeReassignment,
         severity: severity,
         source: 'bslint',
         location
@@ -236,6 +295,7 @@ export const messages = {
     noIdenticalRegexInLoop: (location: Location, severity: DiagnosticSeverity) => ({
         message: 'Avoid redeclaring identical regular expressions in a loop',
         code: CodeStyleError.NoRegexDuplicates,
+        legacyCode: CodeStyleLegacyError.NoRegexDuplicates,
         severity: severity,
         source: 'bslint',
         location
@@ -243,6 +303,7 @@ export const messages = {
     noRegexRedeclaring: (location: Location, severity: DiagnosticSeverity) => ({
         message: 'Avoid redeclaring identical regular expressions',
         code: CodeStyleError.NoRegexDuplicates,
+        legacyCode: CodeStyleLegacyError.NoRegexDuplicates,
         severity: severity,
         source: 'bslint',
         location
@@ -250,6 +311,7 @@ export const messages = {
     expectedEndForTerminator: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ForTerminatorEndForExpected,
+        legacyCode: CodeStyleLegacyError.ForTerminatorEndForExpected,
         source: 'bslint',
         message: `${CS} expected 'end for' terminator`,
         location
@@ -257,6 +319,7 @@ export const messages = {
     expectedNextTerminator: (location: Location) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ForTerminatorNextExpected,
+        legacyCode: CodeStyleLegacyError.ForTerminatorNextExpected,
         source: 'bslint',
         message: `${CS} expected 'next' terminator`,
         location

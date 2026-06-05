@@ -12,6 +12,16 @@ interface ThrowInfo {
 }
 
 enum ReturnLintError {
+    UnreachableCode = 'unreachable-code',
+    ReturnValueUnexpected = 'return-value-found',
+    ReturnValueExpected = 'missing-return-value',
+    UnsafeReturnValue = 'unsafe-return-value',
+    ReturnValueRequired = 'return-value-required',
+    ReturnValueMissing = 'missing-return-value',
+    LastReturnValueMissing = 'missing-last-return-value'
+}
+
+enum ReturnLintLegacyError {
     UnreachableCode = 'LINT2001',
     ReturnValueUnexpected = 'LINT2002',
     ReturnValueExpected = 'LINT2003',
@@ -38,6 +48,7 @@ export function createReturnLinter(
             diagnostics.push({
                 severity: severity.unreachableCode,
                 code: ReturnLintError.UnreachableCode,
+                legacyCode: ReturnLintLegacyError.UnreachableCode,
                 message: 'Unreachable code',
                 location: curr.stat.location,
                 tags: [DiagnosticTag.Unnecessary]
@@ -108,6 +119,7 @@ export function createReturnLinter(
                     diagnostics.push({
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueUnexpected,
+                        legacyCode: ReturnLintLegacyError.ReturnValueUnexpected,
                         message: `${kind} as void should not return a value`,
                         location: r.stat?.location ?? funLocation
                     });
@@ -129,6 +141,7 @@ export function createReturnLinter(
             diagnostics.push({
                 severity: consistentReturn,
                 code: ReturnLintError.UnsafeReturnValue,
+                legacyCode: ReturnLintLegacyError.ReturnValueRequired,
                 message: 'Not all code paths return a value',
                 location: funLocation
             });
@@ -142,6 +155,7 @@ export function createReturnLinter(
                     diagnostics.push({
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueMissing,
+                        legacyCode: ReturnLintLegacyError.ReturnValueMissing,
                         message: `${kind} should consistently return a value`,
                         location: r.stat.location || funLocation
                     });
