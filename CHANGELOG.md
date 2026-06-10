@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.44](https://github.com/rokucommunity/bslint/compare/0.8.43...v0.8.44) - 2026-06-10
+### Added
+ - Add security-audit-required job to security-audit.yml ([#189](https://github.com/rokucommunity/bslint/pull/189))
+### Changed
+ - Update minimum audit threshold ([#191](https://github.com/rokucommunity/bslint/pull/191))
+ - Accept GHSA-w5hq-g745-h8pq (uuid <11.1.1) advisory ([#190](https://github.com/rokucommunity/bslint/pull/190))
+ - Security enhancements ([#186](https://github.com/rokucommunity/bslint/pull/186))
+ - upgrade to [brighterscript@0.72.5](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0725---2026-06-10). Notable changes since 0.72.1:
+     - Add parameter name inlay hints ([#1703](https://github.com/rokucommunity/brighterscript/pull/1703))
+     - Update minimum audit threshold ([#1723](https://github.com/rokucommunity/brighterscript/pull/1723))
+     - Accept GHSA-w5hq-g745-h8pq (uuid <11.1.1) advisory ([#1722](https://github.com/rokucommunity/brighterscript/pull/1722))
+     - Add security-audit-required gate job to security-audit workflow ([#1720](https://github.com/rokucommunity/brighterscript/pull/1720))
+     - Security Audit workflow ([#1718](https://github.com/rokucommunity/brighterscript/pull/1718))
+     - Security enhancements ([#1714](https://github.com/rokucommunity/brighterscript/pull/1714))
+
+
+
 ## [0.8.43](https://github.com/rokucommunity/bslint/compare/0.8.42...v0.8.43) - 2026-05-11
 ### Added
  - Add for-terminator-style rule ([#182](https://github.com/rokucommunity/bslint/pull/182))
