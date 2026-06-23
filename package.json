@@ -14,7 +14,7 @@
     "test:nocover": "mocha",
     "test:watch": "npm run test -- --watch --watch-files \"src/**/*.ts,test/**/*.brs\"",
     "watch": "tsc --watch",
-    "audit": "npm audit || audit-ci --config ./audit-ci.jsonc",
+    "audit": "npm audit --audit-level=high || audit-ci --config ./audit-ci.jsonc",
     "package": "npm run build && npm pack"
   },
   "files": [
