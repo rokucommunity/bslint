@@ -6,13 +6,15 @@ import { createContext } from '../../util';
 import CheckUsage, { UnusedCode } from './index';
 
 describe('checkUsage CreateObject usage', () => {
-    it('counts only roSGNode CreateObject component usage', async () => {
+    it('counts only roSGNode usage without crashing on incomplete CreateObject calls', async () => {
         const linter = new Linter();
         linter.builder.plugins.add({
             name: 'test',
             afterProgramCreate: (program: Program) => {
                 program.setFile('source/main.brs', `
                     sub main()
+                        emptyObject = CreateObject()
+                        regex = CreateObject("roRegex")
                         invalidNode = CreateObject("Parent")
                         validNode = CreateObject("roSGNode", "Used")
                         print "Unrelated"
@@ -36,7 +38,7 @@ describe('checkUsage CreateObject usage', () => {
             rootDir: 'test/project1',
             files: [],
             rules: {},
-            diagnosticFilters: [1129]
+            diagnosticFilters: [1002, 1129, 1130]
         } as any);
 
         expectDiagnostics(diagnostics, [
