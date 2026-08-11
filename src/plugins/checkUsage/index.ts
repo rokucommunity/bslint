@@ -1,4 +1,4 @@
-import { BscFile, CallableContainerMap, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Program, Range, Scope, TokenKind, WalkMode, XmlFile } from 'brighterscript';
+import { BscFile, CallableContainerMap, createVisitor, DiagnosticSeverity, isBrsFile, isLiteralExpression, isVariableExpression, isXmlFile, Program, Range, Scope, TokenKind, WalkMode, XmlFile } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 
@@ -156,22 +156,28 @@ export default class CheckUsage {
             if (pkgPath === 'source/main.brs' || pkgPath === 'source/main.bs') {
                 this.main = fv;
             }
-            // find strings that look like referring to component names
+            // find component names passed to CreateObject("roSGNode", componentName)
             file.parser.references.functionExpressions.forEach(fun => {
                 fun.body.walk(createVisitor({
-                    LiteralExpression: (e) => {
-                        const { kind } = e.token;
-                        if (kind === TokenKind.StringLiteral) {
-                            const { text } = e.token;
-                            if (text !== '""') {
-                                const name = text.toLowerCase();
-                                if (map.has(name)) {
-                                    fv.edges.push({
-                                        name,
-                                        range: e.token.range,
-                                        file
-                                    });
-                                }
+                    CallExpression: (e) => {
+                        const componentType = e.args[0];
+                        const componentName = e.args[1];
+                        if (
+                            isVariableExpression(e.callee) &&
+                            e.callee.name.text.toLowerCase() === 'createobject' &&
+                            isLiteralExpression(componentType) &&
+                            componentType.token.kind === TokenKind.StringLiteral &&
+                            componentType.token.text.toLowerCase() === '"rosgnode"' &&
+                            isLiteralExpression(componentName) &&
+                            componentName.token.kind === TokenKind.StringLiteral
+                        ) {
+                            const name = componentName.token.text.toLowerCase();
+                            if (map.has(name)) {
+                                fv.edges.push({
+                                    name,
+                                    range: componentName.token.range,
+                                    file
+                                });
                             }
                         }
                     }
