@@ -63,7 +63,13 @@
     "brighterscript": ">= 0.59.0 < 1"
   },
   "overrides": {
-    "serialize-javascript": "^7.0.5"
+    "serialize-javascript": "^7.0.5",
+    "brace-expansion": "^2.1.4",
+    "js-yaml": "^4.3.1",
+    "fast-uri": "^3.1.5",
+    "ip-address": "^10.4.0",
+    "@babel/core": "^7.29.7",
+    "qs": "^6.15.3"
   },
   "mocha": {
     "config": ".mocharc.cjs"
