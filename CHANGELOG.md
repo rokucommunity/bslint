@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.45](https://github.com/rokucommunity/bslint/compare/0.8.44...v0.8.45) - 2026-09-02
+### Changed
+ - Security enhancements ([#196](https://github.com/rokucommunity/bslint/pull/196), [#198](https://github.com/rokucommunity/bslint/pull/198))
+ - upgrade to [brighterscript@0.73.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0731---2026-09-02). Notable changes since 0.72.5:
+     - Report mismatched XML element pairs ([#1746](https://github.com/rokucommunity/brighterscript/pull/1746))
+     - Add warning for function names that exceed the truncation limit ([#1777](https://github.com/rokucommunity/brighterscript/pull/1777))
+     - Validate eval/rsg_version against firmware lifecycle ([#1698](https://github.com/rokucommunity/brighterscript/pull/1698))
+     - Remove more prod deps: (drop array-flat-polyfill/readline, consolidate minimatch into micromatch) ([#1737](https://github.com/rokucommunity/brighterscript/pull/1737))
+### Fixed
+ - fix: restrict CreateObject component usage detection ([#197](https://github.com/rokucommunity/bslint/pull/197))
+
+
+
 ## [0.8.44](https://github.com/rokucommunity/bslint/compare/0.8.43...v0.8.44) - 2026-06-10
 ### Changed
  - Security enhancements ([#186](https://github.com/rokucommunity/bslint/pull/186), [#191](https://github.com/rokucommunity/bslint/pull/191), [#190](https://github.com/rokucommunity/bslint/pull/190), [#189](https://github.com/rokucommunity/bslint/pull/189))
