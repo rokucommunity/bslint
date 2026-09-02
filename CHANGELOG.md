@@ -6,6 +6,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.45](https://github.com/rokucommunity/bslint/compare/0.8.44...v0.8.45) - 2026-09-02
+### Changed
+ - Security enhancements ([#198](https://github.com/rokucommunity/bslint/pull/198))
+ - Security enhancements ([#196](https://github.com/rokucommunity/bslint/pull/196))
+ - upgrade to [brighterscript@0.73.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0731---2026-09-02). Notable changes since 0.72.5:
+     - Security enhancements ([#1782](https://github.com/rokucommunity/brighterscript/pull/1782))
+     - Keep synthesized Tokens on the lexer's hidden class ([#1781](https://github.com/rokucommunity/brighterscript/pull/1781))
+     - Report mismatched XML element pairs ([#1746](https://github.com/rokucommunity/brighterscript/pull/1746))
+     - Add <field> and <function> completions in xml interfaces ([#1748](https://github.com/rokucommunity/brighterscript/pull/1748))
+     - Cap LSP worker thread pool to fix memory scaling with project count ([#1776](https://github.com/rokucommunity/brighterscript/pull/1776))
+     - Add warning for function names that exceed the truncation limit ([#1777](https://github.com/rokucommunity/brighterscript/pull/1777))
+     - Security enhancements ([#1775](https://github.com/rokucommunity/brighterscript/pull/1775))
+     - Bump brace-expansion in /benchmarks ([#1774](https://github.com/rokucommunity/brighterscript/pull/1774))
+     - Security enhancements ([#1773](https://github.com/rokucommunity/brighterscript/pull/1773))
+     - Bump qs from 6.14.2 to 6.15.3 ([#1766](https://github.com/rokucommunity/brighterscript/pull/1766))
+     - Bump postcss from 8.5.10 to 8.5.25 ([#1764](https://github.com/rokucommunity/brighterscript/pull/1764))
+     - Bump fast-uri from 3.1.2 to 3.1.4 ([#1763](https://github.com/rokucommunity/brighterscript/pull/1763))
+     - chore: Simplify create-vsix inputs and improve branch resolution ([#1772](https://github.com/rokucommunity/brighterscript/pull/1772))
+     - chore: Give fork PRs a clear create-vsix failure message ([#1770](https://github.com/rokucommunity/brighterscript/pull/1770))
+     - Fix compile break against roku-deploy 3.18 ([#1752](https://github.com/rokucommunity/brighterscript/pull/1752))
+     - Add SceneGraph XML element and attribute completions ([#1741](https://github.com/rokucommunity/brighterscript/pull/1741))
+     - chore: Update create-vsix to support multi-vsix and shared bot logic ([#1740](https://github.com/rokucommunity/brighterscript/pull/1740))
+     - Validate eval/rsg_version against firmware lifecycle ([#1698](https://github.com/rokucommunity/brighterscript/pull/1698))
+     - Remove more prod deps: (drop array-flat-polyfill/readline, consolidate minimatch into micromatch) ([#1737](https://github.com/rokucommunity/brighterscript/pull/1737))
+     - Replace single-use deps with util/formatUtils helpers ([#1736](https://github.com/rokucommunity/brighterscript/pull/1736))
+     - chore: remove dead production dependencies ([#1735](https://github.com/rokucommunity/brighterscript/pull/1735))
+     - Bump form-data from 2.5.5 to 2.5.6 ([#1733](https://github.com/rokucommunity/brighterscript/pull/1733))
+### Fixed
+ - fix: restrict CreateObject component usage detection ([#197](https://github.com/rokucommunity/bslint/pull/197))
+
+
+
 ## [0.8.44](https://github.com/rokucommunity/bslint/compare/0.8.43...v0.8.44) - 2026-06-10
 ### Changed
  - Security enhancements ([#186](https://github.com/rokucommunity/bslint/pull/186), [#191](https://github.com/rokucommunity/bslint/pull/191), [#190](https://github.com/rokucommunity/bslint/pull/190), [#189](https://github.com/rokucommunity/bslint/pull/189))
