@@ -28,7 +28,8 @@ export enum CodeStyleError {
     NoArrayFieldType = 'LINT3025',
     NoRegexDuplicates = 'LINT3026',
     ForTerminatorEndForExpected = 'LINT3027',
-    ForTerminatorNextExpected = 'LINT3028'
+    ForTerminatorNextExpected = 'LINT3028',
+    UnsortedImport = 'LINT3029'
 }
 
 const CS = 'Code style:';
@@ -245,6 +246,13 @@ export const messages = {
         code: CodeStyleError.ForTerminatorNextExpected,
         source: 'bslint',
         message: `${CS} expected 'next' terminator`,
+        range
+    }),
+    unsortedImport: (range: Range, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.UnsortedImport,
+        source: 'bslint',
+        message: `${CS} imports should be sorted alphabetically within their group`,
         range
     })
 };
