@@ -26,7 +26,8 @@ import {
     isFunctionExpression,
     AstNode,
     Expression,
-    Range
+    Range,
+    ImportStatement
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
@@ -98,8 +99,9 @@ export default class CodeStyle {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
+        const validateSortedImports = sortedImports !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateNoRegexDuplicates = noRegexDuplicates !== DiagnosticSeverity.Hint;
@@ -161,6 +163,10 @@ export default class CodeStyle {
 
         if (validateNoRegexDuplicates) {
             this.validateRegex(file, diagnostics, noRegexDuplicates);
+        }
+
+        if (validateSortedImports) {
+            this.validateSortedImports(file, diagnostics, sortedImports);
         }
 
         file.ast.walk(createVisitor({
@@ -291,6 +297,38 @@ export default class CodeStyle {
                     } else if (this.isLoop(parentStatement)) {
                         diagnostics.push(messages.noIdenticalRegexInLoop(callExpression.range, severity));
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Imports are split into groups by blank lines; each group must be sorted alphabetically on its own.
+     */
+    validateSortedImports(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        const imports = file.parser.references.importStatements;
+
+        const groups: ImportStatement[][] = [];
+        let currentGroup: ImportStatement[] = [];
+        let previous: ImportStatement | undefined;
+        for (const stat of imports) {
+            if (previous && stat.range.start.line - previous.range.end.line > 1) {
+                groups.push(currentGroup);
+                currentGroup = [];
+            }
+            currentGroup.push(stat);
+            previous = stat;
+        }
+        if (currentGroup.length > 0) {
+            groups.push(currentGroup);
+        }
+
+        for (const group of groups) {
+            for (let i = 1; i < group.length; i++) {
+                const previousPath = group[i - 1].filePath?.toLowerCase() ?? '';
+                const currentPath = group[i].filePath?.toLowerCase() ?? '';
+                if (currentPath < previousPath) {
+                    diagnostics.push(messages.unsortedImport(group[i].range, severity));
                 }
             }
         }
