@@ -39,7 +39,11 @@ describe('checkUsage CreateObject usage', () => {
             rootDir: 'test/project1',
             files: [],
             rules: {},
-            diagnosticFilters: [1002, 1129, 1130]
+            diagnosticFilters: [
+                'incorrect-argument-count',
+                'incorrect-createobject-argument-count',
+                'unknown-brightscript-component'
+            ]
         } as any);
 
         expectDiagnostics(diagnostics, [

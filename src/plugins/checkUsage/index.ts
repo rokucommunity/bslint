@@ -179,26 +179,9 @@ export default class CheckUsage implements Plugin {
             });
 
 
-            // find strings that look like referring to component names
+            // find component names passed to CreateObject("roSGNode", componentName)
             for (const func of functionExpressions) {
                 func.body.walk(createVisitor({
-                    LiteralExpression: (e) => {
-                        const { kind } = e.tokens.value;
-                        if (kind === TokenKind.StringLiteral) {
-                            const { text } = e.tokens.value;
-                            if (text !== '""') {
-                                const name = text.toLowerCase();
-                                if (map.has(name)) {
-                                    fv.edges.push({
-                                        name,
-                                        range: e.tokens.value.location.range,
-                                        file
-                                    });
-                                }
-                            }
-                        }
-                    },
-                    // find component names passed to CreateObject("roSGNode", componentName)
                     CallExpression: (e) => {
                         const componentType = e.args[0];
                         const componentName = e.args[1];
