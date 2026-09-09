@@ -1,0 +1,11 @@
+' this group of 3 is sorted together
+import "pkg:/source/imports/a.bs"
+import "pkg:/source/imports/b.bs"
+import "pkg:/source/imports/c.bs"
+
+' this group of 2 is sorted together
+import "pkg:/source/imports/d.bs"
+import "pkg:/source/imports/e.bs"
+
+sub main()
+end sub

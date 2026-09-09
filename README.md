@@ -143,6 +143,7 @@ Default rules:
         "anon-function-style": "auto",
         "aa-comma-style": "no-dangling",
         "no-print": "off",
+        "sorted-imports": "off",
         "no-todo": "off",
         "todo-pattern": "TODO|todo|FIXME",
         "no-stop": "warn",
@@ -209,6 +210,8 @@ Default rules:
     - `off`: do not validate
 
 - `no-print`: prevent usage of `print` statements in code (`error | warn | info | off`)
+
+- `sorted-imports`: enforce that `import` statements are sorted alphabetically. A blank line between imports starts a new group, sorted independently of the groups around it (`error | warn | info | off`, **default: `off`**)
 
 - `no-todo`: prevent usage of `todo` comments in code (`error | warn | info | off`)
 

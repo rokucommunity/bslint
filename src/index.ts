@@ -42,6 +42,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'aa-comma-style'?: RuleAAComma;
         'type-annotations'?: RuleTypeAnnotations;
         'no-print'?: RuleSeverity;
+        'sorted-imports'?: RuleSeverity;
         'no-todo'?: RuleSeverity;
         // Will be transformed to RegExp type when program context is created.
         'todo-pattern'?: string;
@@ -83,6 +84,7 @@ export interface BsLintRules {
     aaCommaStyle: RuleAAComma;
     typeAnnotations: RuleTypeAnnotations;
     noPrint: BsLintSeverity;
+    sortedImports: BsLintSeverity;
     noTodo: BsLintSeverity;
     noStop: BsLintSeverity;
     eolLast: RuleEolLast;

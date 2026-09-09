@@ -38,7 +38,9 @@ import {
     isVariableExpression,
     isWhileStatement,
     isCallExpression,
-    ValidateScopeEvent
+    ValidateScopeEvent,
+    ImportStatement,
+    isImportStatement
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
@@ -112,8 +114,9 @@ export default class CodeStyle implements Plugin {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
+        const validateSortedImports = sortedImports !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateNoRegexDuplicates = noRegexDuplicates !== DiagnosticSeverity.Hint;
@@ -174,6 +177,10 @@ export default class CodeStyle implements Plugin {
 
         if (validateNoRegexDuplicates) {
             this.validateRegex(file, diagnostics, noRegexDuplicates);
+        }
+
+        if (validateSortedImports) {
+            this.validateSortedImports(file, diagnostics, sortedImports);
         }
 
         file.ast.walk(createVisitor({
@@ -349,6 +356,39 @@ export default class CodeStyle implements Plugin {
             }
         }
     }
+
+    /**
+      * Imports are split into groups by blank lines; each group must be sorted alphabetically on its own.
+      */
+    validateSortedImports(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        const imports = file.parser.ast.findChildren<ImportStatement>(isImportStatement);
+
+        const groups: ImportStatement[][] = [];
+        let currentGroup: ImportStatement[] = [];
+        let previous: ImportStatement | undefined;
+        for (const stat of imports) {
+            if (previous && stat.location.range.start.line - previous.location.range.end.line > 1) {
+                groups.push(currentGroup);
+                currentGroup = [];
+            }
+            currentGroup.push(stat);
+            previous = stat;
+        }
+        if (currentGroup.length > 0) {
+            groups.push(currentGroup);
+        }
+
+        for (const group of groups) {
+            for (let i = 1; i < group.length; i++) {
+                const previousPath = group[i - 1].filePath?.toLowerCase() ?? '';
+                const currentPath = group[i].filePath?.toLowerCase() ?? '';
+                if (currentPath < previousPath) {
+                    diagnostics.push(messages.unsortedImport(group[i].location, severity));
+                }
+            }
+        }
+    }
+
 
     afterValidateFile(event: AfterValidateFileEvent) {
         const { file } = event;

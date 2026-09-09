@@ -29,7 +29,8 @@ export enum CodeStyleLegacyError {
     NoRegexDuplicates = 'LINT3026',
     NameShadowing = 'LINT3127',
     ForTerminatorEndForExpected = 'LINT3027',
-    ForTerminatorNextExpected = 'LINT3028'
+    ForTerminatorNextExpected = 'LINT3028',
+    UnsortedImport = 'LINT3029'
 }
 
 export enum CodeStyleError {
@@ -62,7 +63,8 @@ export enum CodeStyleError {
     NameShadowing = 'name-shadowing',
     TypeReassignment = 'type-reassignment',
     ForTerminatorEndForExpected = 'missing-end-for',
-    ForTerminatorNextExpected = 'missing-next'
+    ForTerminatorNextExpected = 'missing-next',
+    UnsortedImport = 'unsorted-import'
 }
 
 const CS = 'Code style:';
@@ -322,6 +324,14 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.ForTerminatorNextExpected,
         source: 'bslint',
         message: `${CS} expected 'next' terminator`,
+        location
+    }),
+    unsortedImport: (location: Location, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.UnsortedImport,
+        legacyCode: CodeStyleLegacyError.UnsortedImport,
+        source: 'bslint',
+        message: `${CS} imports should be sorted alphabetically within their group`,
         location
     })
 };

@@ -1,4 +1,4 @@
-import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util } from 'brighterscript';
+import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util, isVariableExpression, isLiteralExpression } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 import { BsLintDiagnosticContext } from '../../Linter';
@@ -27,6 +27,7 @@ export default class CheckUsage implements Plugin {
 
     constructor(_: PluginContext) {
         // known SG components
+        // TODO: get list of built-in components from brighterscript
         const walked = new Set<string>();
         [
             'animation', 'busyspinner', 'buttongroup', 'channelstore', 'checklist', 'colorfieldinterpolator',
@@ -116,7 +117,7 @@ export default class CheckUsage implements Plugin {
 
     private functionExpressionCache = new Cache<BscFile, FunctionExpression[]>();
 
-    beforeProgramValidate() {
+    beforeValidateProgram() {
         this.functionExpressionCache.clear();
     }
 
@@ -196,6 +197,30 @@ export default class CheckUsage implements Plugin {
                                 }
                             }
                         }
+                    },
+                    // find component names passed to CreateObject("roSGNode", componentName)
+                    CallExpression: (e) => {
+                        const componentType = e.args[0];
+                        const componentName = e.args[1];
+                        if (
+                            isVariableExpression(e.callee) &&
+                            e.callee.tokens.name.text.toLowerCase() === 'createobject' &&
+                            isLiteralExpression(componentType) &&
+                            componentType.tokens.value.kind === TokenKind.StringLiteral &&
+                            componentType.tokens.value.text.toLowerCase() === '"rosgnode"' &&
+                            isLiteralExpression(componentName) &&
+                            componentName.tokens.value.kind === TokenKind.StringLiteral
+                        ) {
+                            const name = componentName.tokens.value.text.toLowerCase();
+                            if (map.has(name)) {
+                                fv.edges.push({
+                                    name,
+                                    range: componentName.tokens.value.location.range,
+                                    file
+                                });
+                            }
+                        }
+
                     }
                 }), { walkMode: WalkMode.visitExpressions });
             }
