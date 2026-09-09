@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.46](https://github.com/rokucommunity/bslint/compare/0.8.45...v0.8.46) - 2026-09-09
+### Added
+ - Add sorted-imports rule ([#202](https://github.com/rokucommunity/bslint/pull/202))
+### Changed
+ - Security enhancements ([#203](https://github.com/rokucommunity/bslint/pull/203))
+ - upgrade to [brighterscript@0.73.3](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0733---2026-09-09). Notable changes since 0.73.1:
+     - Security enhancements ([#1796](https://github.com/rokucommunity/brighterscript/pull/1796))
+     - Better error message for wrong-cased XML tags ([#1793](https://github.com/rokucommunity/brighterscript/pull/1793))
+     - Add `isTerminal` and `previousInChain` getters to AstNode ([#1788](https://github.com/rokucommunity/brighterscript/pull/1788))
+     - Fix nested curly braces in template strings ([#1539](https://github.com/rokucommunity/brighterscript/pull/1539))
+     - Recognize regex literals after `${` and `,` ([#1789](https://github.com/rokucommunity/brighterscript/pull/1789))
+     - Infer node type from findAncestor type-guard matchers ([#1787](https://github.com/rokucommunity/brighterscript/pull/1787))
+     - Reduce per-Token lexer allocation to cut GC pressure while editing ([#1712](https://github.com/rokucommunity/brighterscript/pull/1712))
+
+
+
 ## [0.8.45](https://github.com/rokucommunity/bslint/compare/0.8.44...v0.8.45) - 2026-09-02
 ### Changed
  - Security enhancements ([#196](https://github.com/rokucommunity/bslint/pull/196), [#198](https://github.com/rokucommunity/bslint/pull/198))
