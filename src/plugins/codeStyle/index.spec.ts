@@ -42,6 +42,7 @@ describe('codeStyle', () => {
                 'aa-comma-style': 'off',
                 'type-annotations': 'off',
                 'no-print': 'off',
+                'sorted-imports': 'off',
                 'no-todo': 'off',
                 'todo-pattern': 'off',
                 'eol-last': 'off',
@@ -749,6 +750,69 @@ describe('codeStyle', () => {
             `03:no-stop:Code style: STOP statements are not allowed in published applications`
         ];
         expect(actual).deep.equal(expected);
+    });
+
+    describe('validate sorted imports', () => {
+        it('flags imports that are out of order within their group', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: [
+                    'source/sorted-imports.bs',
+                    'source/imports/a.bs',
+                    'source/imports/b.bs',
+                    'source/imports/c.bs',
+                    'source/imports/d.bs',
+                    'source/imports/e.bs'
+                ],
+                rules: {
+                    'sorted-imports': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            const expected = [
+                `03:unsorted-import:Code style: imports should be sorted alphabetically within their group`,
+                `08:unsorted-import:Code style: imports should be sorted alphabetically within their group`
+            ];
+            expect(actual).deep.equal(expected);
+        });
+
+        it('allows imports that are already sorted within their group', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: [
+                    'source/sorted-imports-ok.bs',
+                    'source/imports/a.bs',
+                    'source/imports/b.bs',
+                    'source/imports/c.bs',
+                    'source/imports/d.bs',
+                    'source/imports/e.bs'
+                ],
+                rules: {
+                    'sorted-imports': 'error'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            expect(actual).deep.equal([]);
+        });
+
+        it('allows anything when set to off', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: [
+                    'source/sorted-imports.bs',
+                    'source/imports/a.bs',
+                    'source/imports/b.bs',
+                    'source/imports/c.bs',
+                    'source/imports/d.bs',
+                    'source/imports/e.bs'
+                ],
+                rules: {
+                    'sorted-imports': 'off'
+                }
+            });
+            const actual = fmtDiagnostics(diagnostics);
+            expect(actual).deep.equal([]);
+        });
     });
 
     describe('enforce eol at end of file', () => {

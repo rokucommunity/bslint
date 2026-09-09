@@ -1,0 +1,11 @@
+' this group is out of order: c, a, b
+import "pkg:/source/imports/c.bs"
+import "pkg:/source/imports/a.bs"
+import "pkg:/source/imports/b.bs"
+
+' this group is also out of order, independently of the group above: e, d
+import "pkg:/source/imports/e.bs"
+import "pkg:/source/imports/d.bs"
+
+sub main()
+end sub

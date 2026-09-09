@@ -236,6 +236,42 @@ Skipped a few brighterscript releases because there were some bugs we couldn't m
 - fixes for brighterscript v0.66.0-alpha.5 through v0.66.0-alpha.6
 
 
+## [0.8.46](https://github.com/rokucommunity/bslint/compare/0.8.45...v0.8.46) - 2026-09-09
+### Added
+ - Add sorted-imports rule ([#202](https://github.com/rokucommunity/bslint/pull/202))
+### Changed
+ - Security enhancements ([#203](https://github.com/rokucommunity/bslint/pull/203))
+ - upgrade to [brighterscript@0.73.3](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0733---2026-09-09). Notable changes since 0.73.1:
+     - Security enhancements ([#1796](https://github.com/rokucommunity/brighterscript/pull/1796))
+     - Better error message for wrong-cased XML tags ([#1793](https://github.com/rokucommunity/brighterscript/pull/1793))
+     - Add `isTerminal` and `previousInChain` getters to AstNode ([#1788](https://github.com/rokucommunity/brighterscript/pull/1788))
+     - Fix nested curly braces in template strings ([#1539](https://github.com/rokucommunity/brighterscript/pull/1539))
+     - Recognize regex literals after `${` and `,` ([#1789](https://github.com/rokucommunity/brighterscript/pull/1789))
+     - Infer node type from findAncestor type-guard matchers ([#1787](https://github.com/rokucommunity/brighterscript/pull/1787))
+     - Reduce per-Token lexer allocation to cut GC pressure while editing ([#1712](https://github.com/rokucommunity/brighterscript/pull/1712))
+
+
+
+## [0.8.45](https://github.com/rokucommunity/bslint/compare/0.8.44...v0.8.45) - 2026-09-02
+### Changed
+ - Security enhancements ([#196](https://github.com/rokucommunity/bslint/pull/196), [#198](https://github.com/rokucommunity/bslint/pull/198))
+ - upgrade to [brighterscript@0.73.1](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0731---2026-09-02). Notable changes since 0.72.5:
+     - Report mismatched XML element pairs ([#1746](https://github.com/rokucommunity/brighterscript/pull/1746))
+     - Add warning for function names that exceed the truncation limit ([#1777](https://github.com/rokucommunity/brighterscript/pull/1777))
+     - Validate eval/rsg_version against firmware lifecycle ([#1698](https://github.com/rokucommunity/brighterscript/pull/1698))
+     - Remove more prod deps: (drop array-flat-polyfill/readline, consolidate minimatch into micromatch) ([#1737](https://github.com/rokucommunity/brighterscript/pull/1737))
+### Fixed
+ - fix: restrict CreateObject component usage detection ([#197](https://github.com/rokucommunity/bslint/pull/197))
+
+
+
+## [0.8.44](https://github.com/rokucommunity/bslint/compare/0.8.43...v0.8.44) - 2026-06-10
+### Changed
+ - Security enhancements ([#186](https://github.com/rokucommunity/bslint/pull/186), [#191](https://github.com/rokucommunity/bslint/pull/191), [#190](https://github.com/rokucommunity/bslint/pull/190), [#189](https://github.com/rokucommunity/bslint/pull/189))
+ - upgrade to [brighterscript@0.72.5](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0725---2026-06-10). Notable changes since 0.72.1:
+     - Security enhancements ([#1703](https://github.com/rokucommunity/brighterscript/pull/1703), [#1723](https://github.com/rokucommunity/brighterscript/pull/1723), [#1722](https://github.com/rokucommunity/brighterscript/pull/1722), [#1720](https://github.com/rokucommunity/brighterscript/pull/1720), [#1718](https://github.com/rokucommunity/brighterscript/pull/1718), [#1714](https://github.com/rokucommunity/brighterscript/pull/1714))
+
+
 ## [0.8.43](https://github.com/rokucommunity/bslint/compare/0.8.42...v0.8.43) - 2026-05-11
 ### Added
  - Add for-terminator-style rule ([#182](https://github.com/rokucommunity/bslint/pull/182))
