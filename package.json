@@ -10,7 +10,7 @@
     "build": "tsc",
     "preversion": "npm run build && npm run lint && npm run test",
     "lint": "eslint \"src/**\"",
-    "test": "nyc mocha",
+    "test": "c8 mocha",
     "test:nocover": "mocha",
     "test:watch": "npm run test -- --watch --watch-files \"src/**/*.ts,test/**/*.brs\"",
     "watch": "tsc --watch",
@@ -50,31 +50,22 @@
     "@typescript-eslint/parser": "^3.10.1",
     "audit-ci": "^7.1.0",
     "brighterscript": "^0.73.3",
+    "c8": "^10.1.3",
     "chai": "^4.3.6",
     "eslint": "^7.7.0",
     "mocha": "^10.8.2",
-    "nyc": "^15.1.0",
     "source-map-support": "^0.5.21",
-    "thenby": "^1.3.4",
+    "thenby": "1.3.4",
     "ts-node": "^10.7.0",
     "typescript": "^4.9.4"
   },
   "peerDependencies": {
     "brighterscript": ">= 0.59.0 < 1"
   },
-  "overrides": {
-    "serialize-javascript": "^7",
-    "brace-expansion@^1": "^1.1.18",
-    "brace-expansion@^2": "^2",
-    "js-yaml": "^4",
-    "fast-uri": "^3",
-    "istanbul-lib-processinfo": "^3.0.1",
-    "@babel/core": "^7"
-  },
   "mocha": {
     "config": ".mocharc.cjs"
   },
-  "nyc": {
+  "c8": {
     "include": [
       "src/**/*.ts",
       "!src/**/*.spec.ts"
@@ -82,21 +73,20 @@
     "extension": [
       ".ts"
     ],
-    "require": [
-      "ts-node/register",
-      "source-map-support/register"
-    ],
     "reporter": [
       "text-summary",
       "html",
       "lcovonly"
     ],
-    "sourceMap": true,
-    "instrument": true,
     "check-coverage": false,
     "lines": 100,
     "statements": 100,
     "functions": 100,
     "branches": 100
+  },
+  "overrides": {
+    "serialize-javascript": "^7",
+    "vscode-languageserver-protocol": "3.17.5",
+    "vscode-languageserver-types": "3.17.5"
   }
 }
