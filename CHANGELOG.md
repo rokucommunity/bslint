@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.47-0](https://github.com/rokucommunity/bslint/compare/0.8.46...v0.8.47-0) - 2026-09-11
+### Changed
+ - Security enhancements ([#206](https://github.com/rokucommunity/bslint/pull/206))
+ - upgrade to [brighterscript@0.73.4](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#0734---2026-09-11). Notable changes since 0.73.3:
+     - Tolerate older BrsTranspileState in continue back-transpile ([#1812](https://github.com/rokucommunity/brighterscript/pull/1812))
+     - chore: Remove duplicate thenby devDependency ([#1808](https://github.com/rokucommunity/brighterscript/pull/1808))
+     - Security enhancements ([#1804](https://github.com/rokucommunity/brighterscript/pull/1804), [#1805](https://github.com/rokucommunity/brighterscript/pull/1805))
+     - Locate the super() call when injecting field initializers ([#1803](https://github.com/rokucommunity/brighterscript/pull/1803))
+
+
+
 ## [0.8.46](https://github.com/rokucommunity/bslint/compare/0.8.45...v0.8.46) - 2026-09-09
 ### Added
  - Add sorted-imports rule ([#202](https://github.com/rokucommunity/bslint/pull/202))
