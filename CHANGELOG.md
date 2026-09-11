@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.54](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.53...v1.0.0-alpha.54) - 2026-09-11
+### Changed
+ - Merge master, upgrade brighterscript to alpha.54 ([#210](https://github.com/rokucommunity/bslint/pull/210))
+ - upgrade to [brighterscript@1.0.0-alpha.54](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha54---2026-09-11). Notable changes since 1.0.0-alpha.53:
+     - Merge master into v1 ([#1814](https://github.com/rokucommunity/brighterscript/pull/1814))
+     - Fix binary op false positive on enum unions of the same type ([#1811](https://github.com/rokucommunity/brighterscript/pull/1811))
+     - Fix crash on files added to the build after the prepare phase ([#1810](https://github.com/rokucommunity/brighterscript/pull/1810))
+
+
+
 ## [1.0.0-alpha.53](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.52...v1.0.0-alpha.53) - 2026-09-10
 ### Changed
  - Upgraded to Brighterscript v1.0.0-alpha.53 ([#207](https://github.com/rokucommunity/bslint/pull/207))
