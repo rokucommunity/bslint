@@ -62,14 +62,13 @@
     "typescript": "^4.9.4"
   },
   "overrides": {
-    "serialize-javascript": "^7.0.5",
-    "brace-expansion": "^2.1.4",
-    "js-yaml": "^4.3.2",
-    "fast-uri": "^3.1.7",
+    "serialize-javascript": "^7",
+    "brace-expansion@^1": "^1.1.18",
+    "brace-expansion@^2": "^2",
+    "js-yaml": "^4",
+    "fast-uri": "^3",
     "istanbul-lib-processinfo": "^3.0.1",
-    "ip-address": "^10.4.0",
-    "@babel/core": "^7.29.7",
-    "qs": "^6.15.3"
+    "@babel/core": "^7"
   },
   "mocha": {
     "config": ".mocharc.cjs"
