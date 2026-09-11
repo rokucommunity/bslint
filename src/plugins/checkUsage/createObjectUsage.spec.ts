@@ -1,4 +1,4 @@
-import { Program } from 'brighterscript';
+import { AfterProvideProgramEvent } from 'brighterscript';
 import * as path from 'path';
 import Linter from '../../Linter';
 import { expectDiagnostics } from '../../testHelpers.spec';
@@ -10,7 +10,8 @@ describe('checkUsage CreateObject usage', () => {
         const linter = new Linter();
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProvideProgram: (event: AfterProvideProgramEvent) => {
+                const program = event.program;
                 program.setFile('source/main.brs', `
                     sub main()
                         emptyObject = CreateObject()
@@ -38,7 +39,11 @@ describe('checkUsage CreateObject usage', () => {
             rootDir: 'test/project1',
             files: [],
             rules: {},
-            diagnosticFilters: [1002, 1129, 1130]
+            diagnosticFilters: [
+                'incorrect-argument-count',
+                'incorrect-createobject-argument-count',
+                'unknown-brightscript-component'
+            ]
         } as any);
 
         expectDiagnostics(diagnostics, [

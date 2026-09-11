@@ -1,4 +1,4 @@
-import { Program } from 'brighterscript';
+import { AfterProvideProgramEvent } from 'brighterscript';
 import * as path from 'path';
 import Linter from '../../Linter';
 import { createContext, PluginWrapperContext } from '../../util';
@@ -16,7 +16,8 @@ describe('checkUsage', () => {
         linter = new Linter();
         linter.builder.plugins.add({
             name: 'test',
-            afterProgramCreate: (program: Program) => {
+            afterProvideProgram: (event: AfterProvideProgramEvent) => {
+                const { program } = event;
                 lintContext = createContext(program);
                 const checkUsage = new CheckUsage(lintContext);
                 program.plugins.add(checkUsage);
@@ -50,8 +51,8 @@ describe('checkUsage', () => {
             }
         });
         expectDiagnosticsFmt(diagnostics, [
-            `01:LINT4002:Script 'components${path.sep}child2.brs' does not seem to be used`,
-            `02:LINT4001:Component 'components${path.sep}child2.xml' does not seem to be used`
+            `01:unused-script:Script 'components${path.sep}child2.brs' does not seem to be used`,
+            `02:unused-component:Component 'components${path.sep}child2.xml' does not seem to be used`
         ]);
     });
 });
