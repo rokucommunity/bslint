@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.55](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.54...v1.0.0-alpha.55) - 2026-09-18
+### Changed
+ - Upgrade brighterscript to 1.0.0-alpha.55 ([#213](https://github.com/rokucommunity/bslint/pull/213))
+ - upgrade to [brighterscript@1.0.0-alpha.55](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha55---2026-09-18). Notable changes since 1.0.0-alpha.54:
+     - Support conditional compilation (`#if`) inside class bodies ([#1744](https://github.com/rokucommunity/brighterscript/pull/1744))
+     - Lazily allocate SymbolTable siblings/complementsTables ([#1822](https://github.com/rokucommunity/brighterscript/pull/1822))
+     - Skip per-token toLowerCase+Set lookup for Token.isReserved ([#1820](https://github.com/rokucommunity/brighterscript/pull/1820))
+     - Fix quadratic clearByFilter cost during validation ([#1819](https://github.com/rokucommunity/brighterscript/pull/1819))
+     - Fix Array<Interface> callfunc argument false-positive across component scopes ([#1817](https://github.com/rokucommunity/brighterscript/pull/1817))
+
+
+
 ## [1.0.0-alpha.54](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.53...v1.0.0-alpha.54) - 2026-09-11
 ### Changed
  - Merge master, upgrade brighterscript to alpha.54 ([#210](https://github.com/rokucommunity/bslint/pull/210))
