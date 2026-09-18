@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isCommentStatement, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -12,6 +12,16 @@ interface ThrowInfo {
 }
 
 enum ReturnLintError {
+    UnreachableCode = 'unreachable-code',
+    ReturnValueUnexpected = 'return-value-found',
+    ReturnValueExpected = 'missing-return-value',
+    UnsafeReturnValue = 'unsafe-return-value',
+    ReturnValueRequired = 'return-value-required',
+    ReturnValueMissing = 'missing-return-value',
+    LastReturnValueMissing = 'missing-last-return-value'
+}
+
+enum ReturnLintLegacyError {
     UnreachableCode = 'LINT2001',
     ReturnValueUnexpected = 'LINT2002',
     ReturnValueExpected = 'LINT2003',
@@ -35,32 +45,30 @@ export function createReturnLinter(
     function visitStatement(curr: StatementInfo) {
         const { parent } = state;
         if (parent?.returns) {
-            if (!isCommentStatement(curr.stat)) {
-                diagnostics.push({
-                    severity: severity.unreachableCode,
-                    code: ReturnLintError.UnreachableCode,
-                    message: 'Unreachable code',
-                    range: curr.stat.range,
-                    file: file,
-                    tags: [DiagnosticTag.Unnecessary]
-                });
-            }
+            diagnostics.push({
+                severity: severity.unreachableCode,
+                code: ReturnLintError.UnreachableCode,
+                legacyCode: ReturnLintLegacyError.UnreachableCode,
+                message: 'Unreachable code',
+                location: curr.stat.location,
+                tags: [DiagnosticTag.Unnecessary]
+            });
         } else if (isReturnStatement(curr.stat)) {
-            const { ifs, trys, branch, parent } = state;
+            const { ifs, conditionalCompiles, trys, branch, parent } = state;
             returns.push({
                 stat: curr.stat,
-                hasValue: !!curr.stat.value && !isCommentStatement(curr.stat.value)
+                hasValue: !!curr.stat.value
             });
             // flag parent branch to return
-            const returnBlock = (ifs || trys) ? branch : parent;
+            const returnBlock = (ifs || conditionalCompiles || trys) ? branch : parent;
             if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
             }
         } else if (isThrowStatement(curr.stat)) {
-            const { ifs, trys, branch, parent } = state;
+            const { ifs, conditionalCompiles, trys, branch, parent } = state;
             throws.push({ stat: curr.stat });
             // flag parent branch to 'return'
-            const returnBlock = (ifs || trys) ? branch : parent;
+            const returnBlock = (ifs || conditionalCompiles || trys) ? branch : parent;
             if (returnBlock && parent?.branches === 1) {
                 returnBlock.returns = true;
             }
@@ -71,13 +79,15 @@ export function createReturnLinter(
         const { parent } = state;
         if (!parent) {
             finalize(closed);
-        } else if (isIfStatement(closed.stat) || isTryCatchStatement(closed.stat) || isCatchStatement(closed.stat)) {
+        } else if (isIfStatement(closed.stat) || isConditionalCompileStatement(closed.stat) || isTryCatchStatement(closed.stat) || isCatchStatement(closed.stat)) {
             if (closed.branches === 0) {
                 parent.returns = true;
                 parent.branches--;
             }
         } else if (closed.returns) {
             if (isIfStatement(parent.stat)) {
+                parent.branches--;
+            } else if (isConditionalCompileStatement(parent.stat)) {
                 parent.branches--;
             } else if (isTryCatchStatement(parent.stat)) {
                 parent.branches--;
@@ -89,27 +99,29 @@ export function createReturnLinter(
 
     function finalize(last: StatementInfo) {
         const { consistentReturn } = severity;
-        const kind = fun.functionType?.kind === TokenKind.Sub ? 'Sub' : 'Function';
+        const kind = fun.tokens.functionType?.kind === TokenKind.Sub ? 'Sub' : 'Function';
         const returnedValues = returns.filter((r) => r.hasValue);
         const hasReturnedValue = returnedValues.length > 0;
         // Function range only includes the function signature
-        const funRangeStart = (fun.functionType ?? fun.leftParen).range.start;
-        const funRangeEnd = (fun.returnTypeToken ?? fun.rightParen).range.end;
+        const funRangeStart = (fun.tokens.functionType ?? fun.tokens.leftParen).location.range.start;
+        const funRangeEnd = (fun.returnTypeExpression ?? fun.tokens.rightParen).location.range.end;
         const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
-
+        const funLocation = util.createLocationFromRange(fun.location.uri, funRange);
         // Explicit `as void` or `sub` without return type should never return a value
+        const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime });
+
         if (
-            fun.returnTypeToken?.kind === TokenKind.Void ||
-            (kind === 'Sub' && !fun.returnTypeToken)
+            isVoidType(returnType) ||
+            (kind === 'Sub' && !fun.returnTypeExpression)
         ) {
             if (hasReturnedValue) {
                 returnedValues.forEach((r) => {
                     diagnostics.push({
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueUnexpected,
+                        legacyCode: ReturnLintLegacyError.ReturnValueUnexpected,
                         message: `${kind} as void should not return a value`,
-                        range: r.stat?.range || funRange,
-                        file: file
+                        location: r.stat?.location ?? funLocation
                     });
                 });
             }
@@ -117,7 +129,7 @@ export function createReturnLinter(
         }
 
         const requiresReturnValue =
-            !!fun.returnTypeToken ||
+            !!fun.returnTypeExpression ||
             returnedValues.length > 0 ||
             (kind === 'Function' && returns.length > 0);
         const missingValue = requiresReturnValue && returnedValues.length !== returns.length;
@@ -129,9 +141,9 @@ export function createReturnLinter(
             diagnostics.push({
                 severity: consistentReturn,
                 code: ReturnLintError.UnsafeReturnValue,
+                legacyCode: ReturnLintLegacyError.ReturnValueRequired,
                 message: 'Not all code paths return a value',
-                range: funRange,
-                file: file
+                location: funLocation
             });
         }
 
@@ -143,9 +155,9 @@ export function createReturnLinter(
                     diagnostics.push({
                         severity: consistentReturn,
                         code: ReturnLintError.ReturnValueMissing,
+                        legacyCode: ReturnLintLegacyError.ReturnValueMissing,
                         message: `${kind} should consistently return a value`,
-                        range: r.stat.range || funRange,
-                        file: file
+                        location: r.stat.location || funLocation
                     });
                 });
         }

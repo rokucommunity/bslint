@@ -58,6 +58,9 @@ namespace test.foo
         test.foo.ping()
     end function
 
+    sub ping()
+    end sub
+
 end namespace
 
 function error3()

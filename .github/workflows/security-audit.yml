@@ -6,7 +6,7 @@ on:
   pull_request:
   schedule:
     #nightly at 06:00 UTC (1am EST / 2am EDT)
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
 
 jobs:
   audit:
