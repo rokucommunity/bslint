@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.0.0-alpha.56](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.55...v1.0.0-alpha.56) - 2026-09-27
+### Changed
+ - Upgrade brighterscript to 1.0.0-alpha.56 ([#216](https://github.com/rokucommunity/bslint/pull/216))
+ - upgrade to [brighterscript@1.0.0-alpha.56](https://github.com/rokucommunity/brighterscript/blob/master/CHANGELOG.md#100-alpha56---2026-09-27). Notable changes since 1.0.0-alpha.55:
+     - Revalidate dependents of a removed file ([#1846](https://github.com/rokucommunity/brighterscript/pull/1846))
+     - Cache isFileCompletelyFiltered per file ([#1840](https://github.com/rokucommunity/brighterscript/pull/1840))
+     - Cache unresolved ReferenceType lookups ([#1837](https://github.com/rokucommunity/brighterscript/pull/1837))
+     - Drop Token.leadingWhitespace and share token positions ([#1836](https://github.com/rokucommunity/brighterscript/pull/1836))
+     - Back CrossScopeValidator provided symbols with a program-wide index ([#1833](https://github.com/rokucommunity/brighterscript/pull/1833))
+     - Cache ReferenceType resolution and skip allocations in getSymbol ([#1831](https://github.com/rokucommunity/brighterscript/pull/1831))
+     - Add jellyrock to scenario benchmarks ([#1832](https://github.com/rokucommunity/brighterscript/pull/1832))
+     - Add scenario benchmarks and fix ops/sec benchmarks on v1 ([#1830](https://github.com/rokucommunity/brighterscript/pull/1830))
+
+
+
 ## [1.0.0-alpha.55](https://github.com/rokucommunity/bslint/compare/1.0.0-alpha.54...v1.0.0-alpha.55) - 2026-09-18
 ### Changed
  - Upgrade brighterscript to 1.0.0-alpha.55 ([#213](https://github.com/rokucommunity/bslint/pull/213))
