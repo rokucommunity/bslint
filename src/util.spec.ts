@@ -74,10 +74,10 @@ describe('resolveContext', () => {
     it('should support no ignores', () => {
         const program = new Program({});
         const context = createContext(program);
-        const file = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
+        const file1 = new BrsFile({ srcPath: 'test/project1/source/unused-variable.brs', destPath: 'unused-variable.brs', program: program });
 
         expect(context.ignores(null)).equals(true);
-        expect(context.ignores(file)).equals(false);
+        expect(context.ignores(file1)).equals(false);
     });
 
     it('should allow ignoring specific files', () => {
@@ -85,8 +85,8 @@ describe('resolveContext', () => {
             ignores: ['unused-variable.brs']
         } as any);
         const context = createContext(program);
-        const file1 = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
-        const file2 = new BrsFile('test/project1/source/block-if.brs', 'pkg://block-if.brs', program);
+        const file1 = new BrsFile({ srcPath: 'test/project1/source/unused-variable.brs', destPath: 'unused-variable.brs', program: program });
+        const file2 = new BrsFile({ srcPath: 'test/project1/source/block-if.brs', destPath: 'block-if.brs', program: program });
 
         expect(context.ignores(null)).equals(true);
         expect(context.ignores(file1)).equals(true);
@@ -98,9 +98,9 @@ describe('resolveContext', () => {
             ignores: ['source/**/unused*', '**/*.spec.brs']
         } as any);
         const context = createContext(program);
-        const file1 = new BrsFile('test/project1/source/unused-variable.brs', 'pkg://unused-variable.brs', program);
-        const file2 = new BrsFile('test/project1/source/block-if.brs', 'pkg://block-if.brs', program);
-        const file3 = new BrsFile('test/project1/source/block-if.spec.brs', 'pkg://block-if.spec.brs', program);
+        const file1 = new BrsFile({ srcPath: 'test/project1/source/unused-variable.brs', destPath: 'unused-variable.brs', program: program });
+        const file2 = new BrsFile({ srcPath: 'test/project1/source/block-if.brs', destPath: 'block-if.brs', program: program });
+        const file3 = new BrsFile({ srcPath: 'test/project1/source/block-if.spec.brs', destPath: 'block-if.spec.brs', program: program });
 
         expect(context.ignores(null)).equals(true);
         expect(context.ignores(file1)).equals(true);

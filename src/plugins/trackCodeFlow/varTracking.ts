@@ -1,8 +1,18 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, NamespacedVariableNameExpression, ParseMode, util, isMethodStatement, isTryCatchStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
+import { Location } from 'vscode-languageserver-types';
 
 export enum VarLintError {
+    UninitializedVar = 'uninitialized-variable',
+    UnsafeIteratorVar = 'unsafe-iterator-variable',
+    UnsafeInitialization = 'unsafe-initialization',
+    CaseMismatch = 'case-mismatch',
+    UnusedVariable = 'unused-variable',
+    UnusedParameter = 'unused-parameter'
+}
+
+export enum VarLintLegacyError {
     UninitializedVar = 'LINT1001',
     UnsafeIteratorVar = 'LINT1002',
     UnsafeInitialization = 'LINT1003',
@@ -17,22 +27,66 @@ enum ValidationKind {
     Unsafe = 'Unsafe'
 }
 
+
+export const VarTrackingMessages = {
+    varCasing: (curr: VarInfo, name: { text: string; location: Location }) => ({
+        severity: DiagnosticSeverity.Warning,
+        source: 'bslint',
+        code: VarLintError.CaseMismatch,
+        legacyCode: VarLintLegacyError.CaseMismatch,
+        message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
+        data: {
+            name: curr.name,
+            location: name.location
+        }
+    }),
+    unsafeIterator: (name: string) => ({
+        severity: DiagnosticSeverity.Error,
+        source: 'bslint',
+        code: VarLintError.UnsafeIteratorVar,
+        legacyCode: VarLintLegacyError.UnsafeIteratorVar,
+        message: `Using iterator variable '${name}' outside loop`
+    }),
+    unusedVariable: (name: string) => ({
+        severity: DiagnosticSeverity.Warning,
+        source: 'bslint',
+        code: VarLintError.UnusedVariable,
+        legacyCode: VarLintLegacyError.UnusedVariable,
+        message: `Variable '${name}' is set but value is never used`
+    }),
+    unsafeInitialization: (name: string) => ({
+        severity: DiagnosticSeverity.Error,
+        source: 'bslint',
+        code: VarLintError.UnsafeInitialization,
+        legacyCode: VarLintLegacyError.UnsafeInitialization,
+        message: `Not all the code paths assign '${name}'`
+    }),
+    uninitializedVariable: (name: string, scopeName: string) => ({
+        severity: DiagnosticSeverity.Error,
+        source: 'bslint',
+        code: VarLintError.UninitializedVar,
+        legacyCode: VarLintLegacyError.UninitializedVar,
+        message: `Using uninitialised variable '${name}' when this file is included in scope '${scopeName}'`
+    })
+};
+
+
 interface ValidationInfo {
     kind: ValidationKind;
     name: string;
     local?: VarInfo;
-    range: Range;
-    namespace?: NamespacedVariableNameExpression;
+    location: Location;
+    namespace?: NamespaceStatement;
 }
 
 const deferredValidation: Map<string, ValidationInfo[]> = new Map();
 
 function getDeferred(file: BscFile) {
-    return deferredValidation.get(file.pathAbsolute);
+    return deferredValidation.get(file.srcPath);
 }
 
 export function resetVarContext(file: BscFile) {
-    deferredValidation.set(file.pathAbsolute, []);
+    deferredValidation.set(file.srcPath, []);
 }
 
 export function createVarLinter(
@@ -47,33 +101,27 @@ export function createVarLinter(
     let foundLabelAt = 0;
 
     const args: Map<string, VarInfo> = new Map();
-    args.set('m', { name: 'm', range: Range.create(0, 0, 0, 0), isParam: true, isUnsafe: false, isUsed: true });
+    args.set('m', { name: 'm', location: Location.create('', Range.create(0, 0, 0, 0)), isParam: true, isUnsafe: false, isUsed: true });
     fun.parameters.forEach((p) => {
-        const name = p.name.text;
-        args.set(name.toLowerCase(), { name: name, range: p.name.range, isParam: true, isUnsafe: false, isUsed: false });
+        const name = p.tokens.name.text;
+        args.set(name.toLowerCase(), { name: name, location: p.tokens.name.location, isParam: true, isUnsafe: false, isUsed: false });
     });
 
-    if (isMethodStatement(fun.functionStatement)) {
-        args.set('super', { name: 'super', range: null, isParam: true, isUnsafe: false, isUsed: true });
+    if (isMethodStatement(fun.parent)) {
+        args.set('super', { name: 'super', location: null, isParam: true, isUnsafe: false, isUsed: true });
     }
 
-    function verifyVarCasing(curr: VarInfo, name: { text: string; range: Range }) {
+    function verifyVarCasing(curr: VarInfo, name: { text: string; location: Location }) {
         if (curr && curr.name !== name.text) {
             diagnostics.push({
+                ...VarTrackingMessages.varCasing(curr, name),
                 severity: severity.caseSensitivity,
-                code: VarLintError.CaseMismatch,
-                message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
-                range: name.range,
-                file: file,
-                data: {
-                    name: curr.name,
-                    range: name.range
-                }
+                location: name.location
             });
         }
     }
 
-    function setLocal(parent: StatementInfo, name: { text: string; range: Range }, restriction?: VarRestriction): VarInfo {
+    function setLocal(parent: StatementInfo, name: { text: string; location: Location }, restriction?: VarRestriction): VarInfo {
         if (!name) {
             return;
         }
@@ -81,7 +129,7 @@ export function createVarLinter(
         const arg = args.get(key);
         const local = {
             name: name.text,
-            range: name.range,
+            location: name.location,
             parent: parent,
             restriction: restriction,
             metBranches: 1,
@@ -104,7 +152,7 @@ export function createVarLinter(
             kind: ValidationKind.Assignment,
             name: name.text,
             local: local,
-            range: name.range
+            location: name.location
         });
 
         return local;
@@ -155,7 +203,7 @@ export function createVarLinter(
             // for iterator will be declared by the next assignement statement
         } else if (isForEachStatement(stat)) {
             // declare `for each` iterator variable
-            setLocal(block, stat.item, VarRestriction.Iterator);
+            setLocal(block, stat.tokens.item, VarRestriction.Iterator);
         } else if (state.parent?.narrows) {
             narrowBlock(block);
         }
@@ -187,11 +235,11 @@ export function createVarLinter(
         const { stat } = curr;
         if (isAssignmentStatement(stat) && state.parent) {
             // value = stat.value;
-            setLocal(state.parent, stat.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
+            setLocal(state.parent, stat.tokens.name, isForStatement(state.parent.stat) ? VarRestriction.Iterator : undefined);
         } else if (isCatchStatement(stat) && state.parent) {
-            setLocal(curr, stat.exceptionVariable, VarRestriction.CatchedError);
+            setLocal(curr, (stat.exceptionVariableExpression as VariableExpression)?.tokens?.name, VarRestriction.CatchedError);
         } else if (isLabelStatement(stat) && !foundLabelAt) {
-            foundLabelAt = stat.range.start.line;
+            foundLabelAt = stat.location.range.start.line;
         } else if (foundLabelAt && isGotoStatement(stat) && state.parent) {
             // To avoid false positives when finding a goto statement,
             // very generously mark as used all unused variables after 1st found label line.
@@ -201,7 +249,7 @@ export function createVarLinter(
             for (let i = state.stack.length - 1; i >= 0; i--) {
                 const block = blocks.get(stack[i]);
                 block?.locals?.forEach(local => {
-                    if (local.range?.start.line > labelLine) {
+                    if (local.location.range?.start.line > labelLine) {
                         local.isUsed = true;
                     }
                 });
@@ -250,7 +298,7 @@ export function createVarLinter(
         if (!parent.locals) {
             parent.locals = locals;
         } else {
-            const isParentBranched = isIfStatement(parent.stat) || isTryCatchStatement(parent.stat);
+            const isParentBranched = isIfStatement(parent.stat) || isTryCatchStatement(parent.stat) || isConditionalCompileStatement(parent.stat);
             const isLoop = isForStatement(closed.stat) || isForEachStatement(closed.stat) || isWhileStatement(closed.stat);
             locals.forEach((local, name) => {
                 const parentLocal = parent.locals.get(name);
@@ -283,8 +331,8 @@ export function createVarLinter(
     }
 
     function visitExpression(expr: Expression, parent: Expression, curr: StatementInfo) {
-        if (isVariableExpression(expr)) {
-            const name = expr.name.text;
+        if (isVariableExpression(expr) && !util.isInTypeExpression(expr)) {
+            const name = expr.tokens.name.text;
             if (name === 'm') {
                 return;
             }
@@ -294,31 +342,27 @@ export function createVarLinter(
                 deferred.push({
                     kind: ValidationKind.UninitializedVar,
                     name: name,
-                    range: expr.range,
-                    namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)?.nameExpression
+                    location: expr.location,
+                    namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)
                 });
                 return;
             } else {
                 local.isUsed = true;
-                verifyVarCasing(local, expr.name);
+                verifyVarCasing(local, expr.tokens.name);
             }
 
             if (local.isUnsafe && !findSafeLocal(name)) {
                 if (local.restriction) {
                     diagnostics.push({
+                        ...VarTrackingMessages.unsafeIterator(name),
                         severity: severity.unsafeIterators,
-                        code: VarLintError.UnsafeIteratorVar,
-                        message: `Using iterator variable '${name}' outside loop`,
-                        range: expr.range,
-                        file: file
+                        location: expr.location
                     });
                 } else if (!isNarrowing(local, expr, parent, curr)) {
                     diagnostics.push({
-                        severity: severity.unsafePathLoop,
-                        code: VarLintError.UnsafeInitialization,
-                        message: `Not all the code paths assign '${name}'`,
-                        range: expr.range,
-                        file: file
+                        ...VarTrackingMessages.unsafeInitialization(name),
+                        severity: severity.unsafePathLoop, // should this be severity.assignAllPath?
+                        location: expr.location
                     });
                 }
             }
@@ -338,13 +382,13 @@ export function createVarLinter(
             // e.g. 2nd condition in: if x <> invalid and x.y = z
             return curr.narrows?.some(narrow => narrow.text === local.name);
         }
-        const operator = parent.operator.kind;
+        const operator = parent.tokens.operator.kind;
         if (operator !== TokenKind.Equal && operator !== TokenKind.LessGreater) {
             return false;
         }
         const narrow: NarrowingInfo = {
             text: local.name,
-            range: local.range,
+            location: local.location,
             type: operator === TokenKind.Equal ? 'invalid' : 'valid',
             block
         };
@@ -359,11 +403,9 @@ export function createVarLinter(
         locals.forEach(local => {
             if (!local.isUsed && !local.restriction) {
                 diagnostics.push({
+                    ...VarTrackingMessages.unusedVariable(local.name),
                     severity: severity.unusedVariable,
-                    code: VarLintError.UnusedVariable,
-                    message: `Variable '${local.name}' is set but value is never used`,
-                    range: local.range,
-                    file: file
+                    location: local.location
                 });
             }
         });
@@ -374,9 +416,9 @@ export function createVarLinter(
                 diagnostics.push({
                     severity: severity.unusedParameter,
                     code: VarLintError.UnusedParameter,
+                    legacyCode: VarLintLegacyError.UnusedParameter,
                     message: `Parameter '${arg.name}' is set but value is never used`,
-                    range: arg.range,
-                    file: file
+                    location: arg.location
                 });
             }
         });
@@ -399,7 +441,7 @@ export function runDeferredValidation(
     const topLevelVars = buildTopLevelVars(scope, lintContext.globals);
     const diagnostics: BsDiagnostic[] = [];
     files.forEach((file) => {
-        const deferred = deferredValidation.get(file.pathAbsolute);
+        const deferred = deferredValidation.get(file.srcPath);
         if (deferred) {
             deferredVarLinter(scope, file, callables, topLevelVars, deferred, diagnostics);
         }
@@ -419,7 +461,7 @@ function buildTopLevelVars(scope: Scope, globals: string[]) {
         toplevel.add(getRootNamespaceName(namespace).toLowerCase()); // keep root of namespace
     }
     for (const [, cls] of scope.getClassMap()) {
-        toplevel.add(cls.item.name.text.toLowerCase());
+        toplevel.add(cls.item.tokens.name.text.toLowerCase());
     }
     for (const [, enm] of scope.getEnumMap()) {
         toplevel.add(enm.item.name.toLowerCase());
@@ -438,7 +480,7 @@ function deferredVarLinter(
     deferred: ValidationInfo[],
     diagnostics: BsDiagnostic[]
 ) {
-    deferred.forEach(({ kind, name, local, range, namespace }) => {
+    deferred.forEach(({ kind, name, local, location, namespace }) => {
         const key = name?.toLowerCase();
         let hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
         if (key && !hasCallable && namespace) {
@@ -450,11 +492,9 @@ function deferredVarLinter(
             case ValidationKind.UninitializedVar:
                 if (!hasCallable) {
                     diagnostics.push({
+                        ...VarTrackingMessages.uninitializedVariable(name, scope.name),
                         severity: DiagnosticSeverity.Error,
-                        code: VarLintError.UninitializedVar,
-                        message: `Using uninitialised variable '${name}' when this file is included in scope '${scope.name}'`,
-                        range: range,
-                        file: file
+                        location: location
                     });
                 }
                 // TODO else test case
@@ -473,19 +513,6 @@ function deferredVarLinter(
  *
  */
 export function getRootNamespaceName(namespace: NamespaceStatement) {
-    // there are more concise ways to accomplish this, but this is a hot function so it's been optimized.
-    while (true) {
-        const parent = namespace.parent?.parent as NamespaceStatement;
-        if (isNamespaceStatement(parent)) {
-            namespace = parent;
-        } else {
-            break;
-        }
-    }
-    const result = util.getDottedGetPath(namespace.nameExpression)[0]?.name?.text;
-    // const name = namespace.getName(ParseMode.BrighterScript).toLowerCase();
-    // if (name.includes('imigx')) {
-    //     console.log([name, result]);
-    // }
-    return result;
+    const nameParts = namespace.getNameParts();
+    return nameParts[0].text;
 }

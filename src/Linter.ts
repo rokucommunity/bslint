@@ -1,6 +1,12 @@
 import { BsLintConfig } from './index';
 import { ProgramBuilder, BsConfig } from 'brighterscript';
 
+export const BsLintDiagnosticTag = 'BSLint';
+export const BsLintScopeDiagnosticTag = 'BSLint_Scope';
+export const BsLintDiagnosticContext = { tags: [BsLintDiagnosticTag] };
+export const BsLintScopeDiagnosticContext = { tags: [BsLintDiagnosticTag, BsLintScopeDiagnosticTag] };
+
+
 const pendingJobs: Promise<void>[] = [];
 
 // allow some asynchronous jobs to run after the compiler has finished its work
@@ -20,8 +26,7 @@ export default class Linter {
         try {
             const options: BsConfig = {
                 ...config,
-                createPackage: false,
-                copyToStaging: false
+                noEmit: true
             };
             await this.builder.run(options);
             await Promise.all(pendingJobs);
