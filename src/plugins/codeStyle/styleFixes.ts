@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, VoidType, WhileStatement, SymbolTypeFlag } from 'brighterscript';
+import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, VoidType, WhileStatement, SymbolTypeFlag, util } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
@@ -95,12 +95,12 @@ function addConditionGroup(diagnostic: BsDiagnostic) {
 function removeConditionGroup(diagnostic: BsDiagnostic) {
     const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression } = diagnostic.data;
     const { leftParen, rightParen } = stat.condition.tokens;
-    const spaceBefore = leftParen.leadingWhitespace?.length > 0 ? '' : ' ';
+    const spaceBefore = util.getLeadingWhitespace(leftParen).length > 0 ? '' : ' ';
     let spaceAfter = '';
     if (isIfStatement(stat)) {
         spaceAfter = stat.isInline ? ' ' : '';
         if (stat.tokens.then) {
-            spaceAfter = stat.tokens.then.leadingWhitespace?.length > 0 ? '' : ' ';
+            spaceAfter = util.getLeadingWhitespace(stat.tokens.then).length > 0 ? '' : ' ';
         }
     }
     return {
@@ -131,7 +131,7 @@ function removeThenToken(diagnostic: BsDiagnostic) {
     const { then } = stat.tokens;
     const { line, character } = then.location.range.start;
     const range = Range.create(
-        line, character - (then.leadingWhitespace?.length || 0), line, character + then.text.length
+        line, character - util.getLeadingWhitespace(then).length, line, character + then.text.length
     );
     return {
         diagnostic,
