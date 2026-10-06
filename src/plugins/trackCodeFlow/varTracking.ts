@@ -247,11 +247,14 @@ export function createVarLinter(
             });
         }
         // move locals to parent
+        const isLoop = isForStatement(closed.stat) || isForEachStatement(closed.stat) || isWhileStatement(closed.stat);
         if (!parent.locals) {
+            if (isLoop) {
+                locals.forEach(markLoopCarriedLocalUsed);
+            }
             parent.locals = locals;
         } else {
             const isParentBranched = isIfStatement(parent.stat) || isTryCatchStatement(parent.stat);
-            const isLoop = isForStatement(closed.stat) || isForEachStatement(closed.stat) || isWhileStatement(closed.stat);
             locals.forEach((local, name) => {
                 const parentLocal = parent.locals.get(name);
                 // if var is an iterator var, flag as partial
@@ -270,15 +273,21 @@ export function createVarLinter(
                 if (parentLocal?.restriction) {
                     local.restriction = parentLocal.restriction;
                 }
-                if (!local.isUsed && isLoop) {
-                    // avoid false positive if a local set in a loop isn't used
-                    const someParentLocal = findLocal(local.name);
-                    if (someParentLocal?.isUsed) {
-                        local.isUsed = true;
-                    }
+                if (isLoop) {
+                    markLoopCarriedLocalUsed(local);
                 }
                 parent.locals.set(name, local);
             });
+        }
+    }
+
+    function markLoopCarriedLocalUsed(local: VarInfo) {
+        if (!local.isUsed) {
+            // avoid false positive if a local set in a loop isn't used
+            const someParentLocal = findLocal(local.name);
+            if (someParentLocal?.isUsed) {
+                local.isUsed = true;
+            }
         }
     }
 
