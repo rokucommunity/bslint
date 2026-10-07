@@ -19,6 +19,7 @@ export interface StatementInfo {
     parent?: Statement;
     locals?: Map<string, VarInfo>;
     branches?: number;
+    inactive?: boolean;
     returns?: boolean;
     narrows?: NarrowingInfo[];
 }
@@ -108,17 +109,23 @@ export default class TrackCodeFlow implements CompilerPlugin {
             // 3. open -> curr becomes parent
             const visitStatement = createStackedVisitor((stat: Statement, stack: Statement[]) => {
                 state.stack = stack;
+                const parentStat = stack[stack.length - 1];
                 curr = {
                     stat: stat,
-                    parent: stack[stack.length - 1],
-                    branches: isBranchedStatement(stat) ? 2 : 1
+                    parent: parentStat,
+                    branches: isBranchedStatement(stat) ? 2 : 1,
+                    inactive: (parentStat && state.blocks.get(parentStat)?.inactive) || (isConditionalCompileStatement(parentStat) && !parentStat.isBranchActive(stat))
                 };
                 returnLinter.visitStatement(curr);
-                varLinter.visitStatement(curr);
+                if (!curr.inactive) {
+                    varLinter.visitStatement(curr);
+                }
 
             }, (opened) => {
                 state.blocks.set(opened, curr);
-                varLinter.openBlock(curr);
+                if (!curr.inactive) {
+                    varLinter.openBlock(curr);
+                }
 
                 if (isIfStatement(opened)) {
                     state.ifs = curr;
@@ -161,7 +168,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
                     if (isStatement(elem) && !isExpression(parent)) {
                         visitStatement(elem, parent);
                     } else if (parent) {
-                        varLinter.visitExpression(elem, parent, curr);
+                        varLinter.visitExpression(elem, parent, curr, curr.inactive);
                     }
                 }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions | InternalWalkMode.visitFalseConditionalCompilationBlocks });
             } else {

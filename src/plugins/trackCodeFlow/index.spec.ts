@@ -16,6 +16,9 @@ describe('trackCodeFlow', () => {
     const project1 = {
         rootDir: 'test/project1'
     };
+    const projectBsConst = {
+        rootDir: 'test/project-bs-const'
+    };
 
     beforeEach(() => {
         linter = new Linter();
@@ -313,11 +316,8 @@ describe('trackCodeFlow', () => {
         } as any);
         const actual = fmtDiagnostics(diagnostics);
         const expected = [
-            `15:unsafe-initialization:Not all the code paths assign 'a'`,
-            `23:unsafe-initialization:Not all the code paths assign 'a'`,
-            `42:unsafe-initialization:Not all the code paths assign 'a'`,
-            `65:unsafe-initialization:Not all the code paths assign 'a'`,
-            `76:unsafe-initialization:Not all the code paths assign 'a'`
+            `23:uninitialized-variable:Using uninitialised variable 'a' when this file is included in scope 'source'`,
+            `65:uninitialized-variable:Using uninitialised variable 'a' when this file is included in scope 'source'`
         ];
         expect(actual).deep.equal(expected);
     });
@@ -565,6 +565,77 @@ describe('trackCodeFlow', () => {
             ).to.equal(
                 expectedSrc.replace(/\r?\n/g, '\n')
             );
+        });
+    });
+
+    describe('conditional compilation with manifest bs_const', () => {
+        it('ignores variables in inactive #if blocks', async () => {
+            const diagnostics = await linter.run({
+                ...projectBsConst,
+                files: ['source/inactive-blocks.bs'],
+                rules: {
+                    'assign-all-paths': 'error',
+                    'unsafe-path-loop': 'error',
+                    'unused-variable': 'error',
+                    'consistent-return': 'off'
+                },
+                diagnosticFilters: [1001, 1090]
+            } as any);
+            expect(fmtDiagnostics(diagnostics)).deep.equal([
+                `83:uninitialized-variable:Using uninitialised variable 'item' when this file is included in scope 'source'`
+            ]);
+        });
+
+        it('tracks only the active branch of known #if conditions', async () => {
+            const diagnostics = await linter.run({
+                ...projectBsConst,
+                files: ['source/known-branches.bs'],
+                rules: {
+                    'assign-all-paths': 'error',
+                    'unsafe-path-loop': 'error',
+                    'unused-variable': 'error',
+                    'consistent-return': 'off'
+                },
+                diagnosticFilters: [1001, 1090]
+            } as any);
+            expect(fmtDiagnostics(diagnostics)).deep.equal([
+                `30:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`
+            ]);
+        });
+
+        it('handles returns in inactive branches', async () => {
+            const diagnostics = await linter.run({
+                ...projectBsConst,
+                files: ['source/flow.bs'],
+                rules: {
+                    'assign-all-paths': 'error',
+                    'unsafe-path-loop': 'error',
+                    'unused-variable': 'error',
+                    'consistent-return': 'error'
+                },
+                diagnosticFilters: [1001, 1090]
+            } as any);
+            expect(fmtDiagnostics(diagnostics)).deep.equal([]);
+        });
+
+        it('evaluates literals, file-level #const and undeclared constants', async () => {
+            const diagnostics = await linter.run({
+                ...projectBsConst,
+                files: ['source/literals-and-consts.bs'],
+                rules: {
+                    'assign-all-paths': 'error',
+                    'unsafe-path-loop': 'error',
+                    'unused-variable': 'error',
+                    'consistent-return': 'off'
+                },
+                diagnosticFilters: [1001, 1090]
+            } as any);
+            expect(fmtDiagnostics(diagnostics)).deep.equal([
+                `37:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`,
+                `53:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`,
+                `85:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`,
+                `96:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`
+            ]);
         });
     });
 });

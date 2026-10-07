@@ -12,7 +12,7 @@ function assignPathsCC1() as dynamic
     #if true
         a = 1
     #end if
-    return a ' not really an error because #else block will never be run, but displays one anyway. Maybe fix this
+    return a ' no error, #if true is always compiled
 end function
 
 
@@ -20,7 +20,7 @@ function assignPathsCC2() as dynamic
     #if SOME_VAR
         a = 1
     #end if
-    return a ' error
+    return a ' error, SOME_VAR is undeclared so false, a is never assigned
 end function
 
 
@@ -39,7 +39,7 @@ function assignPathsCC4() as dynamic
     #else
         a = 2
     #end if
-    return a '  error
+    return a ' no error, SOME_VAR is false so the #else branch assigns a
 end function
 
 
@@ -62,7 +62,7 @@ function assignPathsCC6() as dynamic
     #else
         ' missing assignment
     #end if
-    return a '  error
+    return a ' error, every condition is false and the #else branch does not assign a
 end function
 
 function assignPathsCC7() as dynamic
@@ -73,5 +73,5 @@ function assignPathsCC7() as dynamic
     #else
         a = 2
     #end if
-    return a '  error
+    return a ' no error, only the #else branch is live and it assigns a
 end function

@@ -1,0 +1,9 @@
+function returnInInactiveBranch()
+    #if FLAG_OFF
+        return invalid
+    #else
+        x = 1
+    #end if
+    print x
+    return x
+end function
