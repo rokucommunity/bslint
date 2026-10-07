@@ -259,7 +259,8 @@ export function createVarLinter(
 
     function closeBlock(closed: StatementInfo) {
         const { locals, returns } = closed;
-        const branches = closed.branches - (closed.inactiveBranches ?? 0);
+        // a conditional compile statement only has one live branch
+        const branches = closed.branches - (isConditionalCompileStatement(closed.stat) ? 1 : 0);
         const { parent } = state;
         if (!parent) {
             // always finalize when closing the function body (no parent)

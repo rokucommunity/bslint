@@ -50,3 +50,46 @@ sub readsOnlyInInactive(msg)
         print outer
     #end if
 end sub
+
+sub inactiveIteratorWithElse()
+    #if FLAG_OFF
+        for each item in [1]
+        end for
+    #else
+        item = 1
+    #end if
+    print item
+end sub
+
+sub inactiveIteratorInsideIf(c)
+    if c then
+        #if FLAG_OFF
+            for each item in [1]
+            end for
+        #else
+            item = 1
+        #end if
+    else
+        item = 2
+    end if
+    print item
+end sub
+
+sub inactiveIteratorNoElse()
+    #if FLAG_OFF
+        for each item in [1]
+        end for
+    #end if
+    print item
+end sub
+
+sub unreachedTrueElseIf()
+    #if DEBUG
+        x = 1
+    #else if DEBUG
+        y = undeclaredA
+    #else
+        z = undeclaredB
+    #end if
+    print x
+end sub
