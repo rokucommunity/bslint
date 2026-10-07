@@ -1,0 +1,52 @@
+sub inactiveThen()
+    #if FLAG_OFF
+        y = undeclaredInInactiveBlock
+    #end if
+end sub
+
+sub inactiveElse()
+    #if DEBUG
+        print "debug"
+    #else
+        y = undeclaredInInactiveElse
+    #end if
+end sub
+
+sub inactiveElseIfChain()
+    #if FLAG_OFF
+        a = undeclaredInChainThen
+    #else if FLAG_OFF
+        b = undeclaredInChainElseIf
+    #else if DEBUG
+        print "debug"
+    #else
+        c = undeclaredInChainElse
+    #end if
+end sub
+
+sub inactiveNested()
+    #if FLAG_OFF
+        #if DEBUG
+            z = undeclaredInNestedBlock
+        #end if
+    #end if
+end sub
+
+sub inactiveNot()
+    #if not DEBUG
+        n = undeclaredInNotBlock
+    #end if
+    #if not FLAG_OFF
+        print "active"
+    #else
+        m = undeclaredInNotElse
+    #end if
+end sub
+
+sub readsOnlyInInactive(msg)
+    outer = 1
+    #if FLAG_OFF
+        print msg
+        print outer
+    #end if
+end sub

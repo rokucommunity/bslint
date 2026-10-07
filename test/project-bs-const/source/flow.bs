@@ -1,0 +1,18 @@
+sub unknownConstBothBranches()
+    #if UNKNOWN_CONST
+        x = 1
+    #else
+        x = 2
+    #end if
+    print x
+end sub
+
+function returnInInactiveBranch()
+    #if FLAG_OFF
+        return invalid
+    #else
+        x = 1
+    #end if
+    print x
+    return x
+end function

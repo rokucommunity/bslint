@@ -258,7 +258,8 @@ export function createVarLinter(
     }
 
     function closeBlock(closed: StatementInfo) {
-        const { locals, branches, returns } = closed;
+        const { locals, returns } = closed;
+        const branches = closed.branches - (closed.inactiveBranches ?? 0);
         const { parent } = state;
         if (!parent) {
             // always finalize when closing the function body (no parent)
@@ -330,10 +331,20 @@ export function createVarLinter(
         }
     }
 
-    function visitExpression(expr: Expression, parent: Expression, curr: StatementInfo) {
+    // `markUsedOnly` is set for code in inactive conditional compilation blocks: reads mark known variables
+    // as used, but nothing is reported for them
+    function visitExpression(expr: Expression, parent: Expression, curr: StatementInfo, markUsedOnly = false) {
         if (isVariableExpression(expr) && !util.isInTypeExpression(expr)) {
             const name = expr.tokens.name.text;
             if (name === 'm') {
+                return;
+            }
+
+            if (markUsedOnly) {
+                const usedLocal = findLocal(name);
+                if (usedLocal) {
+                    usedLocal.isUsed = true;
+                }
                 return;
             }
 

@@ -1,4 +1,4 @@
-import { BsDiagnostic, BrsFile, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateFileEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
+import { BsDiagnostic, BrsFile, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateFileEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement, ConditionalCompileStatement } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -19,6 +19,8 @@ export interface StatementInfo {
     parent?: Statement;
     locals?: Map<string, VarInfo>;
     branches?: number;
+    inactiveBranches?: number;
+    inactive?: boolean;
     returns?: boolean;
     narrows?: NarrowingInfo[];
 }
@@ -108,13 +110,19 @@ export default class TrackCodeFlow implements CompilerPlugin {
             // 3. open -> curr becomes parent
             const visitStatement = createStackedVisitor((stat: Statement, stack: Statement[]) => {
                 state.stack = stack;
+                const parentStat = stack[stack.length - 1];
+                const conditionValue = isConditionalCompileStatement(stat) ? getConditionalCompileValue(stat) : undefined;
                 curr = {
                     stat: stat,
-                    parent: stack[stack.length - 1],
-                    branches: isBranchedStatement(stat) ? 2 : 1
+                    parent: parentStat,
+                    branches: isBranchedStatement(stat) ? 2 : 1,
+                    inactiveBranches: conditionValue === undefined ? 0 : 1,
+                    inactive: (parentStat && state.blocks.get(parentStat)?.inactive) || isInactiveConditionalCompileBranch(stat, parentStat)
                 };
                 returnLinter.visitStatement(curr);
-                varLinter.visitStatement(curr);
+                if (!curr.inactive) {
+                    varLinter.visitStatement(curr);
+                }
 
             }, (opened) => {
                 state.blocks.set(opened, curr);
@@ -161,7 +169,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
                     if (isStatement(elem) && !isExpression(parent)) {
                         visitStatement(elem, parent);
                     } else if (parent) {
-                        varLinter.visitExpression(elem, parent, curr);
+                        varLinter.visitExpression(elem, parent, curr, curr.inactive);
                     }
                 }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions | InternalWalkMode.visitFalseConditionalCompilationBlocks });
             } else {
@@ -242,6 +250,27 @@ function findTryBranch(state: LintState): { trys?: StatementInfo; branch?: State
         trys: undefined,
         branch: parent
     };
+}
+
+// Evaluate a `#if` condition against the manifest bs_const values, `undefined` when the constant is unknown
+function getConditionalCompileValue(stat: ConditionalCompileStatement): boolean | undefined {
+    const value = stat.getBsConsts()?.get(stat.tokens.condition.text.toLowerCase());
+    if (value === undefined) {
+        return undefined;
+    }
+    return stat.tokens.not ? !value : !!value;
+}
+
+// Whether `stat` is a branch of a `#if` that is not compiled according to the manifest bs_const values
+function isInactiveConditionalCompileBranch(stat: Statement, parentStat?: Statement): boolean {
+    if (!isConditionalCompileStatement(parentStat)) {
+        return false;
+    }
+    const value = getConditionalCompileValue(parentStat);
+    if (value === undefined) {
+        return false;
+    }
+    return (stat === parentStat.thenBranch && !value) || (stat === parentStat.elseBranch && value);
 }
 
 // `if` and `for/while` are considered as multi-branch

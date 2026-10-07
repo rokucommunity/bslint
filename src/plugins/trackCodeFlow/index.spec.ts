@@ -16,6 +16,9 @@ describe('trackCodeFlow', () => {
     const project1 = {
         rootDir: 'test/project1'
     };
+    const projectBsConst = {
+        rootDir: 'test/project-bs-const'
+    };
 
     beforeEach(() => {
         linter = new Linter();
@@ -565,6 +568,55 @@ describe('trackCodeFlow', () => {
             ).to.equal(
                 expectedSrc.replace(/\r?\n/g, '\n')
             );
+        });
+    });
+
+    describe('conditional compilation with manifest bs_const', () => {
+        it('ignores variables in inactive #if blocks', async () => {
+            const diagnostics = await linter.run({
+                ...projectBsConst,
+                files: ['source/inactive-blocks.bs'],
+                rules: {
+                    'assign-all-paths': 'error',
+                    'unsafe-path-loop': 'error',
+                    'unused-variable': 'error',
+                    'consistent-return': 'off'
+                },
+                diagnosticFilters: [1001, 1090]
+            } as any);
+            expect(fmtDiagnostics(diagnostics)).deep.equal([]);
+        });
+
+        it('tracks only the active branch of known #if conditions', async () => {
+            const diagnostics = await linter.run({
+                ...projectBsConst,
+                files: ['source/known-branches.bs'],
+                rules: {
+                    'assign-all-paths': 'error',
+                    'unsafe-path-loop': 'error',
+                    'unused-variable': 'error',
+                    'consistent-return': 'off'
+                },
+                diagnosticFilters: [1001, 1090]
+            } as any);
+            expect(fmtDiagnostics(diagnostics)).deep.equal([
+                `30:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`
+            ]);
+        });
+
+        it('handles unknown constants and returns in inactive branches', async () => {
+            const diagnostics = await linter.run({
+                ...projectBsConst,
+                files: ['source/flow.bs'],
+                rules: {
+                    'assign-all-paths': 'error',
+                    'unsafe-path-loop': 'error',
+                    'unused-variable': 'error',
+                    'consistent-return': 'error'
+                },
+                diagnosticFilters: [1001, 1090]
+            } as any);
+            expect(fmtDiagnostics(diagnostics)).deep.equal([]);
         });
     });
 });
