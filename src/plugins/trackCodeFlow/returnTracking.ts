@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, DiagnosticTag, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnostic, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -12,7 +12,6 @@ interface ThrowInfo {
 }
 
 enum ReturnLintError {
-    UnreachableCode = 'unreachable-code',
     ReturnValueUnexpected = 'return-value-found',
     ReturnValueExpected = 'missing-return-value',
     UnsafeReturnValue = 'unsafe-return-value',
@@ -22,7 +21,6 @@ enum ReturnLintError {
 }
 
 enum ReturnLintLegacyError {
-    UnreachableCode = 'LINT2001',
     ReturnValueUnexpected = 'LINT2002',
     ReturnValueExpected = 'LINT2003',
     UnsafeReturnValue = 'LINT2004',
@@ -43,17 +41,10 @@ export function createReturnLinter(
     const throws: ThrowInfo[] = [];
 
     function visitStatement(curr: StatementInfo) {
-        const { parent } = state;
-        if (parent?.returns) {
-            diagnostics.push({
-                severity: severity.unreachableCode,
-                code: ReturnLintError.UnreachableCode,
-                legacyCode: ReturnLintLegacyError.UnreachableCode,
-                message: 'Unreachable code',
-                location: curr.stat.location,
-                tags: [DiagnosticTag.Unnecessary]
-            });
-        } else if (isReturnStatement(curr.stat)) {
+        if (state.parent?.returns) {
+            return;
+        }
+        if (isReturnStatement(curr.stat)) {
             const { ifs, conditionalCompiles, trys, branch, parent } = state;
             returns.push({
                 stat: curr.stat,
