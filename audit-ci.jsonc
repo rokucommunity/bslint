@@ -8,7 +8,7 @@
             "GHSA-vfj7-8cjw-p6xm": {
                 // Added: 2026-10-03
                 "active": true,
-                "notes": "`braces` <=3.0.3 (prod, via `brighterscript`/`roku-deploy`/`fast-glob`/`micromatch`): stack exhaustion on deeply nested brace patterns. No patched version is published, so it cannot be upgraded or overridden. The only patterns reaching it are globs from the caller's own project config; no untrusted party supplies them, and a crash only affects the caller's own local process."
+                "notes": "`braces` <=3.0.3: stack exhaustion on deeply nested brace patterns. No patched version is published, so it cannot be upgraded or overridden. Dev-only (`npm audit --omit=dev` is clean): reachable only through devDependency tooling globbing repo-controlled patterns."
             }
         }
     ]

@@ -35,7 +35,7 @@
     "url": "https://github.com/rokucommunity/bslint"
   },
   "dependencies": {
-    "brighterscript": "^1.0.0-alpha.56",
+    "brighterscript": "^1.0.0-alpha.57",
     "coveralls-next": "^6.0.1",
     "fs-extra": "^10.0.0",
     "jsonc-parser": "^2.3.0",
@@ -63,13 +63,7 @@
   },
   "overrides": {
     "serialize-javascript": "^7",
-    "brace-expansion@^1": "^1.1.21",
-    "brace-expansion@^2": "^2.1.7",
-    "brace-expansion@^5": "^5.0.12",
-    "js-yaml": "^4",
-    "fast-uri": "^3.1.8",
-    "istanbul-lib-processinfo": "^3.0.1",
-    "@babel/core": "^7"
+    "istanbul-lib-processinfo": "^3.0.1"
   },
   "mocha": {
     "config": ".mocharc.cjs"
