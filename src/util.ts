@@ -12,7 +12,6 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'assign-all-paths': 'error',
         'unsafe-path-loop': 'error',
         'unsafe-iterators': 'error',
-        'unreachable-code': 'info',
         'case-sensitivity': 'warn',
         'unused-variable': 'warn',
         'unused-parameter': 'warn',
@@ -149,7 +148,6 @@ export function createContext(program: Program): PluginWrapperContext {
 function rulesToSeverity(rules: BsLintConfig['rules']) {
     return {
         assignAllPath: ruleToSeverity(rules['assign-all-paths']),
-        unreachableCode: ruleToSeverity(rules['unreachable-code']),
         unsafePathLoop: ruleToSeverity(rules['unsafe-path-loop']),
         unsafeIterators: ruleToSeverity(rules['unsafe-iterators']),
         caseSensitivity: ruleToSeverity(rules['case-sensitivity']),

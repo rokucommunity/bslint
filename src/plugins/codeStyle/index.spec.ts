@@ -28,7 +28,6 @@ describe('codeStyle', () => {
                 'assign-all-paths': 'off',
                 'unsafe-path-loop': 'off',
                 'unsafe-iterators': 'off',
-                'unreachable-code': 'off',
                 'case-sensitivity': 'off',
                 'unused-variable': 'off',
                 'unused-parameter': 'off',

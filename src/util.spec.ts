@@ -60,12 +60,12 @@ describe('normalizeConfig', () => {
         const options: BsLintConfig = {
             cwd: 'test/project1',
             rules: {
-                'unreachable-code': 'error',
+                'unused-variable': 'error',
                 'consistent-return': 'off'
             }
         };
         const actual = normalizeConfig(options);
-        expect(actual.rules['unreachable-code']).equals('error');
+        expect(actual.rules['unused-variable']).equals('error');
         expect(actual.rules['consistent-return']).equals('off');
     });
 });

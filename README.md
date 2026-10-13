@@ -160,7 +160,6 @@ Default rules:
         "assign-all-paths": "error",
         "unsafe-path-loop": "error",
         "unsafe-iterators": "error",
-        "unreachable-code": "info",
         "case-sensitivity": "warn",
         "unused-variable": "warn",
         "unused-parameter": "warn",
@@ -316,12 +315,6 @@ Valid values for the rules severity are: `error | warn | info | off`.
 - `unused-variable`: inform of variable being set but never used
 
 - `unused-parameter`: inform of function parameter never being used
-
-- `unreachable-code`: inform of unreachable code
-    ```vb
-    return
-    print "is unreachable"
-    ```
 
 - `consistent-return`: verifies consistency of `sub`/`function` returned values
   (missing return, missing value, returned value while function is `as void`,...)

@@ -397,27 +397,6 @@ describe('trackCodeFlow', () => {
         expect(actual).deep.equal(expected);
     });
 
-    it('implements unreachable-code', async () => {
-        const diagnostics = await linter.run({
-            ...project1,
-            files: ['source/unreachable-code.brs'],
-            rules: {
-                'unreachable-code': 'error',
-                'consistent-return': 'off',
-                'unused-variable': 'off'
-            }
-        });
-        const actual = fmtDiagnostics(diagnostics);
-        const expected = [
-            `04:unreachable-code:Unreachable code`,
-            `10:unreachable-code:Unreachable code`,
-            `26:unreachable-code:Unreachable code`,
-            `41:unreachable-code:Unreachable code`,
-            `50:unreachable-code:Unreachable code`
-        ];
-        expect(actual).deep.equal(expected);
-    });
-
     it('implements case-sensitivity', async () => {
         const diagnostics = await linter.run({
             ...project1,
