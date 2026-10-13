@@ -42,7 +42,8 @@ import {
     ImportStatement,
     isImportStatement,
     isAAIndexedMemberExpression,
-    isAALiteralExpression
+    isAALiteralExpression,
+    isAAMemberExpression
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
@@ -460,7 +461,7 @@ export default class CodeStyle implements Plugin {
 
         indexes.forEach((index, i) => {
             const member = aa.elements[index];
-            if (isAAIndexedMemberExpression(member) || isAALiteralExpression(member)) {
+            if (isAAIndexedMemberExpression(member) || isAAMemberExpression(member)) {
                 const hasComma = !!member.tokens.comma;
                 if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
                     if (hasComma) {
