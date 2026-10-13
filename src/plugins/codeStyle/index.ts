@@ -40,7 +40,9 @@ import {
     isCallExpression,
     ValidateScopeEvent,
     ImportStatement,
-    isImportStatement
+    isImportStatement,
+    isAAIndexedMemberExpression,
+    isAAMemberExpression
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
@@ -458,13 +460,15 @@ export default class CodeStyle implements Plugin {
 
         indexes.forEach((index, i) => {
             const member = aa.elements[index];
-            const hasComma = !!member.tokens.comma;
-            if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
-                if (hasComma) {
-                    diagnostics.push(messages.removeAAComma(member.tokens.comma.location));
+            if (isAAIndexedMemberExpression(member) || isAAMemberExpression(member)) {
+                const hasComma = !!member.tokens.comma;
+                if (aaCommaStyle === 'never' || (i === last && ((aaCommaStyle === 'no-dangling') || isSingleLine(aa)))) {
+                    if (hasComma) {
+                        diagnostics.push(messages.removeAAComma(member.tokens.comma.location));
+                    }
+                } else if (!hasComma) {
+                    diagnostics.push(messages.addAAComma(member.value?.location));
                 }
-            } else if (!hasComma) {
-                diagnostics.push(messages.addAAComma(member.value.location));
             }
         });
     }
