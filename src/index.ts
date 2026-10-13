@@ -26,7 +26,6 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'assign-all-paths'?: RuleSeverity;
         'unsafe-path-loop'?: RuleSeverity;
         'unsafe-iterators'?: RuleSeverity;
-        'unreachable-code'?: RuleSeverity;
         'case-sensitivity'?: RuleSeverity;
         'unused-variable'?: RuleSeverity;
         'unused-parameter'?: RuleSeverity;
@@ -71,7 +70,6 @@ export interface BsLintRules {
     assignAllPath: BsLintSeverity;
     unsafePathLoop: BsLintSeverity;
     unsafeIterators: BsLintSeverity;
-    unreachableCode: BsLintSeverity;
     caseSensitivity: BsLintSeverity;
     unusedVariable: BsLintSeverity;
     unusedParameter: BsLintSeverity;
