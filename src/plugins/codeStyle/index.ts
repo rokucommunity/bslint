@@ -42,7 +42,6 @@ import {
     ImportStatement,
     isImportStatement,
     isAAIndexedMemberExpression,
-    isAALiteralExpression,
     isAAMemberExpression
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
