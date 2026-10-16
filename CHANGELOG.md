@@ -10,14 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  - Security enhancements ([#206](https://github.com/rokucommunity/bslint/pull/206), [#218](https://github.com/rokucommunity/bslint/pull/218), [#221](https://github.com/rokucommunity/bslint/pull/221), [#223](https://github.com/rokucommunity/bslint/pull/223))
  - upgrade to [brighterscript@0.73.7](https://github.com/rokucommunity/brighterscript/blob/v0.73.7/CHANGELOG.md#0737---2026-10-13). Notable changes since 0.73.3:
-     - Add component-scope coverage for recursive const resolution ([#1904](https://github.com/rokucommunity/brighterscript/pull/1904))
-     - Add `bsc --init` to create a new bsconfig.json ([#1892](https://github.com/rokucommunity/brighterscript/pull/1892))
-     - Allow a namespaced const to reference an outer symbol with the same name ([#1905](https://github.com/rokucommunity/brighterscript/pull/1905))
-     - Add `...` (DotDotDot) token to the lexer ([#1896](https://github.com/rokucommunity/brighterscript/pull/1896))
      - Security enhancements ([#1804](https://github.com/rokucommunity/brighterscript/pull/1804), [#1805](https://github.com/rokucommunity/brighterscript/pull/1805), [#1854](https://github.com/rokucommunity/brighterscript/pull/1854), [#1873](https://github.com/rokucommunity/brighterscript/pull/1873), [#1875](https://github.com/rokucommunity/brighterscript/pull/1875), [#1882](https://github.com/rokucommunity/brighterscript/pull/1882))
-     - Fix crash stripping sourceMappingURL comment from non-transpiled files ([#1821](https://github.com/rokucommunity/brighterscript/pull/1821))
-     - Tolerate older BrsTranspileState in continue back-transpile ([#1812](https://github.com/rokucommunity/brighterscript/pull/1812))
-     - Locate the super() call when injecting field initializers ([#1803](https://github.com/rokucommunity/brighterscript/pull/1803))
 ### Fixed
  - Fix unused-variable false positive for loop-carried reads in nested loops ([#225](https://github.com/rokucommunity/bslint/pull/225))
 
