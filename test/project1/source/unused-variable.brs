@@ -61,3 +61,77 @@ sub ok4()
         end if
     end for
 end sub
+
+function loopInsideIf(params as object) as string
+    queryString = ""
+    first = true
+    if params <> invalid then
+        for each key in params
+            if not first then
+                queryString += "&"
+            else
+                first = false
+            end if
+            queryString += key
+        end for
+    end if
+    return queryString
+end function
+
+function whileInsideIf(node as object) as object
+    child = node.focusedChild
+    if child <> invalid then
+        while child <> invalid
+            node = child
+            child = node.focusedChild
+        end while
+    end if
+    return node
+end function
+
+function loopInsideElse(params as object) as string
+    queryString = ""
+    first = true
+    if params = invalid then
+        queryString = "none"
+    else
+        for each key in params
+            if not first then
+                queryString += "&"
+            else
+                first = false
+            end if
+            queryString += key
+        end for
+    end if
+    return queryString
+end function
+
+function loopInsideTry(params as object) as string
+    queryString = ""
+    first = true
+    try
+        for each key in params
+            if not first then
+                queryString += "&"
+            else
+                first = false
+            end if
+            queryString += key
+        end for
+    catch e
+        queryString = "error"
+    end try
+    return queryString
+end function
+
+function unusedInLoopInsideIf(params as object) as integer
+    count = 0
+    if params <> invalid then
+        for each key in params
+            junk = 1
+            count += 1
+        end for
+    end if
+    return count
+end function
