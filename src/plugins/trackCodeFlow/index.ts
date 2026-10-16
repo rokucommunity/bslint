@@ -109,12 +109,12 @@ export default class TrackCodeFlow implements CompilerPlugin {
             // 3. open -> curr becomes parent
             const visitStatement = createStackedVisitor((stat: Statement, stack: Statement[]) => {
                 state.stack = stack;
-                const parentStat = stack[stack.length - 1];
                 curr = {
                     stat: stat,
-                    parent: parentStat,
+                    parent: stack[stack.length - 1],
                     branches: isBranchedStatement(stat) ? 2 : 1,
-                    inactive: (parentStat && state.blocks.get(parentStat)?.inactive) || (isConditionalCompileStatement(parentStat) && !parentStat.isBranchActive(stat))
+                    // brighterscript marks code in unselected `#if` branches as inactive
+                    inactive: stat.isActive === false
                 };
                 returnLinter.visitStatement(curr);
                 if (!curr.inactive) {
