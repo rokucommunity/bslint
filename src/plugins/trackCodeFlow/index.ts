@@ -19,6 +19,7 @@ export interface StatementInfo {
     parent?: Statement;
     locals?: Map<string, VarInfo>;
     branches?: number;
+    inactive?: boolean;
     returns?: boolean;
     narrows?: NarrowingInfo[];
 }
@@ -111,14 +112,20 @@ export default class TrackCodeFlow implements CompilerPlugin {
                 curr = {
                     stat: stat,
                     parent: stack[stack.length - 1],
-                    branches: isBranchedStatement(stat) ? 2 : 1
+                    branches: isBranchedStatement(stat) ? 2 : 1,
+                    // brighterscript marks code in unselected `#if` branches as inactive
+                    inactive: stat.isActive === false
                 };
                 returnLinter.visitStatement(curr);
-                varLinter.visitStatement(curr);
+                if (!curr.inactive) {
+                    varLinter.visitStatement(curr);
+                }
 
             }, (opened) => {
                 state.blocks.set(opened, curr);
-                varLinter.openBlock(curr);
+                if (!curr.inactive) {
+                    varLinter.openBlock(curr);
+                }
 
                 if (isIfStatement(opened)) {
                     state.ifs = curr;
@@ -161,7 +168,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
                     if (isStatement(elem) && !isExpression(parent)) {
                         visitStatement(elem, parent);
                     } else if (parent) {
-                        varLinter.visitExpression(elem, parent, curr);
+                        varLinter.visitExpression(elem, parent, curr, curr.inactive);
                     }
                 }, { walkMode: WalkMode.visitStatements | WalkMode.visitExpressions | InternalWalkMode.visitFalseConditionalCompilationBlocks });
             } else {

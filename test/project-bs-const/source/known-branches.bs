@@ -1,0 +1,31 @@
+sub assignedInBothTrue()
+    #if DEBUG
+        x = 1
+    #else
+        x = 2
+    #end if
+    print x
+end sub
+
+sub assignedInBothFalse()
+    #if FLAG_OFF
+        x = 1
+    #else
+        x = 2
+    #end if
+    print x
+end sub
+
+sub assignedOnlyInActive()
+    #if DEBUG
+        x = 1
+    #end if
+    print x
+end sub
+
+sub assignedOnlyInInactive()
+    #if FLAG_OFF
+        x = 1
+    #end if
+    print x
+end sub
