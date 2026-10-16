@@ -160,7 +160,6 @@ Default rules:
         "assign-all-paths": "error",
         "unsafe-path-loop": "error",
         "unsafe-iterators": "error",
-        "unreachable-code": "info",
         "case-sensitivity": "warn",
         "unused-variable": "warn",
         "unused-parameter": "warn",
@@ -271,7 +270,13 @@ Default rules:
     - `all`: enforce both arguments and return type annotations
     - `return`: enforce return type annotations
     - `args`: enforce arguments type annotations
+    - `all-allow-implicit`: enforce argument and return type annotations, but allows arguments with default values to not have an annotation
+    - `args-allow-implicit`: enforce arguments type annotations, but allows arguments with default values to not have an annotation
     - `off`: do not validate (**default**)
+
+- `name-shadowing`: enforces that no two items have the same name (`error | warn | info | off`)
+
+- `type-reassignment`: enforces that a variable is not used to reference multiple types (`error | warn | info | off`)
 
 ### Code flow rules
 
@@ -310,12 +315,6 @@ Valid values for the rules severity are: `error | warn | info | off`.
 - `unused-variable`: inform of variable being set but never used
 
 - `unused-parameter`: inform of function parameter never being used
-
-- `unreachable-code`: inform of unreachable code
-    ```vb
-    return
-    print "is unreachable"
-    ```
 
 - `consistent-return`: verifies consistency of `sub`/`function` returned values
   (missing return, missing value, returned value while function is `as void`,...)

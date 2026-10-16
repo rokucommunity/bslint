@@ -1,0 +1,108 @@
+sub literalTrue()
+    #if true
+        x = 1
+    #end if
+    print x
+end sub
+
+sub literalTrueElse()
+    #if true
+        x = 1
+    #else
+        y = undeclaredInLiteralElse
+    #end if
+    print x
+end sub
+
+sub literalFalse()
+    #if false
+        y = undeclaredInLiteralFalse
+    #else
+        x = 1
+    #end if
+    print x
+end sub
+
+sub literalNotFalse()
+    #if not false
+        x = 1
+    #end if
+    print x
+end sub
+
+sub literalFalseOnly()
+    #if false
+        x = 1
+    #end if
+    print x
+end sub
+
+sub undeclaredConstant()
+    #if UNDECLARED_CONST
+        y = undeclaredInUndeclaredThen
+    #else
+        x = 1
+    #end if
+    print x
+end sub
+
+sub undeclaredConstantOnly()
+    #if UNDECLARED_CONST
+        x = 1
+    #end if
+    print x
+end sub
+
+sub undeclaredNotConstant()
+    #if not UNDECLARED_CONST
+        x = 1
+    #end if
+    print x
+end sub
+
+#const FILE_ON = true
+#const FILE_OFF = false
+
+sub fileConstTrue()
+    #if FILE_ON
+        x = 1
+    #else
+        y = undeclaredInFileConstElse
+    #end if
+    print x
+end sub
+
+sub fileConstFalse()
+    #if FILE_OFF
+        y = undeclaredInFileConstThen
+    #end if
+end sub
+
+sub fileConstFalseOnly()
+    #if FILE_OFF
+        x = 1
+    #end if
+    print x
+end sub
+
+#if FLAG_OFF
+    #const NEVER_DEFINED = true
+#end if
+
+sub constInInactiveBranch()
+    #if NEVER_DEFINED
+        x = 1
+    #end if
+    print x
+end sub
+
+#if DEBUG
+    #const DEFINED_IN_ACTIVE = true
+#end if
+
+sub constInActiveBranch()
+    #if DEFINED_IN_ACTIVE
+        x = 1
+    #end if
+    print x
+end sub

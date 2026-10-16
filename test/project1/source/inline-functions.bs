@@ -1,0 +1,10 @@
+sub main()
+    takesFunction(function(input as object) as string
+        return "Hello, " + input.name + "!"
+    end function)
+end sub
+
+
+sub takesFunction(anonFunc as function)
+    print anonFunc({name: "Hello, World!"})
+end sub

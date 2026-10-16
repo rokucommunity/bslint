@@ -9,3 +9,7 @@ end function
 function test3(arg1 as string, arg2 as string) as string
     return arg1 + arg2
 end function
+
+function test4(arg1 = "hello", arg2 = "world") as string
+    return arg1 + arg2
+end function

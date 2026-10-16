@@ -1,0 +1,12 @@
+namespace TestNamespace
+    class TestImportClass
+    end class
+
+    enum TestImportEnum
+    end enum
+
+    interface TestImportInterface
+    end interface
+
+    const TestImportConst = 1
+end namespace
