@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.47](https://github.com/rokucommunity/bslint/compare/0.8.46...v0.8.47) - 2026-10-16
+### Changed
+ - Security enhancements ([#206](https://github.com/rokucommunity/bslint/pull/206), [#218](https://github.com/rokucommunity/bslint/pull/218), [#221](https://github.com/rokucommunity/bslint/pull/221), [#223](https://github.com/rokucommunity/bslint/pull/223))
+ - upgrade to [brighterscript@0.73.7](https://github.com/rokucommunity/brighterscript/blob/v0.73.7/CHANGELOG.md#0737---2026-10-13). Notable changes since 0.73.3:
+     - Security enhancements ([#1804](https://github.com/rokucommunity/brighterscript/pull/1804), [#1805](https://github.com/rokucommunity/brighterscript/pull/1805), [#1854](https://github.com/rokucommunity/brighterscript/pull/1854), [#1873](https://github.com/rokucommunity/brighterscript/pull/1873), [#1875](https://github.com/rokucommunity/brighterscript/pull/1875), [#1882](https://github.com/rokucommunity/brighterscript/pull/1882))
+### Fixed
+ - Fix unused-variable false positive for loop-carried reads in nested loops ([#225](https://github.com/rokucommunity/bslint/pull/225))
+
+
+
 ## [0.8.46](https://github.com/rokucommunity/bslint/compare/0.8.45...v0.8.46) - 2026-09-09
 ### Added
  - Add sorted-imports rule ([#202](https://github.com/rokucommunity/bslint/pull/202))
