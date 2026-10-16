@@ -467,6 +467,7 @@ describe('trackCodeFlow', () => {
             `02:unused-variable:Variable 'a' is set but value is never used`,
             `08:unused-variable:Variable 'a' is set but value is never used`,
             `12:unused-variable:Variable 'a' is set but value is never used`,
+            `132:unused-variable:Variable 'junk' is set but value is never used`,
             `21:unused-variable:Variable 'd' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
