@@ -358,7 +358,8 @@ describe('trackCodeFlow', () => {
             `02:LINT1005:Variable 'a' is set but value is never used`,
             `08:LINT1005:Variable 'a' is set but value is never used`,
             `12:LINT1005:Variable 'a' is set but value is never used`,
-            `21:LINT1005:Variable 'd' is set but value is never used`
+            `21:LINT1005:Variable 'd' is set but value is never used`,
+            `132:LINT1005:Variable 'junk' is set but value is never used`
         ];
         expect(actual).deep.equal(expected);
     });
