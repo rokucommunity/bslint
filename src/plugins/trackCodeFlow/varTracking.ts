@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
+import { BscCode, BrsCode, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 import { Location } from 'vscode-languageserver-types';
@@ -79,25 +79,26 @@ interface ValidationInfo {
     namespace?: NamespaceStatement;
 }
 
-const deferredValidation: Map<string, ValidationInfo[]> = new Map();
+// keyed by code (not by path), because several pieces of code can share one file
+const deferredValidation = new WeakMap<BscCode, ValidationInfo[]>();
 
-function getDeferred(file: BscFile) {
-    return deferredValidation.get(file.srcPath);
+function getDeferred(code: BscCode) {
+    return deferredValidation.get(code);
 }
 
-export function resetVarContext(file: BscFile) {
-    deferredValidation.set(file.srcPath, []);
+export function resetVarContext(code: BscCode) {
+    deferredValidation.set(code, []);
 }
 
 export function createVarLinter(
     lintContext: PluginContext,
-    file: BscFile,
+    code: BrsCode,
     fun: FunctionExpression,
     state: LintState,
     diagnostics: BsDiagnostic[]
 ) {
     const { severity } = lintContext;
-    const deferred = getDeferred(file);
+    const deferred = getDeferred(code);
     let foundLabelAt = 0;
 
     const args: Map<string, VarInfo> = new Map();
@@ -456,15 +457,15 @@ export function createVarLinter(
 export function runDeferredValidation(
     lintContext: PluginContext,
     scope: Scope,
-    files: BscFile[],
+    codes: BscCode[],
     callables: CallableContainerMap
 ) {
     const topLevelVars = buildTopLevelVars(scope, lintContext.globals);
     const diagnostics: BsDiagnostic[] = [];
-    files.forEach((file) => {
-        const deferred = deferredValidation.get(file.srcPath);
+    codes.forEach((code) => {
+        const deferred = getDeferred(code);
         if (deferred) {
-            deferredVarLinter(scope, file, callables, topLevelVars, deferred, diagnostics);
+            deferredVarLinter(scope, code, callables, topLevelVars, deferred, diagnostics);
         }
     });
     return diagnostics;
@@ -495,7 +496,7 @@ function buildTopLevelVars(scope: Scope, globals: string[]) {
 
 function deferredVarLinter(
     scope: Scope,
-    file: BscFile,
+    code: BscCode,
     callables: CallableContainerMap,
     toplevel: Set<string>,
     deferred: ValidationInfo[],

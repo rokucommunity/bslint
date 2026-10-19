@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, standardizePath as s, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -694,10 +694,10 @@ describe('codeStyle', () => {
             sub test2()
             end sub
         `);
-        (file.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
+        (file.code.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
         program.validate();
         const codeStyle = new CodeStyle(createContext(program));
-        codeStyle.validateBrsFile(file);
+        codeStyle.validateBrsCode(file.code);
     });
 
     describe('enforce no todo', () => {
@@ -1861,6 +1861,235 @@ describe('codeStyle', () => {
 
             const allEdits = Object.values(fixAll.edit.changes as Record<string, unknown[]>).flat();
             expect(allEdits).to.have.length(4);
+        });
+    });
+
+    describe('code in xml script blocks', () => {
+        function getCodeActions(srcPath: string, line: number) {
+            const range = { start: { line, character: 0 }, end: { line, character: 999 } } as any;
+            return program.getCodeActions(srcPath, range);
+        }
+
+        it('reports diagnostics in xml file coordinates', () => {
+            init({ 'no-print': 'error' });
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            print "first"
+                        end sub
+                    ]]></script>
+                    <script type="text/brightscript"><![CDATA[ sub other() : print "second" : end sub ]]></script>
+                </component>
+            `);
+            program.validate();
+            expectDiagnostics(program, [{
+                code: 'no-print',
+                location: {
+                    uri: util.pathToUri(s`${program.options.rootDir}/components/Widget.xml`),
+                    range: util.createRange(4, 28, 4, 33)
+                }
+            }, {
+                code: 'no-print',
+                location: {
+                    uri: util.pathToUri(s`${program.options.rootDir}/components/Widget.xml`),
+                    range: util.createRange(7, 77, 7, 82)
+                }
+            }]);
+        });
+
+        it('applies the same rules as in brs files', () => {
+            const rules: BsLintConfig['rules'] = {
+                'inline-if-style': 'then',
+                'block-if-style': 'no-then',
+                'condition-style': 'no-group',
+                'named-function-style': 'auto',
+                'aa-comma-style': 'no-dangling',
+                'no-todo': 'error',
+                'todo-pattern': 'TODO',
+                'for-terminator-style': 'end-for'
+            };
+            const code = `
+                sub init()
+                    if (m.top <> invalid) then
+                        m.values = { p1: 1, p2: 2, }
+                    end if
+                    if true print "inline"
+                    ' TODO: something
+                    for i = 0 to 2
+                    next
+                end sub
+            `;
+            init(rules);
+            program.setFile('source/main.brs', code);
+            program.validate();
+            const brsDiagnostics = fmtDiagnostics(program.getDiagnostics());
+
+            init(rules);
+            // the xml prelude is on one line, so the code is on the same lines as in the brs file
+            program.setFile('components/Widget.xml', `<component name="Widget" extends="Group"><script type="text/brightscript"><![CDATA[${code}]]></script></component>`);
+            program.validate();
+            const xmlDiagnostics = fmtDiagnostics(program.getDiagnostics());
+
+            expect(xmlDiagnostics).to.have.length(6);
+            expect(xmlDiagnostics).to.eql(brsDiagnostics);
+        });
+
+        it('does not apply eol-last to code embedded in a file', () => {
+            init({ 'eol-last': 'always' });
+            program.setFile('components/Widget.xml', `<component name="Widget" extends="Group"><script type="text/brightscript"><![CDATA[ sub init() : end sub ]]></script></component>`);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+
+            init({ 'eol-last': 'never' });
+            program.setFile('components/Widget.xml', `<component name="Widget" extends="Group"><script type="text/brightscript"><![CDATA[\nsub init()\nend sub\n]]></script></component>`);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('honors bs:disable comments in the script block', () => {
+            init({ 'no-print': 'error' });
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            ' bs:disable-next-line no-print
+                            print "ignored"
+                            print "reported"
+                        end sub
+                    ]]></script>
+                    <script type="text/brightscript"><![CDATA[
+                        ' bs:disable no-print
+                        sub other()
+                            print "ignored"
+                        end sub
+                    ]]></script>
+                    <script type="text/brightscript"><![CDATA[
+                        sub another()
+                            print "reported, the flag in the previous block does not apply here"
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `07:no-print:Code style: Avoid using direct Print statements`,
+                `18:no-print:Code style: Avoid using direct Print statements`
+            ]);
+        });
+
+        it('fixes code in script blocks', async () => {
+            const tempPath = `${project1.rootDir}/components/script-block-style-temp.xml`;
+            fs.copyFileSync(`${project1.rootDir}/components/script-block-style.xml`, tempPath);
+            try {
+                const diagnostics = await linter.run({
+                    ...project1,
+                    files: ['components/script-block-style-temp.xml'],
+                    rules: {
+                        'block-if-style': 'no-then',
+                        'aa-comma-style': 'no-dangling',
+                        'named-function-style': 'auto',
+                        'for-terminator-style': 'end-for',
+                        'eol-last': 'always'
+                    },
+                    fix: true
+                });
+                expect(fmtDiagnostics(diagnostics)).to.eql([]);
+
+                expect(lintContext.pendingFixes.size).equals(1);
+                await lintContext.applyFixes();
+                expect(lintContext.pendingFixes.size).equals(0);
+
+                const actualSrc = fs.readFileSync(tempPath).toString();
+                const expectedSrc = fs.readFileSync(`${project1.rootDir}/components/script-block-style-fixed.xml`).toString();
+                expect(actualSrc.replace(/\r?\n/g, '\n')).to.equal(expectedSrc.replace(/\r?\n/g, '\n'));
+            } finally {
+                fs.unlinkSync(tempPath);
+            }
+        });
+
+        it('offers code actions for diagnostics in a script block', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            a = {
+                                p1: 1
+                            }
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'missing-aa-comma');
+            expect(diagnostics).to.have.length(1);
+
+            const actions = getCodeActions('components/Widget.xml', diagnostics[0].location.range.start.line);
+            const action = actions.find(a => a.title === 'Add comma after the expression');
+            expect(action.edit.changes).to.eql({
+                [util.pathToUri(s`${program.options.rootDir}/components/Widget.xml`)]: [{
+                    range: util.createRange(5, 37, 5, 37),
+                    newText: ','
+                }]
+            });
+        });
+
+        it('limits fix-all to the script block', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            a = {
+                                p1: 1
+                                p2: 2
+                            }
+                        end sub
+                    ]]></script>
+                    <script type="text/brightscript"><![CDATA[
+                        sub other()
+                            b = {
+                                q1: 1
+                            }
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'missing-aa-comma');
+            expect(diagnostics).to.have.length(3);
+
+            // the first block has 2 occurrences, so it offers fix-all, covering only its own occurrences
+            const firstBlockActions = getCodeActions('components/Widget.xml', 5);
+            const fixAll = firstBlockActions.find(a => a.title === 'Fix all: Add comma after the expression');
+            expect(fixAll).to.not.equal(undefined);
+            const allEdits = Object.values(fixAll.edit.changes as Record<string, unknown[]>).flat();
+            expect(allEdits).to.have.length(2);
+
+            // the second block has a single occurrence
+            const secondBlockActions = getCodeActions('components/Widget.xml', 13);
+            expect(secondBlockActions.map(a => a.title)).to.include('Add comma after the expression');
+            expect(secondBlockActions.map(a => a.title)).to.not.include('Fix all: Add comma after the expression');
+        });
+
+        it('validates scope rules in script blocks', () => {
+            init({ 'type-reassignment': 'error' });
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            x = 1
+                            x = "hello"
+                            print x
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `06:type-reassignment:Strictness: Reassignment of the type of 'x' from integer to string`
+            ]);
         });
     });
 });

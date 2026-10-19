@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AfterProvideProgramEvent, Program, util } from 'brighterscript';
+import { AfterProvideProgramEvent, Program, standardizePath as s, util } from 'brighterscript';
 import Linter from '../../Linter';
 import TrackCodeFlow from './index';
 import bslintFactory from '../../index';
@@ -616,6 +616,100 @@ describe('trackCodeFlow', () => {
                 `85:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`,
                 `96:uninitialized-variable:Using uninitialised variable 'x' when this file is included in scope 'source'`
             ]);
+        });
+    });
+
+    describe('code in xml script blocks', () => {
+        it('tracks variables in each script block', () => {
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            unused = 1
+                            if m.top <> invalid
+                                maybe = 1
+                            end if
+                            print maybe
+                            print helper(1)
+                        end sub
+                    ]]></script>
+                    <script type="text/brightscript"><![CDATA[ function helper(value)
+                        Result = value
+                        return result
+                    end function ]]></script>
+                </component>
+            `);
+            program.validate();
+            expectDiagnostics(program, [{
+                code: VarLintError.UnusedVariable,
+                location: { range: util.createRange(4, 28, 4, 34) }
+            }, {
+                code: VarLintError.UnsafeInitialization,
+                location: { range: util.createRange(8, 34, 8, 39) }
+            }, {
+                code: VarLintError.CaseMismatch,
+                location: { range: util.createRange(14, 31, 14, 37) }
+            }]);
+        });
+
+        it('reports uninitialized variables in script blocks', () => {
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            print notDefined
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            expectDiagnostics(program, [{
+                code: 'cannot-find-name',
+                location: { range: util.createRange(4, 34, 4, 44) }
+            }, {
+                code: VarLintError.UninitializedVar,
+                message: `Using uninitialised variable 'notDefined' when this file is included in scope 'components${path.sep}Widget.xml'`,
+                location: { range: util.createRange(4, 34, 4, 44) }
+            }]);
+        });
+
+        it('honors bs:disable comments in the script block', () => {
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            unused = 1 ' bs:disable-line unused-variable
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            expectDiagnostics(program, []);
+        });
+
+        it('offers to fix the casing of a variable in a script block', () => {
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[ sub init()
+                        Value = 1
+                        print value
+                    end sub ]]></script>
+                </component>
+            `);
+            program.validate();
+            const range = util.createRange(4, 30, 4, 35);
+            expectDiagnostics(program, [{
+                code: VarLintError.CaseMismatch,
+                location: { range: range }
+            }]);
+            const action = program.getCodeActions('components/Widget.xml', range)
+                .find(x => x.title === `Variable 'value' was previously set with a different casing as 'Value'`);
+            expect(action.edit.changes).to.eql({
+                [util.pathToUri(s`${program.options.rootDir}/components/Widget.xml`)]: [{
+                    range: range,
+                    newText: 'Value'
+                }]
+            });
         });
     });
 });

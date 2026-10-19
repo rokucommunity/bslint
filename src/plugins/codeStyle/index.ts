@@ -2,8 +2,8 @@ import {
     BsDiagnostic,
     createVisitor,
     FunctionExpression,
-    isBrsFile,
-    isXmlFile,
+    isBrsCode,
+    isXmlCode,
     isGroupingExpression,
     TokenKind,
     WalkMode,
@@ -11,13 +11,13 @@ import {
     DiagnosticSeverity,
     ProvideCodeActionsEvent,
     AALiteralExpression,
-    BrsFile,
-    AfterValidateFileEvent,
+    BrsCode,
+    AfterValidateCodeEvent,
     Expression,
     isVoidType,
     Statement,
     SymbolTypeFlag,
-    XmlFile,
+    XmlCode,
     AstNode,
     Token,
     isNamespaceStatement,
@@ -62,17 +62,21 @@ export default class CodeStyle implements Plugin {
 
     provideCodeActions(event: ProvideCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
-        extractFixes(event.file, addFixes, event.diagnostics);
+        const { code, program } = event;
+        const file = code.document;
+        extractFixes(file, addFixes, event.diagnostics);
 
         // For each fixable code touched by the cursor, offer "fix all" if there are
-        // multiple occurrences of that code across the whole file
+        // multiple occurrences of that code across the whole piece of code
+        // (i.e. the file, or the `<script>` block of an xml file)
+        const uri = util.pathToUri(file.srcPath);
         const handledCodes = new Set<string | number>();
         for (const diagnostic of event.diagnostics) {
             if (handledCodes.has(diagnostic.code) || !getFixes(diagnostic)) {
                 continue;
             }
-            const allInFile = event.program.getDiagnostics()
-                .filter(x => x.location.uri === util.pathToUri(event.file.srcPath) && x.code === diagnostic.code);
+            const allInFile = program.getDiagnostics()
+                .filter(x => x.location.uri === uri && x.code === diagnostic.code && program.getCodeAt(file, x.location.range?.start) === code);
             if (allInFile.length > 1) {
                 handledCodes.add(diagnostic.code);
                 addFixAllToEvent(event, allInFile.map(d => getFixes(d)).filter(Boolean));
@@ -80,14 +84,14 @@ export default class CodeStyle implements Plugin {
         }
     }
 
-    validateXMLFile(file: XmlFile) {
+    validateXmlCode(code: XmlCode) {
         const diagnostics: BsDiagnostic[] = [];
         const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
 
-        for (const field of file.parser?.ast?.componentElement?.interfaceElement?.fields ?? []) {
+        for (const field of code.ast?.componentElement?.interfaceElement?.fields ?? []) {
             if (field.tokens.startTagName?.text?.toLowerCase() === 'field') {
                 const typeAttribute = field.getAttribute('type');
 
@@ -113,7 +117,7 @@ export default class CodeStyle implements Plugin {
         return diagnostics;
     }
 
-    validateBrsFile(file: BrsFile) {
+    validateBrsCode(code: BrsCode) {
         const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
@@ -137,9 +141,9 @@ export default class CodeStyle implements Plugin {
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
 
-        // Check if the file is empty by going backwards from the last token,
+        // Check if the code is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
-        const { tokens } = file.parser;
+        const { tokens } = code.parser;
         let isFileEmpty = true;
         for (let i = tokens.length - 1; i >= 0; i--) {
             if (tokens[i].kind !== TokenKind.Eof &&
@@ -149,8 +153,9 @@ export default class CodeStyle implements Plugin {
             }
         }
 
-        // Validate `eol-last` on non-empty files
-        if (validateEolLast && !isFileEmpty) {
+        // Validate `eol-last` on non-empty files. It is about the end of the file,
+        // so it does not apply to code embedded in another file (i.e. an xml `<script>` block)
+        if (validateEolLast && !isFileEmpty && !code.isEmbedded) {
             const penultimateToken = tokens[tokens.length - 2];
             if (disallowEolLast) {
                 if (penultimateToken?.kind === TokenKind.Newline) {
@@ -178,14 +183,14 @@ export default class CodeStyle implements Plugin {
         }
 
         if (validateNoRegexDuplicates) {
-            this.validateRegex(file, diagnostics, noRegexDuplicates);
+            this.validateRegex(code, diagnostics, noRegexDuplicates);
         }
 
         if (validateSortedImports) {
-            this.validateSortedImports(file, diagnostics, sortedImports);
+            this.validateSortedImports(code, diagnostics, sortedImports);
         }
 
-        file.ast.walk(createVisitor({
+        code.ast.walk(createVisitor({
             // validate function style (`function` or `sub`)
             FunctionExpression: (func) => {
                 this.validateFunctionStyle(func, diagnostics);
@@ -280,29 +285,29 @@ export default class CodeStyle implements Plugin {
         return diagnostics;
     }
 
-    validateBrsFileInScope(file: BrsFile) {
+    validateBrsCodeInScope(code: BrsCode) {
         const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
         const { nameShadowing, typeReassignment } = severity;
 
-        file.ast.walk(createVisitor({
+        code.ast.walk(createVisitor({
             NamespaceStatement: (nsStmt) => {
-                this.validateNameShadowing(file, nsStmt, nsStmt.getNameParts()?.[0], nameShadowing, diagnostics);
+                this.validateNameShadowing(code, nsStmt, nsStmt.getNameParts()?.[0], nameShadowing, diagnostics);
             },
             ClassStatement: (classStmt) => {
-                this.validateNameShadowing(file, classStmt, classStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(code, classStmt, classStmt.tokens.name, nameShadowing, diagnostics);
             },
             InterfaceStatement: (ifaceStmt) => {
-                this.validateNameShadowing(file, ifaceStmt, ifaceStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(code, ifaceStmt, ifaceStmt.tokens.name, nameShadowing, diagnostics);
             },
             ConstStatement: (constStmt) => {
-                this.validateNameShadowing(file, constStmt, constStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(code, constStmt, constStmt.tokens.name, nameShadowing, diagnostics);
             },
             EnumStatement: (enumStmt) => {
-                this.validateNameShadowing(file, enumStmt, enumStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(code, enumStmt, enumStmt.tokens.name, nameShadowing, diagnostics);
             },
             AssignmentStatement: (assignStmt) => {
-                this.validateTypeReassignment(file, assignStmt, typeReassignment, diagnostics);
+                this.validateTypeReassignment(code, assignStmt, typeReassignment, diagnostics);
             }
             // eslint-disable-next-line no-bitwise
         }), { walkMode: WalkMode.visitStatementsRecursive | InternalWalkMode.visitFalseConditionalCompilationBlocks });
@@ -310,10 +315,10 @@ export default class CodeStyle implements Plugin {
         return diagnostics;
     }
 
-    validateRegex(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+    validateRegex(code: BrsCode, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
         const regexesByFunction = new Map<FunctionExpression, Set<string>>();
 
-        const callExpressions = file.parser.ast.findChildren<CallExpression>(node => {
+        const callExpressions = code.ast.findChildren<CallExpression>(node => {
             return isCallExpression(node) && this.isCreateObject(node);
         });
         // walk all callExpressions
@@ -362,8 +367,8 @@ export default class CodeStyle implements Plugin {
     /**
       * Imports are split into groups by blank lines; each group must be sorted alphabetically on its own.
       */
-    validateSortedImports(file: BrsFile, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
-        const imports = file.parser.ast.findChildren<ImportStatement>(isImportStatement);
+    validateSortedImports(code: BrsCode, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        const imports = code.ast.findChildren<ImportStatement>(isImportStatement);
 
         const groups: ImportStatement[][] = [];
         let currentGroup: ImportStatement[] = [];
@@ -392,17 +397,18 @@ export default class CodeStyle implements Plugin {
     }
 
 
-    afterValidateFile(event: AfterValidateFileEvent) {
-        const { file } = event;
+    afterValidateCode(event: AfterValidateCodeEvent) {
+        const { code } = event;
+        const file = code.document;
         if (this.lintContext.ignores(file)) {
             return;
         }
 
         const diagnostics: (BsDiagnostic)[] = [];
-        if (isXmlFile(file)) {
-            diagnostics.push(...this.validateXMLFile(file));
-        } else if (isBrsFile(file)) {
-            diagnostics.push(...this.validateBrsFile(file));
+        if (isXmlCode(code)) {
+            diagnostics.push(...this.validateXmlCode(code));
+        } else if (isBrsCode(code)) {
+            diagnostics.push(...this.validateBrsCode(code));
         }
 
         // add file reference
@@ -415,7 +421,7 @@ export default class CodeStyle implements Plugin {
 
         // apply fix
         if (fix) {
-            bsDiagnostics = extractFixes(event.file, this.lintContext.addFixes, bsDiagnostics);
+            bsDiagnostics = extractFixes(file, this.lintContext.addFixes, bsDiagnostics);
         }
 
         // append diagnostics
@@ -429,8 +435,10 @@ export default class CodeStyle implements Plugin {
             }
 
             const diagnostics: (BsDiagnostic)[] = [];
-            if (isBrsFile(file)) {
-                diagnostics.push(...this.validateBrsFileInScope(file));
+            for (const code of file.codes ?? []) {
+                if (isBrsCode(code)) {
+                    diagnostics.push(...this.validateBrsCodeInScope(code));
+                }
             }
 
             // add file reference
@@ -555,14 +563,14 @@ export default class CodeStyle implements Plugin {
         return hasReturnedValue;
     }
 
-    validateNameShadowing(file: BrsFile, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
+    validateNameShadowing(code: BrsCode, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
         const name = nameIdentifier?.text;
         if (!name || !node) {
             return;
         }
         const nameLocation = nameIdentifier.location;
 
-        const astTable = file.ast.getSymbolTable();
+        const astTable = code.ast.getSymbolTable();
         const data = {} as ExtraSymbolData;
         const typeChain = [];
         // eslint-disable-next-line no-bitwise
@@ -599,7 +607,7 @@ export default class CodeStyle implements Plugin {
         });
     }
 
-    validateTypeReassignment(file: BrsFile, assignStmt: AssignmentStatement, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
+    validateTypeReassignment(code: BrsCode, assignStmt: AssignmentStatement, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
         const functionExpression = assignStmt.findAncestor<FunctionExpression>(isFunctionExpression);
         if (!functionExpression) {
             return;
