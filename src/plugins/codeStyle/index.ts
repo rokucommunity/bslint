@@ -27,7 +27,10 @@ import {
     AstNode,
     Expression,
     Range,
-    ImportStatement
+    ImportStatement,
+    BinaryExpression,
+    isBinaryExpression,
+    util
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
@@ -99,12 +102,14 @@ export default class CodeStyle {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle, noMixedLogicalOperators, noAmbiguousNot } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateSortedImports = sortedImports !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
         const validateNoStop = noStop !== DiagnosticSeverity.Hint;
         const validateNoRegexDuplicates = noRegexDuplicates !== DiagnosticSeverity.Hint;
+        const validateMixedLogicalOperators = noMixedLogicalOperators !== DiagnosticSeverity.Hint;
+        const validateAmbiguousNot = noAmbiguousNot !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
         const validateColorFormat = (colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
@@ -116,7 +121,7 @@ export default class CodeStyle {
         const validateAAStyle = aaCommaStyle !== 'off';
         const validateForTerminator = forTerminatorStyle !== 'off';
         const requireForTerminatorNext = forTerminatorStyle === 'next';
-        const walkExpressions = validateAAStyle || validateColorFormat;
+        const walkExpressions = validateAAStyle || validateColorFormat || validateMixedLogicalOperators || validateAmbiguousNot;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
@@ -168,6 +173,9 @@ export default class CodeStyle {
         if (validateSortedImports) {
             this.validateSortedImports(file, diagnostics, sortedImports);
         }
+
+        // nested `and`/`or` binary expressions already checked as part of their outermost chain
+        const visitedLogicalChains = new Set<BinaryExpression>();
 
         file.ast.walk(createVisitor({
             IfStatement: s => {
@@ -223,6 +231,16 @@ export default class CodeStyle {
                 // only validate template strings that look like regular strings (i.e. `0xAABBCC`)
                 if (validateColorStyle && e.quasis.length === 1 && e.quasis[0].expressions.length === 1) {
                     validateColorStyle(e.quasis[0].expressions[0].token.text, e.quasis[0].expressions[0].token.range, diagnostics);
+                }
+            },
+            BinaryExpression: e => {
+                if (validateMixedLogicalOperators && isLogicalOperator(e) && !visitedLogicalChains.has(e)) {
+                    validateLogicalChain(e, visitedLogicalChains, noMixedLogicalOperators, diagnostics);
+                }
+            },
+            UnaryExpression: e => {
+                if (validateAmbiguousNot && e.operator.kind === TokenKind.Not && isBinaryExpression(e.right)) {
+                    diagnostics.push(messages.ambiguousNot(e, noAmbiguousNot));
                 }
             },
             AALiteralExpression: e => {
@@ -489,6 +507,56 @@ function validateForTerminatorToken(
     } else if (!requireNext && isNext) {
         diagnostics.push(messages.expectedEndForTerminator(token.range));
     }
+}
+
+function isLogicalOperator(e: Expression): e is BinaryExpression {
+    return isBinaryExpression(e) && (e.operator.kind === TokenKind.And || e.operator.kind === TokenKind.Or);
+}
+
+/**
+ * Flag a chain of `and`/`or` operators (not separated by parentheses) that mixes both operators.
+ *
+ * The Roku runtime evaluates `and` before `or`, but brighterscript parses them with equal precedence,
+ * so the fix is computed from the flattened chain using the runtime precedence rather than from the AST shape.
+ */
+function validateLogicalChain(
+    root: BinaryExpression,
+    visited: Set<BinaryExpression>,
+    severity: DiagnosticSeverity,
+    diagnostics: (Omit<BsDiagnostic, 'file'>)[]
+) {
+    const operands: Expression[] = [];
+    const operators: TokenKind[] = [];
+    const flatten = (e: Expression) => {
+        if (isLogicalOperator(e)) {
+            visited.add(e);
+            flatten(e.left);
+            operators.push(e.operator.kind);
+            flatten(e.right);
+        } else {
+            operands.push(e);
+        }
+    };
+    flatten(root);
+
+    if (!operators.includes(TokenKind.And) || !operators.includes(TokenKind.Or)) {
+        return;
+    }
+
+    // ranges of each run of `and` operands, which the runtime evaluates first
+    const groups: Range[] = [];
+    let start = -1;
+    for (let i = 0; i <= operators.length; i++) {
+        if (operators[i] === TokenKind.And) {
+            if (start < 0) {
+                start = i;
+            }
+        } else if (start >= 0) {
+            groups.push(util.createBoundingRange(operands[start], operands[i]));
+            start = -1;
+        }
+    }
+    diagnostics.push(messages.mixedLogicalOperators(root.range, severity, groups));
 }
 
 /**

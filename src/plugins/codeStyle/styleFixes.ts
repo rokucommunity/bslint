@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, WhileStatement } from 'brighterscript';
+import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, UnaryExpression, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
@@ -45,9 +45,23 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return replaceForTerminator(diagnostic, 'end for');
         case CodeStyleError.ForTerminatorNextExpected:
             return replaceForTerminator(diagnostic, 'next');
+        case CodeStyleError.MixedLogicalOperators:
+            return wrapInParentheses(diagnostic, diagnostic.data);
+        case CodeStyleError.AmbiguousNot:
+            return wrapInParentheses(diagnostic, [(diagnostic.data as UnaryExpression).right.range]);
         default:
             return null;
     }
+}
+
+function wrapInParentheses(diagnostic: BsDiagnostic, ranges: Range[]): ChangeEntry {
+    return {
+        diagnostic,
+        changes: ranges.flatMap(range => [
+            insertText(range.start, '('),
+            insertText(range.end, ')')
+        ])
+    };
 }
 
 function replaceForTerminator(diagnostic: BsDiagnostic, text: string): ChangeEntry {

@@ -56,6 +56,8 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'no-array-component-field-type'?: RuleSeverity;
         'no-regex-duplicates'?: RuleSeverity;
         'for-terminator-style'?: RuleForTerminator;
+        'no-mixed-logical-operators'?: RuleSeverity;
+        'no-ambiguous-not'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -95,6 +97,8 @@ export interface BsLintRules {
     noArrayComponentFieldType: BsLintSeverity;
     noRegexDuplicates: BsLintSeverity;
     forTerminatorStyle: RuleForTerminator;
+    noMixedLogicalOperators: BsLintSeverity;
+    noAmbiguousNot: BsLintSeverity;
 }
 
 export { Linter };

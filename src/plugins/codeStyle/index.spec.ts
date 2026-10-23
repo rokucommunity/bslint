@@ -53,6 +53,8 @@ describe('codeStyle', () => {
                 'color-cert': 'off',
                 'no-regex-duplicates': 'off',
                 'for-terminator-style': 'off',
+                'no-mixed-logical-operators': 'off',
+                'no-ambiguous-not': 'off',
                 ...(rules ?? {})
             }
         } as BsLintConfig);
@@ -686,6 +688,94 @@ describe('codeStyle', () => {
             `03:LINT3016:Code style: STOP statements are not allowed in published applications`
         ];
         expect(actual).deep.equal(expected);
+    });
+
+    describe('no-mixed-logical-operators', () => {
+        const src = `
+            sub test(a, b, c, d)
+                if a or b and c then print "1"
+                x = a and b or c and d
+                while a or b or c
+                end while
+                if (a or b) and c then print "2"
+                if a and (b or c) then print "3"
+                if not a and b or c then print "4"
+                if a and b and c then print "5"
+            end sub
+        `;
+
+        function applyAllFixes(code: string): string {
+            const diagnostics = program.getDiagnostics().filter(d => d.code === code);
+            return applyEdits(src, diagnostics.flatMap(d => getFixes(d as any).changes));
+        }
+
+        it('flags chains that mix and/or without parentheses', () => {
+            init({ 'no-mixed-logical-operators': 'error' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `03:LINT3030:Code style: add parentheses when mixing 'and' and 'or' to make precedence explicit`,
+                `04:LINT3030:Code style: add parentheses when mixing 'and' and 'or' to make precedence explicit`,
+                `09:LINT3030:Code style: add parentheses when mixing 'and' and 'or' to make precedence explicit`
+            ]);
+        });
+
+        it('allows anything when set to off', () => {
+            init({ 'no-mixed-logical-operators': 'off' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('fix groups `and` operands, which the runtime evaluates first', () => {
+            init({ 'no-mixed-logical-operators': 'error' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            const fixed = applyAllFixes('LINT3030');
+            expect(fixed).to.contain(`if a or (b and c) then print "1"`);
+            expect(fixed).to.contain(`x = (a and b) or (c and d)`);
+            expect(fixed).to.contain(`if (not a and b) or c then print "4"`);
+            expect(fixed).to.contain(`if (a or b) and c then print "2"`);
+        });
+    });
+
+    describe('no-ambiguous-not', () => {
+        const src = `
+            sub test(a, b, c)
+                if not a = b then print "1"
+                x = not a + 1 > c
+                if not (a = b) then print "2"
+                if not a then print "3"
+                if not a and b then print "4"
+            end sub
+        `;
+
+        it('flags `not` applied to an unparenthesized binary expression', () => {
+            init({ 'no-ambiguous-not': 'error' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `03:LINT3031:Code style: add parentheses around the operand of 'not' to make precedence explicit`,
+                `04:LINT3031:Code style: add parentheses around the operand of 'not' to make precedence explicit`
+            ]);
+        });
+
+        it('allows anything when set to off', () => {
+            init({ 'no-ambiguous-not': 'off' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('fix wraps the operand of `not`', () => {
+            init({ 'no-ambiguous-not': 'error' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3031');
+            const fixed = applyEdits(src, diagnostics.flatMap(d => getFixes(d as any).changes));
+            expect(fixed).to.contain(`if not (a = b) then print "1"`);
+            expect(fixed).to.contain(`x = not (a + 1 > c)`);
+        });
     });
 
     describe('validate sorted imports', () => {

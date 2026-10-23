@@ -144,6 +144,8 @@ Default rules:
         "aa-comma-style": "no-dangling",
         "no-print": "off",
         "sorted-imports": "off",
+        "no-mixed-logical-operators": "off",
+        "no-ambiguous-not": "off",
         "no-todo": "off",
         "todo-pattern": "TODO|todo|FIXME",
         "no-stop": "warn",
@@ -212,6 +214,10 @@ Default rules:
 - `no-print`: prevent usage of `print` statements in code (`error | warn | info | off`)
 
 - `sorted-imports`: enforce that `import` statements are sorted alphabetically. A blank line between imports starts a new group, sorted independently of the groups around it (`error | warn | info | off`, **default: `off`**)
+
+- `no-mixed-logical-operators`: require parentheses when `and` and `or` are mixed in the same expression, instead of relying on operator precedence. The Roku runtime evaluates `and` before `or`, so `a or b and c` means `a or (b and c)`; the auto-fix adds the parentheses accordingly (`error | warn | info | off`, **default: `off`**)
+
+- `no-ambiguous-not`: require parentheses around the operand of `not` when it is a comparison or arithmetic expression. `not` has a lower precedence than comparison operators, so `not a = b` means `not (a = b)`, not `(not a) = b`; the auto-fix adds the parentheses (`error | warn | info | off`, **default: `off`**)
 
 - `no-todo`: prevent usage of `todo` comments in code (`error | warn | info | off`)
 

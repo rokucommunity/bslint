@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, FunctionExpression, IfStatement, Range, WhileStatement } from 'brighterscript';
+import { DiagnosticSeverity, FunctionExpression, IfStatement, Range, UnaryExpression, WhileStatement } from 'brighterscript';
 
 export enum CodeStyleError {
     InlineIfFound = 'LINT3001',
@@ -29,7 +29,9 @@ export enum CodeStyleError {
     NoRegexDuplicates = 'LINT3026',
     ForTerminatorEndForExpected = 'LINT3027',
     ForTerminatorNextExpected = 'LINT3028',
-    UnsortedImport = 'LINT3029'
+    UnsortedImport = 'LINT3029',
+    MixedLogicalOperators = 'LINT3030',
+    AmbiguousNot = 'LINT3031'
 }
 
 const CS = 'Code style:';
@@ -254,5 +256,21 @@ export const messages = {
         source: 'bslint',
         message: `${CS} imports should be sorted alphabetically within their group`,
         range
+    }),
+    mixedLogicalOperators: (range: Range, severity: DiagnosticSeverity, groups: Range[]) => ({
+        severity: severity,
+        code: CodeStyleError.MixedLogicalOperators,
+        source: 'bslint',
+        message: `${CS} add parentheses when mixing 'and' and 'or' to make precedence explicit`,
+        range,
+        data: groups
+    }),
+    ambiguousNot: (expr: UnaryExpression, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.AmbiguousNot,
+        source: 'bslint',
+        message: `${CS} add parentheses around the operand of 'not' to make precedence explicit`,
+        range: expr.range,
+        data: expr
     })
 };
