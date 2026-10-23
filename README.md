@@ -146,6 +146,7 @@ Default rules:
         "sorted-imports": "off",
         "no-mixed-logical-operators": "off",
         "no-ambiguous-not": "off",
+        "no-chained-comparisons": "off",
         "no-todo": "off",
         "todo-pattern": "TODO|todo|FIXME",
         "no-stop": "warn",
@@ -218,6 +219,8 @@ Default rules:
 - `no-mixed-logical-operators`: require parentheses when `and` and `or` are mixed in the same expression, instead of relying on operator precedence. The Roku runtime evaluates `and` before `or`, so `a or b and c` means `a or (b and c)`; the auto-fix adds the parentheses accordingly (`error | warn | info | off`, **default: `off`**)
 
 - `no-ambiguous-not`: require parentheses around the operand of `not` when it is a comparison or arithmetic expression. `not` has a lower precedence than comparison operators, so `not a = b` means `not (a = b)`, not `(not a) = b`; the auto-fix adds the parentheses (`error | warn | info | off`, **default: `off`**)
+
+- `no-chained-comparisons`: require parentheses around comparisons that are assigned or chained. `a = b = c` assigns the result of `b = c` to `a` (it does not assign `c` to both), and `if a = b = c` compares `a = b` to `c`; the auto-fix rewrites these as `a = (b = c)` and `if (a = b) = c` (`error | warn | info | off`, **default: `off`**)
 
 - `no-todo`: prevent usage of `todo` comments in code (`error | warn | info | off`)
 

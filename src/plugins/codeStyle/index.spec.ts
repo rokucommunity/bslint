@@ -55,6 +55,7 @@ describe('codeStyle', () => {
                 'for-terminator-style': 'off',
                 'no-mixed-logical-operators': 'off',
                 'no-ambiguous-not': 'off',
+                'no-chained-comparisons': 'off',
                 ...(rules ?? {})
             }
         } as BsLintConfig);
@@ -775,6 +776,63 @@ describe('codeStyle', () => {
             const fixed = applyEdits(src, diagnostics.flatMap(d => getFixes(d as any).changes));
             expect(fixed).to.contain(`if not (a = b) then print "1"`);
             expect(fixed).to.contain(`x = not (a + 1 > c)`);
+        });
+    });
+
+    describe('no-chained-comparisons', () => {
+        const src = `
+            sub test(a, b, c, d)
+                x = a = b
+                m.x = a < b
+                m["x"] = a <> b
+                if a = b = c then print "1"
+                y = a = b = c
+                if a < b < c < d then print "2"
+                z = (a = b)
+                if (a = b) = c then print "3"
+                w = a + b
+                if a = b and c = d then print "4"
+            end sub
+        `;
+
+        function applyAllFixes(): string {
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'LINT3032' || d.code === 'LINT3033');
+            return applyEdits(src, diagnostics.flatMap(d => getFixes(d as any).changes));
+        }
+
+        it('flags assigned comparisons and chained comparisons', () => {
+            init({ 'no-chained-comparisons': 'error' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `03:LINT3032:Code style: add parentheses around a comparison being assigned, e.g. 'a = (b = c)'`,
+                `04:LINT3032:Code style: add parentheses around a comparison being assigned, e.g. 'a = (b = c)'`,
+                `05:LINT3032:Code style: add parentheses around a comparison being assigned, e.g. 'a = (b = c)'`,
+                `06:LINT3033:Code style: add parentheses around chained comparisons to make evaluation order explicit`,
+                `07:LINT3032:Code style: add parentheses around a comparison being assigned, e.g. 'a = (b = c)'`,
+                `07:LINT3033:Code style: add parentheses around chained comparisons to make evaluation order explicit`,
+                `08:LINT3033:Code style: add parentheses around chained comparisons to make evaluation order explicit`
+            ]);
+        });
+
+        it('allows anything when set to off', () => {
+            init({ 'no-chained-comparisons': 'off' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            expectDiagnosticsFmt(program, []);
+        });
+
+        it('fix adds parentheses following left-to-right evaluation', () => {
+            init({ 'no-chained-comparisons': 'error' });
+            program.setFile('source/main.brs', src);
+            program.validate();
+            const fixed = applyAllFixes();
+            expect(fixed).to.contain(`x = (a = b)\n`);
+            expect(fixed).to.contain(`m.x = (a < b)\n`);
+            expect(fixed).to.contain(`m["x"] = (a <> b)\n`);
+            expect(fixed).to.contain(`if (a = b) = c then print "1"`);
+            expect(fixed).to.contain(`y = ((a = b) = c)\n`);
+            expect(fixed).to.contain(`if ((a < b) < c) < d then print "2"`);
         });
     });
 

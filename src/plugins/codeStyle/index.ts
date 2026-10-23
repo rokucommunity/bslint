@@ -102,7 +102,7 @@ export default class CodeStyle {
     validateBrsFile(file: BrsFile) {
         const diagnostics: (Omit<BsDiagnostic, 'file'>)[] = [];
         const { severity } = this.lintContext;
-        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle, noMixedLogicalOperators, noAmbiguousNot } = severity;
+        const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle, noMixedLogicalOperators, noAmbiguousNot, noChainedComparisons } = severity;
         const validatePrint = noPrint !== DiagnosticSeverity.Hint;
         const validateSortedImports = sortedImports !== DiagnosticSeverity.Hint;
         const validateTodo = noTodo !== DiagnosticSeverity.Hint;
@@ -110,6 +110,7 @@ export default class CodeStyle {
         const validateNoRegexDuplicates = noRegexDuplicates !== DiagnosticSeverity.Hint;
         const validateMixedLogicalOperators = noMixedLogicalOperators !== DiagnosticSeverity.Hint;
         const validateAmbiguousNot = noAmbiguousNot !== DiagnosticSeverity.Hint;
+        const validateChainedComparisons = noChainedComparisons !== DiagnosticSeverity.Hint;
         const validateInlineIf = inlineIfStyle !== 'off';
         const validateColorFormat = (colorFormat === 'hash-hex' || colorFormat === 'quoted-numeric-hex' || colorFormat === 'never');
         const disallowInlineIf = inlineIfStyle === 'never';
@@ -121,7 +122,7 @@ export default class CodeStyle {
         const validateAAStyle = aaCommaStyle !== 'off';
         const validateForTerminator = forTerminatorStyle !== 'off';
         const requireForTerminatorNext = forTerminatorStyle === 'next';
-        const walkExpressions = validateAAStyle || validateColorFormat || validateMixedLogicalOperators || validateAmbiguousNot;
+        const walkExpressions = validateAAStyle || validateColorFormat || validateMixedLogicalOperators || validateAmbiguousNot || validateChainedComparisons;
         const validateEolLast = eolLast !== 'off';
         const disallowEolLast = eolLast === 'never';
         const validateColorStyle = validateColorFormat ? createColorValidator(severity) : undefined;
@@ -176,6 +177,12 @@ export default class CodeStyle {
 
         // nested `and`/`or` binary expressions already checked as part of their outermost chain
         const visitedLogicalChains = new Set<BinaryExpression>();
+        const visitedComparisonChains = new Set<BinaryExpression>();
+        const validateAssignedValue = (value: Expression) => {
+            if (validateChainedComparisons && isComparisonOperator(value)) {
+                diagnostics.push(messages.assignedComparison(value, noChainedComparisons));
+            }
+        };
 
         file.ast.walk(createVisitor({
             IfStatement: s => {
@@ -237,6 +244,18 @@ export default class CodeStyle {
                 if (validateMixedLogicalOperators && isLogicalOperator(e) && !visitedLogicalChains.has(e)) {
                     validateLogicalChain(e, visitedLogicalChains, noMixedLogicalOperators, diagnostics);
                 }
+                if (validateChainedComparisons && isComparisonOperator(e) && !visitedComparisonChains.has(e)) {
+                    validateComparisonChain(e, visitedComparisonChains, noChainedComparisons, diagnostics);
+                }
+            },
+            AssignmentStatement: s => {
+                validateAssignedValue(s.value);
+            },
+            DottedSetStatement: s => {
+                validateAssignedValue(s.value);
+            },
+            IndexedSetStatement: s => {
+                validateAssignedValue(s.value);
             },
             UnaryExpression: e => {
                 if (validateAmbiguousNot && e.operator.kind === TokenKind.Not && isBinaryExpression(e.right)) {
@@ -511,6 +530,46 @@ function validateForTerminatorToken(
 
 function isLogicalOperator(e: Expression): e is BinaryExpression {
     return isBinaryExpression(e) && (e.operator.kind === TokenKind.And || e.operator.kind === TokenKind.Or);
+}
+
+function isComparisonOperator(e: Expression): e is BinaryExpression {
+    return isBinaryExpression(e) && comparisonOperators.has(e.operator.kind);
+}
+
+const comparisonOperators = new Set([
+    TokenKind.Equal,
+    TokenKind.LessGreater,
+    TokenKind.Less,
+    TokenKind.LessEqual,
+    TokenKind.Greater,
+    TokenKind.GreaterEqual
+]);
+
+/**
+ * Flag comparisons (not separated by parentheses) used as operands of other comparisons, e.g. `a = b = c`.
+ * Comparisons are evaluated left to right, so the fix groups them as `(a = b) = c`.
+ */
+function validateComparisonChain(
+    root: BinaryExpression,
+    visited: Set<BinaryExpression>,
+    severity: DiagnosticSeverity,
+    diagnostics: (Omit<BsDiagnostic, 'file'>)[]
+) {
+    const operands: Expression[] = [];
+    const flatten = (e: Expression) => {
+        if (isComparisonOperator(e)) {
+            visited.add(e);
+            flatten(e.left);
+            flatten(e.right);
+        } else {
+            operands.push(e);
+        }
+    };
+    flatten(root);
+
+    if (operands.length > 2) {
+        diagnostics.push(messages.chainedComparison(root.range, severity, operands));
+    }
 }
 
 /**

@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, FunctionExpression, IfStatement, Range, UnaryExpression, WhileStatement } from 'brighterscript';
+import { DiagnosticSeverity, Expression, FunctionExpression, IfStatement, Range, UnaryExpression, WhileStatement } from 'brighterscript';
 
 export enum CodeStyleError {
     InlineIfFound = 'LINT3001',
@@ -31,7 +31,9 @@ export enum CodeStyleError {
     ForTerminatorNextExpected = 'LINT3028',
     UnsortedImport = 'LINT3029',
     MixedLogicalOperators = 'LINT3030',
-    AmbiguousNot = 'LINT3031'
+    AmbiguousNot = 'LINT3031',
+    AssignedComparison = 'LINT3032',
+    ChainedComparison = 'LINT3033'
 }
 
 const CS = 'Code style:';
@@ -272,5 +274,21 @@ export const messages = {
         message: `${CS} add parentheses around the operand of 'not' to make precedence explicit`,
         range: expr.range,
         data: expr
+    }),
+    assignedComparison: (value: Expression, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.AssignedComparison,
+        source: 'bslint',
+        message: `${CS} add parentheses around a comparison being assigned, e.g. 'a = (b = c)'`,
+        range: value.range,
+        data: value
+    }),
+    chainedComparison: (range: Range, severity: DiagnosticSeverity, operands: Expression[]) => ({
+        severity: severity,
+        code: CodeStyleError.ChainedComparison,
+        source: 'bslint',
+        message: `${CS} add parentheses around chained comparisons to make evaluation order explicit`,
+        range,
+        data: operands
     })
 };

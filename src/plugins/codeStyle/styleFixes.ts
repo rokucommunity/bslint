@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, UnaryExpression, WhileStatement } from 'brighterscript';
+import { BscFile, BsDiagnostic, Expression, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, Position, Range, TokenKind, UnaryExpression, WhileStatement } from 'brighterscript';
 import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
@@ -49,6 +49,10 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return wrapInParentheses(diagnostic, diagnostic.data);
         case CodeStyleError.AmbiguousNot:
             return wrapInParentheses(diagnostic, [(diagnostic.data as UnaryExpression).right.range]);
+        case CodeStyleError.AssignedComparison:
+            return wrapInParentheses(diagnostic, [diagnostic.range]);
+        case CodeStyleError.ChainedComparison:
+            return groupChainedComparison(diagnostic);
         default:
             return null;
     }
@@ -61,6 +65,19 @@ function wrapInParentheses(diagnostic: BsDiagnostic, ranges: Range[]): ChangeEnt
             insertText(range.start, '('),
             insertText(range.end, ')')
         ])
+    };
+}
+
+function groupChainedComparison(diagnostic: BsDiagnostic): ChangeEntry {
+    // `a = b = c = d` => `((a = b) = c) = d`
+    const operands: Expression[] = diagnostic.data;
+    const inner = operands.slice(1, -1);
+    return {
+        diagnostic,
+        changes: [
+            insertText(operands[0].range.start, '('.repeat(inner.length)),
+            ...inner.map(operand => insertText(operand.range.end, ')'))
+        ]
     };
 }
 

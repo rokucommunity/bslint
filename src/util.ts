@@ -34,7 +34,8 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'no-regex-duplicates': 'off',
         'for-terminator-style': 'end-for',
         'no-mixed-logical-operators': 'off',
-        'no-ambiguous-not': 'off'
+        'no-ambiguous-not': 'off',
+        'no-chained-comparisons': 'off'
     };
 }
 
@@ -178,7 +179,8 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates']),
         forTerminatorStyle: rules['for-terminator-style'],
         noMixedLogicalOperators: ruleToSeverity(rules['no-mixed-logical-operators']),
-        noAmbiguousNot: ruleToSeverity(rules['no-ambiguous-not'])
+        noAmbiguousNot: ruleToSeverity(rules['no-ambiguous-not']),
+        noChainedComparisons: ruleToSeverity(rules['no-chained-comparisons'])
     };
 }
 

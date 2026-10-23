@@ -58,6 +58,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'for-terminator-style'?: RuleForTerminator;
         'no-mixed-logical-operators'?: RuleSeverity;
         'no-ambiguous-not'?: RuleSeverity;
+        'no-chained-comparisons'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -99,6 +100,7 @@ export interface BsLintRules {
     forTerminatorStyle: RuleForTerminator;
     noMixedLogicalOperators: BsLintSeverity;
     noAmbiguousNot: BsLintSeverity;
+    noChainedComparisons: BsLintSeverity;
 }
 
 export { Linter };
