@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, standardizePath as s, util } from 'brighterscript';
+import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, isBrsCode, ParseMode, Parser, Program, standardizePath as s, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -694,10 +694,11 @@ describe('codeStyle', () => {
             sub test2()
             end sub
         `);
-        (file.code.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
+        const code = file.codes.find(isBrsCode);
+        (code.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
         program.validate();
         const codeStyle = new CodeStyle(createContext(program));
-        codeStyle.validateBrsCode(file.code);
+        codeStyle.validateBrsCode(code);
     });
 
     describe('enforce no todo', () => {
