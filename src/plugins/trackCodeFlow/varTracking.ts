@@ -1,4 +1,4 @@
-import { BscCode, BrsCode, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
+import { BrsCodeSegment, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
 import { Location } from 'vscode-languageserver-types';
@@ -79,26 +79,26 @@ interface ValidationInfo {
     namespace?: NamespaceStatement;
 }
 
-// keyed by code (not by path), because several pieces of code can share one file
-const deferredValidation = new WeakMap<BscCode, ValidationInfo[]>();
+// keyed by code segment (not by path), because several code segments can share one file
+const deferredValidation = new WeakMap<BrsCodeSegment, ValidationInfo[]>();
 
-function getDeferred(code: BscCode) {
-    return deferredValidation.get(code);
+function getDeferred(codeSegment: BrsCodeSegment) {
+    return deferredValidation.get(codeSegment);
 }
 
-export function resetVarContext(code: BscCode) {
-    deferredValidation.set(code, []);
+export function resetVarContext(codeSegment: BrsCodeSegment) {
+    deferredValidation.set(codeSegment, []);
 }
 
 export function createVarLinter(
     lintContext: PluginContext,
-    code: BrsCode,
+    codeSegment: BrsCodeSegment,
     fun: FunctionExpression,
     state: LintState,
     diagnostics: BsDiagnostic[]
 ) {
     const { severity } = lintContext;
-    const deferred = getDeferred(code);
+    const deferred = getDeferred(codeSegment);
     let foundLabelAt = 0;
 
     const args: Map<string, VarInfo> = new Map();
@@ -457,15 +457,15 @@ export function createVarLinter(
 export function runDeferredValidation(
     lintContext: PluginContext,
     scope: Scope,
-    codes: BscCode[],
+    codeSegments: BrsCodeSegment[],
     callables: CallableContainerMap
 ) {
     const topLevelVars = buildTopLevelVars(scope, lintContext.globals);
     const diagnostics: BsDiagnostic[] = [];
-    codes.forEach((code) => {
-        const deferred = getDeferred(code);
+    codeSegments.forEach((codeSegment) => {
+        const deferred = getDeferred(codeSegment);
         if (deferred) {
-            deferredVarLinter(scope, code, callables, topLevelVars, deferred, diagnostics);
+            deferredVarLinter(scope, codeSegment, callables, topLevelVars, deferred, diagnostics);
         }
     });
     return diagnostics;
@@ -496,7 +496,7 @@ function buildTopLevelVars(scope: Scope, globals: string[]) {
 
 function deferredVarLinter(
     scope: Scope,
-    code: BscCode,
+    codeSegment: BrsCodeSegment,
     callables: CallableContainerMap,
     toplevel: Set<string>,
     deferred: ValidationInfo[],

@@ -2,8 +2,7 @@ import {
     BsDiagnostic,
     createVisitor,
     FunctionExpression,
-    isBrsCode,
-    isXmlCode,
+    isXmlFile,
     isGroupingExpression,
     TokenKind,
     WalkMode,
@@ -11,13 +10,16 @@ import {
     DiagnosticSeverity,
     ProvideCodeActionsEvent,
     AALiteralExpression,
-    BrsCode,
-    AfterValidateCodeEvent,
+    BrsCodeSegment,
+    AfterValidateBrsCodeSegmentEvent,
+    AfterValidateFileEvent,
+    BscFile,
+    Program,
     Expression,
     isVoidType,
     Statement,
     SymbolTypeFlag,
-    XmlCode,
+    XmlFile,
     AstNode,
     Token,
     isNamespaceStatement,
@@ -62,12 +64,11 @@ export default class CodeStyle implements Plugin {
 
     provideCodeActions(event: ProvideCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
-        const { code, program } = event;
-        const file = code.document;
+        const { file, codeSegment, program } = event;
         extractFixes(file, addFixes, event.diagnostics);
 
         // For each fixable code touched by the cursor, offer "fix all" if there are
-        // multiple occurrences of that code across the whole piece of code
+        // multiple occurrences of that code across the whole code segment
         // (i.e. the file, or the `<script>` block of an xml file)
         const uri = util.pathToUri(file.srcPath);
         const handledCodes = new Set<string | number>();
@@ -76,7 +77,7 @@ export default class CodeStyle implements Plugin {
                 continue;
             }
             const allInFile = program.getDiagnostics()
-                .filter(x => x.location.uri === uri && x.code === diagnostic.code && program.getCodeAt(file, x.location.range?.start) === code);
+                .filter(x => x.location.uri === uri && x.code === diagnostic.code && program.getCodeSegmentAt(file, x.location.range?.start) === codeSegment);
             if (allInFile.length > 1) {
                 handledCodes.add(diagnostic.code);
                 addFixAllToEvent(event, allInFile.map(d => getFixes(d)).filter(Boolean));
@@ -84,14 +85,14 @@ export default class CodeStyle implements Plugin {
         }
     }
 
-    validateXmlCode(code: XmlCode) {
+    validateXmlFile(file: XmlFile) {
         const diagnostics: BsDiagnostic[] = [];
         const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
 
-        for (const field of code.ast?.componentElement?.interfaceElement?.fields ?? []) {
+        for (const field of file.ast?.componentElement?.interfaceElement?.fields ?? []) {
             if (field.tokens.startTagName?.text?.toLowerCase() === 'field') {
                 const typeAttribute = field.getAttribute('type');
 
@@ -117,7 +118,7 @@ export default class CodeStyle implements Plugin {
         return diagnostics;
     }
 
-    validateBrsCode(code: BrsCode) {
+    validateBrsCode(codeSegment: BrsCodeSegment) {
         const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
         const { inlineIfStyle, blockIfStyle, conditionStyle, noPrint, sortedImports, noTodo, noStop, aaCommaStyle, eolLast, colorFormat, noRegexDuplicates, forTerminatorStyle } = severity;
@@ -143,7 +144,7 @@ export default class CodeStyle implements Plugin {
 
         // Check if the code is empty by going backwards from the last token,
         // meaning there are tokens other than `Eof` and `Newline`.
-        const { tokens } = code.parser;
+        const { tokens } = codeSegment.parser;
         let isFileEmpty = true;
         for (let i = tokens.length - 1; i >= 0; i--) {
             if (tokens[i].kind !== TokenKind.Eof &&
@@ -155,7 +156,7 @@ export default class CodeStyle implements Plugin {
 
         // Validate `eol-last` on non-empty files. It is about the end of the file,
         // so it does not apply to code embedded in another file (i.e. an xml `<script>` block)
-        if (validateEolLast && !isFileEmpty && !code.isEmbedded) {
+        if (validateEolLast && !isFileEmpty && !codeSegment.isEmbedded) {
             const penultimateToken = tokens[tokens.length - 2];
             if (disallowEolLast) {
                 if (penultimateToken?.kind === TokenKind.Newline) {
@@ -183,14 +184,14 @@ export default class CodeStyle implements Plugin {
         }
 
         if (validateNoRegexDuplicates) {
-            this.validateRegex(code, diagnostics, noRegexDuplicates);
+            this.validateRegex(codeSegment, diagnostics, noRegexDuplicates);
         }
 
         if (validateSortedImports) {
-            this.validateSortedImports(code, diagnostics, sortedImports);
+            this.validateSortedImports(codeSegment, diagnostics, sortedImports);
         }
 
-        code.ast.walk(createVisitor({
+        codeSegment.ast.walk(createVisitor({
             // validate function style (`function` or `sub`)
             FunctionExpression: (func) => {
                 this.validateFunctionStyle(func, diagnostics);
@@ -285,29 +286,29 @@ export default class CodeStyle implements Plugin {
         return diagnostics;
     }
 
-    validateBrsCodeInScope(code: BrsCode) {
+    validateBrsCodeInScope(codeSegment: BrsCodeSegment) {
         const diagnostics: (BsDiagnostic)[] = [];
         const { severity } = this.lintContext;
         const { nameShadowing, typeReassignment } = severity;
 
-        code.ast.walk(createVisitor({
+        codeSegment.ast.walk(createVisitor({
             NamespaceStatement: (nsStmt) => {
-                this.validateNameShadowing(code, nsStmt, nsStmt.getNameParts()?.[0], nameShadowing, diagnostics);
+                this.validateNameShadowing(codeSegment, nsStmt, nsStmt.getNameParts()?.[0], nameShadowing, diagnostics);
             },
             ClassStatement: (classStmt) => {
-                this.validateNameShadowing(code, classStmt, classStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(codeSegment, classStmt, classStmt.tokens.name, nameShadowing, diagnostics);
             },
             InterfaceStatement: (ifaceStmt) => {
-                this.validateNameShadowing(code, ifaceStmt, ifaceStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(codeSegment, ifaceStmt, ifaceStmt.tokens.name, nameShadowing, diagnostics);
             },
             ConstStatement: (constStmt) => {
-                this.validateNameShadowing(code, constStmt, constStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(codeSegment, constStmt, constStmt.tokens.name, nameShadowing, diagnostics);
             },
             EnumStatement: (enumStmt) => {
-                this.validateNameShadowing(code, enumStmt, enumStmt.tokens.name, nameShadowing, diagnostics);
+                this.validateNameShadowing(codeSegment, enumStmt, enumStmt.tokens.name, nameShadowing, diagnostics);
             },
             AssignmentStatement: (assignStmt) => {
-                this.validateTypeReassignment(code, assignStmt, typeReassignment, diagnostics);
+                this.validateTypeReassignment(codeSegment, assignStmt, typeReassignment, diagnostics);
             }
             // eslint-disable-next-line no-bitwise
         }), { walkMode: WalkMode.visitStatementsRecursive | InternalWalkMode.visitFalseConditionalCompilationBlocks });
@@ -315,10 +316,10 @@ export default class CodeStyle implements Plugin {
         return diagnostics;
     }
 
-    validateRegex(code: BrsCode, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+    validateRegex(codeSegment: BrsCodeSegment, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
         const regexesByFunction = new Map<FunctionExpression, Set<string>>();
 
-        const callExpressions = code.ast.findChildren<CallExpression>(node => {
+        const callExpressions = codeSegment.ast.findChildren<CallExpression>(node => {
             return isCallExpression(node) && this.isCreateObject(node);
         });
         // walk all callExpressions
@@ -367,8 +368,8 @@ export default class CodeStyle implements Plugin {
     /**
       * Imports are split into groups by blank lines; each group must be sorted alphabetically on its own.
       */
-    validateSortedImports(code: BrsCode, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
-        const imports = code.ast.findChildren<ImportStatement>(isImportStatement);
+    validateSortedImports(codeSegment: BrsCodeSegment, diagnostics: (Omit<BsDiagnostic, 'file'>)[], severity: DiagnosticSeverity) {
+        const imports = codeSegment.ast.findChildren<ImportStatement>(isImportStatement);
 
         const groups: ImportStatement[][] = [];
         let currentGroup: ImportStatement[] = [];
@@ -397,20 +398,21 @@ export default class CodeStyle implements Plugin {
     }
 
 
-    afterValidateCode(event: AfterValidateCodeEvent) {
-        const { code } = event;
-        const file = code.document;
-        if (this.lintContext.ignores(file)) {
-            return;
+    afterValidateFile(event: AfterValidateFileEvent) {
+        const { file } = event;
+        if (isXmlFile(file) && !this.lintContext.ignores(file)) {
+            this.registerDiagnostics(event.program, file, this.validateXmlFile(file));
         }
+    }
 
-        const diagnostics: (BsDiagnostic)[] = [];
-        if (isXmlCode(code)) {
-            diagnostics.push(...this.validateXmlCode(code));
-        } else if (isBrsCode(code)) {
-            diagnostics.push(...this.validateBrsCode(code));
+    afterValidateBrsCodeSegment(event: AfterValidateBrsCodeSegmentEvent) {
+        const { file, codeSegment } = event;
+        if (!this.lintContext.ignores(file)) {
+            this.registerDiagnostics(event.program, file, this.validateBrsCode(codeSegment));
         }
+    }
 
+    private registerDiagnostics(program: Program, file: BscFile, diagnostics: BsDiagnostic[]) {
         // add file reference
         let bsDiagnostics: BsDiagnostic[] = diagnostics.map(diagnostic => ({
             ...diagnostic,
@@ -425,7 +427,7 @@ export default class CodeStyle implements Plugin {
         }
 
         // append diagnostics
-        event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
+        program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
     }
 
     validateScope(event: ValidateScopeEvent) {
@@ -435,10 +437,8 @@ export default class CodeStyle implements Plugin {
             }
 
             const diagnostics: (BsDiagnostic)[] = [];
-            for (const code of file.codes ?? []) {
-                if (isBrsCode(code)) {
-                    diagnostics.push(...this.validateBrsCodeInScope(code));
-                }
+            for (const codeSegment of file.codeSegments ?? []) {
+                diagnostics.push(...this.validateBrsCodeInScope(codeSegment));
             }
 
             // add file reference
@@ -563,14 +563,14 @@ export default class CodeStyle implements Plugin {
         return hasReturnedValue;
     }
 
-    validateNameShadowing(code: BrsCode, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
+    validateNameShadowing(codeSegment: BrsCodeSegment, node: AstNode, nameIdentifier: Token, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
         const name = nameIdentifier?.text;
         if (!name || !node) {
             return;
         }
         const nameLocation = nameIdentifier.location;
 
-        const astTable = code.ast.getSymbolTable();
+        const astTable = codeSegment.ast.getSymbolTable();
         const data = {} as ExtraSymbolData;
         const typeChain = [];
         // eslint-disable-next-line no-bitwise
@@ -607,7 +607,7 @@ export default class CodeStyle implements Plugin {
         });
     }
 
-    validateTypeReassignment(code: BrsCode, assignStmt: AssignmentStatement, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
+    validateTypeReassignment(codeSegment: BrsCodeSegment, assignStmt: AssignmentStatement, severity: DiagnosticSeverity, diagnostics: (BsDiagnostic)[]) {
         const functionExpression = assignStmt.findAncestor<FunctionExpression>(isFunctionExpression);
         if (!functionExpression) {
             return;

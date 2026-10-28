@@ -1,4 +1,4 @@
-import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, isBrsCode, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, BrsCode, isFunctionExpression, Cache, util, isVariableExpression, isLiteralExpression } from 'brighterscript';
+import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, BrsCodeSegment, isFunctionExpression, Cache, util, isVariableExpression, isLiteralExpression } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 import { BsLintDiagnosticContext } from '../../Linter';
@@ -80,10 +80,10 @@ export default class CheckUsage implements Plugin {
         const { file } = event;
         // collect all XML components
         if (isXmlFile(file)) {
-            if (!file.componentCode.componentName) {
+            if (!file.componentName) {
                 return;
             }
-            const { text, location } = file.componentCode.componentName;
+            const { text, location } = file.componentName;
             if (!text) {
                 return;
             }
@@ -103,19 +103,19 @@ export default class CheckUsage implements Plugin {
                 this.map.set(edge.name, v);
             }
 
-            if (file.componentCode.parentComponentName) {
-                const { text, location } = file.componentCode.parentComponentName;
+            if (file.parentComponentName) {
+                const { text, location } = file.parentComponentName;
                 v.edges.push(createComponentEdge(text, location?.range, file));
             }
 
-            const children = file.componentCode.ast.componentElement?.childrenElement;
+            const children = file.ast.componentElement?.childrenElement;
             if (children) {
                 this.walkChildren(v, children.elements, file);
             }
         }
     }
 
-    private functionExpressionCache = new Cache<BrsCode, FunctionExpression[]>();
+    private functionExpressionCache = new Cache<BrsCodeSegment, FunctionExpression[]>();
 
     beforeValidateProgram() {
         this.functionExpressionCache.clear();
@@ -140,7 +140,7 @@ export default class CheckUsage implements Plugin {
                 console.log('[Check Usage] Scope XML component not found:', scope.name);
                 return;
             }
-            const name = comp.componentCode.componentName?.text;
+            const name = comp.componentName?.text;
             v = name && this.map.get(`"${name.toLowerCase()}"`);
             if (!v) {
                 console.log('[Check Usage] Component not found:', scope.name);
@@ -150,15 +150,15 @@ export default class CheckUsage implements Plugin {
         scope.getOwnFiles().forEach(file => {
             if (isXmlFile(file)) {
                 // the BrightScript in a component's `<script>` blocks is part of that component
-                const name = file.componentCode.componentName?.text;
+                const name = file.componentName?.text;
                 const cv = name && this.map.get(`"${name.toLowerCase()}"`);
                 if (cv) {
-                    for (const code of file.codes.filter(isBrsCode)) {
-                        if (this.parsed.has(code.key)) {
+                    for (const codeSegment of file.codeSegments) {
+                        if (this.parsed.has(codeSegment.key)) {
                             continue;
                         }
-                        this.parsed.add(code.key);
-                        this.findComponentEdges(cv, code);
+                        this.parsed.add(codeSegment.key);
+                        this.findComponentEdges(cv, codeSegment);
                     }
                 }
                 return;
@@ -187,21 +187,21 @@ export default class CheckUsage implements Plugin {
                 this.main = fv;
             }
 
-            for (const code of file.codes.filter(isBrsCode)) {
-                this.findComponentEdges(fv, code);
+            for (const codeSegment of file.codeSegments) {
+                this.findComponentEdges(fv, codeSegment);
             }
         });
     }
 
     /**
-     * Find component names passed to `CreateObject("roSGNode", componentName)` in the code, and add them as edges of the vertice
+     * Find component names passed to `CreateObject("roSGNode", componentName)` in the code segment, and add them as edges of the vertice
      */
-    private findComponentEdges(v: Vertice, code: BrsCode) {
+    private findComponentEdges(v: Vertice, codeSegment: BrsCodeSegment) {
         const map = this.map;
-        const file = code.document;
-        // look up all function expressions exactly 1 time for this code, even if it's used across many scopes
-        const functionExpressions = this.functionExpressionCache.getOrAdd(code, () => {
-            return code.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive });
+        const file = codeSegment.document;
+        // look up all function expressions exactly 1 time for this code segment, even if it's used across many scopes
+        const functionExpressions = this.functionExpressionCache.getOrAdd(codeSegment, () => {
+            return codeSegment.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive });
         });
 
         for (const func of functionExpressions) {
@@ -246,12 +246,12 @@ export default class CheckUsage implements Plugin {
                         message: `Script '${v.file.pkgPath}' does not seem to be used`,
                         location: util.createLocationFromFileRange(v.file, util.createRange(0, 0, 1, 0))
                     }, BsLintDiagnosticContext);
-                } else if (isXmlFile(v.file) && v.file.componentCode.componentName?.location.range) {
+                } else if (isXmlFile(v.file) && v.file.componentName?.location.range) {
                     v.file.program.diagnostics.register({
                         severity: DiagnosticSeverity.Warning,
                         code: UnusedCode.UnusedComponent,
                         message: `Component '${v.file.pkgPath}' does not seem to be used`,
-                        location: v.file.componentCode.componentName.location
+                        location: v.file.componentName.location
                     }, BsLintDiagnosticContext);
                 }
             }

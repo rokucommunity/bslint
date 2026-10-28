@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, isBrsCode, ParseMode, Parser, Program, standardizePath as s, util } from 'brighterscript';
+import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, standardizePath as s, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -694,7 +694,7 @@ describe('codeStyle', () => {
             sub test2()
             end sub
         `);
-        const code = file.codes.find(isBrsCode);
+        const code = file.codeSegments[0];
         (code.ast.statements[0] as FunctionStatement).func.tokens.functionType.leadingTrivia = undefined;
         program.validate();
         const codeStyle = new CodeStyle(createContext(program));
@@ -2034,6 +2034,36 @@ describe('codeStyle', () => {
                     newText: ','
                 }]
             });
+        });
+
+        it('handles code actions outside of the script blocks', () => {
+            init({ 'no-array-component-field-type': 'error', 'aa-comma-style': 'always' });
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <interface>
+                        <field id="items" type="array" />
+                    </interface>
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            a = {
+                                p1: 1
+                                p2: 2
+                            }
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `04:no-array-field-type:Avoid using field type 'array'`,
+                `09:missing-aa-comma:Add comma after the expression`,
+                `10:missing-aa-comma:Add comma after the expression`
+            ]);
+
+            // the field is in the xml of the component, not in a code segment
+            const titles = getCodeActions('components/Widget.xml', 3).map(a => a.title);
+            expect(titles).to.not.include('Add comma after the expression');
+            expect(titles).to.not.include('Fix all: Add comma after the expression');
         });
 
         it('limits fix-all to the script block', () => {

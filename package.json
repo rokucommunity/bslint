@@ -35,7 +35,7 @@
     "url": "https://github.com/rokucommunity/bslint"
   },
   "dependencies": {
-    "brighterscript": "github:rokucommunity/brighterscript#d7c397d42aa62f58d1d934c3abe7d932ccf07576",
+    "brighterscript": "github:rokucommunity/brighterscript#c4a87e9c0fa79146e3ce053f740fa1ca19e6d019",
     "fs-extra": "^10.0.0",
     "jsonc-parser": "^2.3.0",
     "minimatch": "^3.0.4",

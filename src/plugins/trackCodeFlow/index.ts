@@ -1,4 +1,4 @@
-import { BsDiagnostic, BrsCode, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsCode, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateCodeEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
+import { BsDiagnostic, BrsCodeSegment, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateBrsCodeSegmentEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -43,7 +43,7 @@ export interface VarInfo {
 }
 
 export interface LintState {
-    code: BrsCode;
+    codeSegment: BrsCodeSegment;
     fun: FunctionExpression;
     parent?: StatementInfo;
     stack: Statement[];
@@ -63,32 +63,32 @@ export default class TrackCodeFlow implements CompilerPlugin {
 
     provideCodeActions(event: ProvideCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
-        extractFixes(event.code.document, addFixes, event.diagnostics);
+        extractFixes(event.file, addFixes, event.diagnostics);
     }
 
     afterValidateScope(event: AfterValidateScopeEvent) {
         const { scope } = event;
         event.program.diagnostics.clearByFilter({ tag: BsLintScopeDiagnosticTag, scope: scope });
         const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
-        const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllCodes(), callablesMap);
+        const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllCodeSegments(), callablesMap);
         event.program.diagnostics.register(diagnostics as any, {
             ...BsLintScopeDiagnosticContext,
             scope: scope
         });
     }
 
-    afterValidateCode(event: AfterValidateCodeEvent) {
-        const { code } = event;
-        if (!isBrsCode(code) || this.lintContext.ignores(code.document)) {
+    afterValidateBrsCodeSegment(event: AfterValidateBrsCodeSegmentEvent) {
+        const { codeSegment, file } = event;
+        if (this.lintContext.ignores(file)) {
             return;
         }
         let diagnostics: BsDiagnostic[] = [];
 
-        resetVarContext(code);
+        resetVarContext(codeSegment);
 
-        for (const fun of code.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive })) {
+        for (const fun of codeSegment.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive })) {
             const state: LintState = {
-                code: code,
+                codeSegment: codeSegment,
                 fun: fun,
                 parent: undefined,
                 stack: [],
@@ -101,8 +101,8 @@ export default class TrackCodeFlow implements CompilerPlugin {
             let curr: StatementInfo = {
                 stat: new EmptyStatement()
             };
-            const returnLinter = createReturnLinter(this.lintContext, code, fun, state, diagnostics);
-            const varLinter = createVarLinter(this.lintContext, code, fun, state, diagnostics);
+            const returnLinter = createReturnLinter(this.lintContext, codeSegment, fun, state, diagnostics);
+            const varLinter = createVarLinter(this.lintContext, codeSegment, fun, state, diagnostics);
 
             // 1. close
             // 2. visit -> curr
@@ -194,7 +194,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         }
 
         if (this.lintContext.fix) {
-            diagnostics = extractFixes(code.document, this.lintContext.addFixes, diagnostics);
+            diagnostics = extractFixes(file, this.lintContext.addFixes, diagnostics);
         }
         event.program.diagnostics.register(diagnostics, BsLintDiagnosticContext);
     }
