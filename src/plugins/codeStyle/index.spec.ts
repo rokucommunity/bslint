@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, standardizePath as s, util } from 'brighterscript';
+import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, Range, standardizePath as s, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
@@ -2034,6 +2034,38 @@ describe('codeStyle', () => {
                     newText: ','
                 }]
             });
+        });
+
+        it('offers one quick fix per diagnostic for a range across script blocks', () => {
+            init({ 'aa-comma-style': 'always' });
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script type="text/brightscript"><![CDATA[
+                        sub init()
+                            a = {
+                                p1: 1
+                            }
+                        end sub
+                    ]]></script>
+                    <script type="text/brightscript"><![CDATA[
+                        sub other()
+                            b = {
+                                q1: 1
+                            }
+                        end sub
+                    ]]></script>
+                </component>
+            `);
+            program.validate();
+            const diagnostics = program.getDiagnostics().filter(d => d.code === 'missing-aa-comma');
+            expect(diagnostics.map(d => d.location.range.start.line)).to.eql([5, 12]);
+
+            // select the whole document: the range starts in the xml, outside of the script blocks
+            const actions = program.getCodeActions('components/Widget.xml', util.createRange(0, 0, 18, 0))
+                .filter(a => a.title === 'Add comma after the expression');
+            expect(
+                actions.map(a => Object.values(a.edit.changes as Record<string, Array<{ range: Range }>>).flat().map(x => x.range.start.line))
+            ).to.eql([[5], [12]]);
         });
 
         it('handles code actions outside of the script blocks', () => {
