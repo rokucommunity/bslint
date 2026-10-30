@@ -1106,7 +1106,10 @@ describe('codeStyle', () => {
                 program.validate();
                 expectDiagnostics(
                     program,
-                    diagnosticCharLocations.map(x => messages.expectedColorCase(util.createLocationFromFileRange(file, util.createRange(1, x[0], 1, x[1]))))
+                    diagnosticCharLocations.map(x => ({
+                        ...messages.expectedColorCase(undefined),
+                        location: util.createLocationFromFileRange(file, util.createRange(1, x[0], 1, x[1]))
+                    }))
                 );
             }
             /* eslint-enable no-template-curly-in-string */

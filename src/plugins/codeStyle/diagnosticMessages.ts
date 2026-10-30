@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, FunctionExpression, IfStatement, Location, WhileStatement } from 'brighterscript';
+import { DiagnosticLocationInput, DiagnosticSeverity, FunctionExpression, IfStatement, WhileStatement } from 'brighterscript';
 
 export enum CodeStyleLegacyError {
     InlineIfFound = 'LINT3001',
@@ -77,7 +77,7 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.BlockIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        location: stat.tokens.if.location,
+        location: stat.tokens.if,
         data: stat
     }),
     removeBlockIfThenKeyword: (stat: IfStatement) => ({
@@ -86,10 +86,10 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.BlockIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        location: stat.tokens.then.location,
+        location: stat.tokens.then,
         data: stat
     }),
-    inlineIfNotAllowed: (location: Location) => ({
+    inlineIfNotAllowed: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.InlineIfFound,
         legacyCode: CodeStyleLegacyError.InlineIfFound,
@@ -103,7 +103,7 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.InlineIfThenMissing,
         source: 'bslint',
         message: `${CS} add 'then' keyword`,
-        location: stat.tokens.if.location,
+        location: stat.tokens.if,
         data: stat
     }),
     removeInlineIfThenKeyword: (stat: IfStatement) => ({
@@ -112,7 +112,7 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.InlineIfThenFound,
         source: 'bslint',
         message: `${CS} remove 'then' keyword`,
-        location: stat.tokens.then.location,
+        location: stat.tokens.then,
         data: stat
     }),
     addParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
@@ -121,7 +121,7 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.ConditionGroupMissing,
         source: 'bslint',
         message: `${CS} add parenthesis around condition`,
-        location: stat.condition.location,
+        location: stat.condition,
         data: stat
     }),
     removeParenthesisAroundCondition: (stat: IfStatement | WhileStatement) => ({
@@ -130,7 +130,7 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.ConditionGroupFound,
         source: 'bslint',
         message: `${CS} remove parenthesis around condition`,
-        location: stat.condition.location,
+        location: stat.condition,
         data: stat
     }),
     expectedSubKeyword: (fun: FunctionExpression, reason: string) => ({
@@ -139,7 +139,7 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.SubKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'sub' keyword ${reason}`,
-        location: fun.tokens.functionType.location,
+        location: fun.tokens.functionType,
         data: fun
     }),
     expectedFunctionKeyword: (fun: FunctionExpression, reason: string) => ({
@@ -148,10 +148,10 @@ export const messages = {
         legacyCode: CodeStyleLegacyError.FunctionKeywordExpected,
         source: 'bslint',
         message: `${CS} expected 'function' keyword ${reason}`,
-        location: fun.tokens.functionType.location,
+        location: fun.tokens.functionType,
         data: fun
     }),
-    expectedReturnTypeAnnotation: (location: Location) => ({
+    expectedReturnTypeAnnotation: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ReturnTypeAnnotation,
         legacyCode: CodeStyleLegacyError.ReturnTypeAnnotation,
@@ -159,7 +159,7 @@ export const messages = {
         message: `${ST} function should declare the return type`,
         location
     }),
-    expectedTypeAnnotation: (location: Location) => ({
+    expectedTypeAnnotation: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.TypeAnnotation,
         legacyCode: CodeStyleLegacyError.TypeAnnotation,
@@ -167,7 +167,7 @@ export const messages = {
         message: `${ST} type annotation required`,
         location
     }),
-    noPrint: (location: Location, severity: DiagnosticSeverity) => ({
+    noPrint: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoPrint,
         legacyCode: CodeStyleLegacyError.NoPrint,
@@ -175,7 +175,7 @@ export const messages = {
         message: `${CS} Avoid using direct Print statements`,
         location
     }),
-    noTodo: (location: Location, severity: DiagnosticSeverity) => ({
+    noTodo: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoTodo,
         legacyCode: CodeStyleLegacyError.NoTodo,
@@ -183,7 +183,7 @@ export const messages = {
         message: `${CS} Avoid using TODO comments`,
         location
     }),
-    noStop: (location: Location, severity: DiagnosticSeverity) => ({
+    noStop: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.NoStop,
         legacyCode: CodeStyleLegacyError.NoStop,
@@ -191,7 +191,7 @@ export const messages = {
         message: `${CS} STOP statements are not allowed in published applications`,
         location
     }),
-    removeAAComma: (location: Location) => ({
+    removeAAComma: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.AACommaFound,
         legacyCode: CodeStyleLegacyError.AACommaFound,
@@ -199,7 +199,7 @@ export const messages = {
         message: `Remove optional comma`,
         location
     }),
-    addAAComma: (location: Location) => ({
+    addAAComma: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.AACommaMissing,
         legacyCode: CodeStyleLegacyError.AACommaMissing,
@@ -207,7 +207,7 @@ export const messages = {
         message: `Add comma after the expression`,
         location
     }),
-    addEolLast: (location: Location, preferredEol: string) => ({
+    addEolLast: (location: DiagnosticLocationInput, preferredEol: string) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.EolLastMissing,
         legacyCode: CodeStyleLegacyError.EolLastMissing,
@@ -216,7 +216,7 @@ export const messages = {
         location,
         data: { preferredEol }
     }),
-    removeEolLast: (location: Location) => ({
+    removeEolLast: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.EolLastFound,
         legacyCode: CodeStyleLegacyError.EolLastFound,
@@ -224,7 +224,7 @@ export const messages = {
         message: `${CS} File should not end with a newline`,
         location
     }),
-    expectedColorFormat: (location: Location) => ({
+    expectedColorFormat: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorFormat,
         legacyCode: CodeStyleLegacyError.ColorFormat,
@@ -232,7 +232,7 @@ export const messages = {
         message: `${CS} File should follow color format`,
         location
     }),
-    expectedColorCase: (location: Location) => ({
+    expectedColorCase: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorCase,
         legacyCode: CodeStyleLegacyError.ColorCase,
@@ -240,7 +240,7 @@ export const messages = {
         message: `${CS} File should follow color case`,
         location
     }),
-    expectedColorAlpha: (location: Location) => ({
+    expectedColorAlpha: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorAlpha,
         legacyCode: CodeStyleLegacyError.ColorAlpha,
@@ -248,7 +248,7 @@ export const messages = {
         message: `${CS} File should follow color alpha rule`,
         location
     }),
-    expectedColorAlphaDefaults: (location: Location) => ({
+    expectedColorAlphaDefaults: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorAlphaDefaults,
         legacyCode: CodeStyleLegacyError.ColorAlphaDefaults,
@@ -256,7 +256,7 @@ export const messages = {
         message: `${CS} File should follow color alpha defaults rule`,
         location
     }),
-    colorCertCompliance: (location: Location) => ({
+    colorCertCompliance: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ColorCertCompliant,
         legacyCode: CodeStyleLegacyError.ColorCertCompliant,
@@ -264,7 +264,7 @@ export const messages = {
         message: `${CS} File should follow Roku broadcast safe color cert requirement`,
         location
     }),
-    noAssocarrayFieldType: (location: Location, severity: DiagnosticSeverity) => ({
+    noAssocarrayFieldType: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         message: `Avoid using field type 'assocarray'`,
         code: CodeStyleError.NoAssocarrayFieldType,
         legacyCode: CodeStyleLegacyError.NoAssocarrayFieldType,
@@ -272,7 +272,7 @@ export const messages = {
         source: 'bslint',
         location
     }),
-    noArrayFieldType: (location: Location, severity: DiagnosticSeverity) => ({
+    noArrayFieldType: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         message: `Avoid using field type 'array'`,
         code: CodeStyleError.NoArrayFieldType,
         legacyCode: CodeStyleLegacyError.NoArrayFieldType,
@@ -287,14 +287,14 @@ export const messages = {
         severity: severity,
         source: 'bslint'
     }),
-    typeReassignment: (location: Location, varName: string, previousType: string, newType: string, severity: DiagnosticSeverity) => ({
+    typeReassignment: (location: DiagnosticLocationInput, varName: string, previousType: string, newType: string, severity: DiagnosticSeverity) => ({
         message: `${ST} Reassignment of the type of '${varName}' from ${previousType} to ${newType}`,
         code: CodeStyleError.TypeReassignment,
         severity: severity,
         source: 'bslint',
         location
     }),
-    noIdenticalRegexInLoop: (location: Location, severity: DiagnosticSeverity) => ({
+    noIdenticalRegexInLoop: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         message: 'Avoid redeclaring identical regular expressions in a loop',
         code: CodeStyleError.NoRegexDuplicates,
         legacyCode: CodeStyleLegacyError.NoRegexDuplicates,
@@ -302,7 +302,7 @@ export const messages = {
         source: 'bslint',
         location
     }),
-    noRegexRedeclaring: (location: Location, severity: DiagnosticSeverity) => ({
+    noRegexRedeclaring: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         message: 'Avoid redeclaring identical regular expressions',
         code: CodeStyleError.NoRegexDuplicates,
         legacyCode: CodeStyleLegacyError.NoRegexDuplicates,
@@ -310,7 +310,7 @@ export const messages = {
         source: 'bslint',
         location
     }),
-    expectedEndForTerminator: (location: Location) => ({
+    expectedEndForTerminator: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ForTerminatorEndForExpected,
         legacyCode: CodeStyleLegacyError.ForTerminatorEndForExpected,
@@ -318,7 +318,7 @@ export const messages = {
         message: `${CS} expected 'end for' terminator`,
         location
     }),
-    expectedNextTerminator: (location: Location) => ({
+    expectedNextTerminator: (location: DiagnosticLocationInput) => ({
         severity: DiagnosticSeverity.Error,
         code: CodeStyleError.ForTerminatorNextExpected,
         legacyCode: CodeStyleLegacyError.ForTerminatorNextExpected,
@@ -326,7 +326,7 @@ export const messages = {
         message: `${CS} expected 'next' terminator`,
         location
     }),
-    unsortedImport: (location: Location, severity: DiagnosticSeverity) => ({
+    unsortedImport: (location: DiagnosticLocationInput, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.UnsortedImport,
         legacyCode: CodeStyleLegacyError.UnsortedImport,
