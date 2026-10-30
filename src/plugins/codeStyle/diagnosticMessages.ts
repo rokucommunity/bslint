@@ -30,9 +30,7 @@ export enum CodeStyleLegacyError {
     NameShadowing = 'LINT3127',
     ForTerminatorEndForExpected = 'LINT3027',
     ForTerminatorNextExpected = 'LINT3028',
-    UnsortedImport = 'LINT3029',
-    RedundantScriptImport = 'LINT3030',
-    MissingComponentExtends = 'LINT3031'
+    UnsortedImport = 'LINT3029'
 }
 
 export enum CodeStyleError {
@@ -341,7 +339,6 @@ export const messages = {
     redundantScriptImport: (location: Location, ancestorComponentName: string, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.RedundantScriptImport,
-        legacyCode: CodeStyleLegacyError.RedundantScriptImport,
         source: 'bslint',
         message: `${CS} remove script import already imported by ancestor component '${ancestorComponentName}'`,
         location
@@ -349,7 +346,6 @@ export const messages = {
     missingComponentExtends: (location: Location, insertPosition: Position, severity: DiagnosticSeverity) => ({
         severity: severity,
         code: CodeStyleError.MissingComponentExtends,
-        legacyCode: CodeStyleLegacyError.MissingComponentExtends,
         source: 'bslint',
         message: `${CS} add 'extends' attribute (components extend 'Group' by default)`,
         location,
