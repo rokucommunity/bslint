@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, FunctionExpression, IfStatement, Location, WhileStatement } from 'brighterscript';
+import { DiagnosticSeverity, FunctionExpression, IfStatement, Location, Position, WhileStatement } from 'brighterscript';
 
 export enum CodeStyleLegacyError {
     InlineIfFound = 'LINT3001',
@@ -30,7 +30,9 @@ export enum CodeStyleLegacyError {
     NameShadowing = 'LINT3127',
     ForTerminatorEndForExpected = 'LINT3027',
     ForTerminatorNextExpected = 'LINT3028',
-    UnsortedImport = 'LINT3029'
+    UnsortedImport = 'LINT3029',
+    RedundantScriptImport = 'LINT3030',
+    MissingComponentExtends = 'LINT3031'
 }
 
 export enum CodeStyleError {
@@ -64,7 +66,9 @@ export enum CodeStyleError {
     TypeReassignment = 'type-reassignment',
     ForTerminatorEndForExpected = 'missing-end-for',
     ForTerminatorNextExpected = 'missing-next',
-    UnsortedImport = 'unsorted-import'
+    UnsortedImport = 'unsorted-import',
+    RedundantScriptImport = 'no-redundant-script-import',
+    MissingComponentExtends = 'missing-component-extends'
 }
 
 const CS = 'Code style:';
@@ -333,5 +337,22 @@ export const messages = {
         source: 'bslint',
         message: `${CS} imports should be sorted alphabetically within their group`,
         location
+    }),
+    redundantScriptImport: (location: Location, ancestorComponentName: string, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.RedundantScriptImport,
+        legacyCode: CodeStyleLegacyError.RedundantScriptImport,
+        source: 'bslint',
+        message: `${CS} remove script import already imported by ancestor component '${ancestorComponentName}'`,
+        location
+    }),
+    missingComponentExtends: (location: Location, insertPosition: Position, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.MissingComponentExtends,
+        legacyCode: CodeStyleLegacyError.MissingComponentExtends,
+        source: 'bslint',
+        message: `${CS} add 'extends' attribute (components extend 'Group' by default)`,
+        location,
+        data: insertPosition
     })
 };

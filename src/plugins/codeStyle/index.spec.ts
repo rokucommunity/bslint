@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
-import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, FunctionStatement, ParseMode, Parser, Program, util } from 'brighterscript';
+import { AALiteralExpression, AfterProvideProgramEvent, AssignmentStatement, BrsFile, DiagnosticSeverity, FunctionStatement, ParseMode, Parser, Program, util } from 'brighterscript';
 import Linter from '../../Linter';
 import CodeStyle, { collectWrappingAAMembersIndexes } from './index';
 import bslintFactory, { BsLintConfig } from '../../index';
-import { createContext, PluginWrapperContext } from '../../util';
+import { bscCompat, createContext, PluginWrapperContext } from '../../util';
 import { expectDiagnostics, expectDiagnosticsFmt, fmtDiagnostics } from '../../testHelpers.spec';
 import { messages } from './diagnosticMessages';
 import { getFixes } from './styleFixes';
@@ -915,6 +915,302 @@ describe('codeStyle', () => {
             `08:no-array-field-type:Avoid using field type 'array'`
         ];
         expect(actual).deep.equal(expected);
+    });
+
+    describe('component rules moved from brighterscript', () => {
+        const reportsDiagnostic = bscCompat.reportsDiagnostic;
+
+        beforeEach(() => {
+            // brighterscript v1 no longer reports these, so bslint does
+            bscCompat.reportsDiagnostic = () => false;
+        });
+
+        afterEach(() => {
+            bscCompat.reportsDiagnostic = reportsDiagnostic;
+        });
+
+        function lines(...items: string[]) {
+            return items.join('\n');
+        }
+
+        function getLintDiagnostics(code: string) {
+            return program.getDiagnostics().filter(d => d.source === 'bslint' && d.code === code);
+        }
+
+        // only bslint's own fixes (brighterscript also adds `bs:disable` actions)
+        function getCodeActions(srcPath: string, line: number, character: number) {
+            return program.getCodeActions(srcPath, util.createRange(line, character, line, character))
+                .filter(a => a.title.startsWith('Code style:') || a.title.startsWith('Fix all: Code style:'));
+        }
+
+        function getEdits(action: { edit?: { changes?: Record<string, { range: unknown; newText: string }[]> } }) {
+            return Object.values(action.edit.changes).flat();
+        }
+
+        function applyAllFixes(src: string, code: string): string {
+            const allChanges = getLintDiagnostics(code).flatMap(d => getFixes(d as any).changes);
+            return applyEdits(src, allChanges);
+        }
+
+        describe('no-redundant-script-import', () => {
+            const parentXml = lines(
+                '<?xml version="1.0" encoding="utf-8" ?>',
+                '<component name="ParentScene" extends="Scene">',
+                '    <script type="text/brightscript" uri="pkg:/source/lib1.brs" />',
+                '    <script type="text/brightscript" uri="pkg:/source/lib2.brs" />',
+                '</component>'
+            );
+            const childXml = lines(
+                '<?xml version="1.0" encoding="utf-8" ?>',
+                '<component name="ChildScene" extends="ParentScene">',
+                '    <script type="text/brightscript" uri="pkg:/source/lib1.brs" />',
+                '    <script type="text/brightscript" uri="pkg:/source/child.brs" />',
+                '</component>'
+            );
+
+            function setFiles(child = childXml) {
+                program.setFile('components/parent.xml', parentXml);
+                program.setFile('source/lib1.brs', '');
+                program.setFile('source/lib2.brs', '');
+                program.setFile('source/child.brs', '');
+                program.setFile('components/child.xml', child);
+            }
+
+            it('flags a script already imported by the parent', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                setFiles();
+                program.validate();
+                expectDiagnostics(getLintDiagnostics('no-redundant-script-import'), [{
+                    code: 'no-redundant-script-import',
+                    severity: DiagnosticSeverity.Warning,
+                    message: `Code style: remove script import already imported by ancestor component 'ParentScene'`,
+                    location: {
+                        uri: util.pathToUri(program.getFile('components/child.xml').srcPath),
+                        range: util.createRange(2, 42, 2, 62)
+                    }
+                }]);
+            });
+
+            it('flags a script imported by a grandparent', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                setFiles();
+                program.setFile('components/grandchild.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="GrandchildScene" extends="ChildScene">',
+                    '    <script type="text/brightscript" uri="pkg:/source/lib2.brs" />',
+                    '</component>'
+                ));
+                program.validate();
+                const diagnostics = getLintDiagnostics('no-redundant-script-import');
+                expect(diagnostics.map(d => d.location.uri.split('/').pop()).sort()).to.eql(['child.xml', 'grandchild.xml']);
+                expect(diagnostics.find(d => d.location.uri.endsWith('grandchild.xml')).message).to.include(`'ParentScene'`);
+            });
+
+            it('does not flag components without a redundant import', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                setFiles(lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="ChildScene" extends="ParentScene">',
+                    '    <script type="text/brightscript" uri="pkg:/source/child.brs" />',
+                    '</component>'
+                ));
+                program.validate();
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(0);
+            });
+
+            it('clears the diagnostic when the parent stops importing the script', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                setFiles();
+                program.validate();
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(1);
+
+                program.setFile('components/parent.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="ParentScene" extends="Scene">',
+                    '    <script type="text/brightscript" uri="pkg:/source/lib2.brs" />',
+                    '</component>'
+                ));
+                program.validate();
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(0);
+            });
+
+            it('can be turned off', () => {
+                init({ 'no-redundant-script-import': 'off' });
+                setFiles();
+                program.validate();
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(0);
+            });
+
+            it('does not double-report when brighterscript reports it', () => {
+                bscCompat.reportsDiagnostic = () => true;
+                init({ 'no-redundant-script-import': 'warn' });
+                setFiles();
+                program.validate();
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(0);
+            });
+
+            it('fix removes the redundant import line', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                setFiles();
+                program.validate();
+                expect(applyAllFixes(childXml, 'no-redundant-script-import')).to.equal(lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="ChildScene" extends="ParentScene">',
+                    '    <script type="text/brightscript" uri="pkg:/source/child.brs" />',
+                    '</component>'
+                ));
+            });
+
+            it('offers a code action to remove the import', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                setFiles();
+                program.validate();
+                const actions = getCodeActions('components/child.xml', 2, 50);
+                expect(actions.map(a => a.title)).to.eql([
+                    `Code style: remove script import already imported by ancestor component 'ParentScene'`
+                ]);
+                expect(getEdits(actions[0])).to.eql([{
+                    range: util.createRange(2, 0, 3, 0),
+                    newText: ''
+                }]);
+            });
+
+            it('offers fix-all when there are multiple redundant imports', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                const child = lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="ChildScene" extends="ParentScene">',
+                    '    <script type="text/brightscript" uri="pkg:/source/lib1.brs" />',
+                    '    <script type="text/brightscript" uri="pkg:/source/lib2.brs" />',
+                    '</component>'
+                );
+                setFiles(child);
+                program.validate();
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(2);
+
+                const actions = getCodeActions('components/child.xml', 2, 50);
+                const fixAll = actions.find(a => a.title.startsWith('Fix all:'));
+                expect(fixAll).to.not.equal(undefined);
+                expect(getEdits(fixAll)).to.have.length(2);
+
+                expect(applyAllFixes(child, 'no-redundant-script-import')).to.equal(lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="ChildScene" extends="ParentScene">',
+                    '</component>'
+                ));
+            });
+        });
+
+        describe('missing-component-extends', () => {
+            it('flags a component without extends', () => {
+                init({ 'missing-component-extends': 'warn' });
+                program.setFile('components/comp1.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1">',
+                    '</component>'
+                ));
+                program.validate();
+                expectDiagnostics(getLintDiagnostics('missing-component-extends'), [{
+                    code: 'missing-component-extends',
+                    severity: DiagnosticSeverity.Warning,
+                    message: `Code style: add 'extends' attribute (components extend 'Group' by default)`,
+                    location: {
+                        uri: util.pathToUri(program.getFile('components/comp1.xml').srcPath),
+                        range: util.createRange(1, 1, 1, 10)
+                    }
+                }]);
+            });
+
+            it('does not flag a component with extends', () => {
+                init({ 'missing-component-extends': 'warn' });
+                program.setFile('components/comp1.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1" extends="Group">',
+                    '</component>'
+                ));
+                program.validate();
+                expect(getLintDiagnostics('missing-component-extends')).to.have.length(0);
+            });
+
+            it('can be turned off', () => {
+                init({ 'missing-component-extends': 'off' });
+                program.setFile('components/comp1.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1">',
+                    '</component>'
+                ));
+                program.validate();
+                expect(getLintDiagnostics('missing-component-extends')).to.have.length(0);
+            });
+
+            it('does not double-report when brighterscript reports it', () => {
+                bscCompat.reportsDiagnostic = () => true;
+                init({ 'missing-component-extends': 'warn' });
+                program.setFile('components/comp1.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1">',
+                    '</component>'
+                ));
+                program.validate();
+                expect(getLintDiagnostics('missing-component-extends')).to.have.length(0);
+            });
+
+            it('suggests Group, Task and ContentNode', () => {
+                init({ 'missing-component-extends': 'warn' });
+                program.setFile('components/comp1.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1">',
+                    '</component>'
+                ));
+                program.validate();
+                const actions = getCodeActions('components/comp1.xml', 1, 5);
+                expect(actions.map(a => ({ title: a.title, isPreferred: a.isPreferred, edits: getEdits(a) }))).to.eql([{
+                    title: `Code style: add 'extends' attribute (components extend 'Group' by default)`,
+                    isPreferred: true,
+                    edits: [{ range: util.createRange(1, 23, 1, 23), newText: ' extends="Group"' }]
+                }, {
+                    title: 'Code style: add extends="Task"',
+                    isPreferred: undefined,
+                    edits: [{ range: util.createRange(1, 23, 1, 23), newText: ' extends="Task"' }]
+                }, {
+                    title: 'Code style: add extends="ContentNode"',
+                    isPreferred: undefined,
+                    edits: [{ range: util.createRange(1, 23, 1, 23), newText: ' extends="ContentNode"' }]
+                }]);
+            });
+
+            it('inserts extends after the last attribute', () => {
+                init({ 'missing-component-extends': 'warn' });
+                const src = lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1" attr2="attr3" attr3="attr3">',
+                    '</component>'
+                );
+                program.setFile('components/comp1.xml', src);
+                program.validate();
+                expect(applyAllFixes(src, 'missing-component-extends')).to.equal(lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1" attr2="attr3" attr3="attr3" extends="Group">',
+                    '</component>'
+                ));
+            });
+
+            it('inserts extends after the tag name when there are no attributes', () => {
+                init({ 'missing-component-extends': 'warn' });
+                const src = lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component>',
+                    '</component>'
+                );
+                program.setFile('components/comp1.xml', src);
+                program.validate();
+                expect(applyAllFixes(src, 'missing-component-extends')).to.equal(lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component extends="Group">',
+                    '</component>'
+                ));
+            });
+        });
     });
 
     describe('AA style', () => {

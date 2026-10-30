@@ -42,16 +42,22 @@ import {
     ImportStatement,
     isImportStatement,
     isAAIndexedMemberExpression,
-    isAAMemberExpression
+    isAAMemberExpression,
+    isXmlScope,
+    XmlScope,
+    FileReference
 } from 'brighterscript';
 import { RuleAAComma } from '../..';
 import { addFixAllToEvent, addFixesToEvent } from '../../textEdit';
-import { PluginContext } from '../../util';
+import { CodeActionKind, codeActionUtil } from 'brighterscript/dist/CodeActionUtil';
+import { bscCompat, PluginContext } from '../../util';
 import { createColorValidator } from '../../createColorValidator';
-import { messages } from './diagnosticMessages';
-import { extractFixes, getFixes } from './styleFixes';
-import { BsLintDiagnosticContext } from '../../Linter';
+import { CodeStyleError, messages } from './diagnosticMessages';
+import { addComponentExtends, extractFixes, getFixes } from './styleFixes';
+import { BsLintDiagnosticContext, BsLintDiagnosticTag } from '../../Linter';
 import { Location } from 'vscode-languageserver-types';
+
+const RedundantScriptImportTag = 'BSLint_RedundantScriptImport';
 
 export default class CodeStyle implements Plugin {
 
@@ -63,6 +69,26 @@ export default class CodeStyle implements Plugin {
     provideCodeActions(event: ProvideCodeActionsEvent) {
         const addFixes = addFixesToEvent(event);
         extractFixes(event.file, addFixes, event.diagnostics);
+
+        // `extends="Group"` is the preferred fix, but offer the other common base components too
+        for (const diagnostic of event.diagnostics) {
+            if (diagnostic.code === CodeStyleError.MissingComponentExtends) {
+                for (const parentName of ['Task', 'ContentNode']) {
+                    const entry = addComponentExtends(diagnostic, parentName);
+                    event.codeActions.push(codeActionUtil.createCodeAction({
+                        title: `Code style: add extends="${parentName}"`,
+                        diagnostics: [diagnostic],
+                        kind: CodeActionKind.QuickFix,
+                        changes: entry.changes.map(change => ({
+                            type: 'replace',
+                            filePath: event.file.srcPath,
+                            range: change.range,
+                            newText: change.text
+                        }))
+                    }));
+                }
+            }
+        }
 
         // For each fixable code touched by the cursor, offer "fix all" if there are
         // multiple occurrences of that code across the whole file
@@ -82,10 +108,26 @@ export default class CodeStyle implements Plugin {
 
     validateXMLFile(file: XmlFile) {
         const diagnostics: BsDiagnostic[] = [];
-        const { noArrayComponentFieldType, noAssocarrayComponentFieldType } = this.lintContext.severity;
+        const { noArrayComponentFieldType, noAssocarrayComponentFieldType, missingComponentExtends } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
+        // older brighterscript versions report this themselves
+        const validateMissingComponentExtends = missingComponentExtends !== DiagnosticSeverity.Hint && !bscCompat.reportsDiagnostic('xmlComponentMissingExtendsAttribute');
+
+        const componentElement = file.parser?.ast?.componentElement;
+        if (validateMissingComponentExtends && componentElement && !componentElement.extends) {
+            // insert after the last attribute, or right after `<component` if there are none
+            const lastAttribute = componentElement.attributes[componentElement.attributes.length - 1];
+            const insertPosition = (lastAttribute?.location ?? componentElement.tokens.startTagName.location).range.end;
+            diagnostics.push(
+                messages.missingComponentExtends(
+                    componentElement.tokens.startTagName.location,
+                    insertPosition,
+                    missingComponentExtends
+                )
+            );
+        }
 
         for (const field of file.parser?.ast?.componentElement?.interfaceElement?.fields ?? []) {
             if (field.tokens.startTagName?.text?.toLowerCase() === 'field') {
@@ -423,6 +465,10 @@ export default class CodeStyle implements Plugin {
     }
 
     validateScope(event: ValidateScopeEvent) {
+        if (isXmlScope(event.scope)) {
+            this.validateXmlScope(event, event.scope);
+        }
+
         for (const file of event.scope.getOwnFiles()) {
             if (this.lintContext.ignores(file)) {
                 return;
@@ -449,6 +495,57 @@ export default class CodeStyle implements Plugin {
             // append diagnostics
             event.program.diagnostics.register(bsDiagnostics, BsLintDiagnosticContext);
         }
+    }
+
+    /**
+     * Detect when a component imports a script that one of its ancestor components already imports
+     */
+    validateXmlScope(event: ValidateScopeEvent, scope: XmlScope) {
+        const { xmlFile } = scope;
+        // ancestors can change without this file changing, so clear the previous results for this scope
+        event.program.diagnostics.clearByFilter({ scope: scope, fileUri: util.pathToUri(xmlFile?.srcPath), tag: RedundantScriptImportTag });
+
+        const { noRedundantScriptImport } = this.lintContext.severity;
+        // older brighterscript versions report this themselves
+        if (noRedundantScriptImport === DiagnosticSeverity.Hint || bscCompat.reportsDiagnostic('unnecessaryScriptImportInChildFromParent')) {
+            return;
+        }
+        if (!xmlFile?.parentComponent || this.lintContext.ignores(xmlFile)) {
+            return;
+        }
+
+        // keep the first occurrence of each path. Closest ancestor imports come first
+        const ancestorImports = new Map<string, FileReference>();
+        for (const ancestorImport of xmlFile.getAncestorScriptTagImports()) {
+            if (!ancestorImports.has(ancestorImport.destPath)) {
+                ancestorImports.set(ancestorImport.destPath, ancestorImport);
+            }
+        }
+
+        let diagnostics: BsDiagnostic[] = [];
+        for (const scriptImport of xmlFile.scriptTagImports) {
+            const ancestorImport = ancestorImports.get(scriptImport.destPath);
+            if (ancestorImport && scriptImport.filePathRange) {
+                const ancestorComponent = ancestorImport.sourceFile as XmlFile;
+                diagnostics.push({
+                    ...messages.redundantScriptImport(
+                        util.createLocationFromFileRange(xmlFile, scriptImport.filePathRange),
+                        ancestorComponent.componentName?.text ?? ancestorComponent.destPath,
+                        noRedundantScriptImport
+                    ),
+                    file: xmlFile
+                } as BsDiagnostic);
+            }
+        }
+
+        if (this.lintContext.fix) {
+            diagnostics = extractFixes(xmlFile, this.lintContext.addFixes, diagnostics);
+        }
+
+        event.program.diagnostics.register(diagnostics, {
+            tags: [BsLintDiagnosticTag, RedundantScriptImportTag],
+            scope: scope
+        });
     }
 
     validateAAStyle(aa: AALiteralExpression, aaCommaStyle: RuleAAComma, diagnostics: (BsDiagnostic)[]) {

@@ -4,6 +4,7 @@ import { BsLintConfig, BsLintRules, RuleSeverity, BsLintSeverity } from './index
 import { readFileSync, existsSync } from 'fs';
 import * as path from 'path';
 import { Program, BscFile, DiagnosticSeverity } from 'brighterscript';
+import { DiagnosticMessages } from 'brighterscript/dist/DiagnosticMessages';
 import { applyFixes, ChangeEntry, TextEdit } from './textEdit';
 import { addJob } from './Linter';
 
@@ -33,9 +34,20 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'name-shadowing': 'off',
         'type-reassignment': 'off',
         'no-regex-duplicates': 'off',
-        'for-terminator-style': 'end-for'
+        'for-terminator-style': 'end-for',
+        'no-redundant-script-import': 'warn',
+        'missing-component-extends': 'warn'
     };
 }
+
+/**
+ * BrighterScript v1 moved some lint-style diagnostics into bslint rules. Versions of brighterscript
+ * that still emit them already report the problem, so the matching bslint rule should stay quiet.
+ * Exposed as an object so tests can override the check.
+ */
+export const bscCompat = {
+    reportsDiagnostic: (name: string) => name in DiagnosticMessages
+};
 
 export function getDefaultSeverity() {
     return rulesToSeverity(getDefaultRules());
@@ -176,7 +188,9 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         nameShadowing: ruleToSeverity(rules['name-shadowing']),
         typeReassignment: ruleToSeverity(rules['type-reassignment']),
         noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates']),
-        forTerminatorStyle: rules['for-terminator-style']
+        forTerminatorStyle: rules['for-terminator-style'],
+        noRedundantScriptImport: ruleToSeverity(rules['no-redundant-script-import']),
+        missingComponentExtends: ruleToSeverity(rules['missing-component-extends'])
     };
 }
 
