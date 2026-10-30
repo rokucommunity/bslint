@@ -153,7 +153,8 @@ export default class CheckUsage implements Plugin {
                 const name = file.componentName?.text;
                 const cv = name && this.map.get(`"${name.toLowerCase()}"`);
                 if (cv) {
-                    for (const codeSegment of file.codeSegments) {
+                    // undefined when the component has no CDATA `<script>` blocks
+                    for (const codeSegment of file.codeSegments ?? []) {
                         if (this.parsed.has(codeSegment.key)) {
                             continue;
                         }
@@ -187,7 +188,7 @@ export default class CheckUsage implements Plugin {
                 this.main = fv;
             }
 
-            for (const codeSegment of file.codeSegments) {
+            for (const codeSegment of file.codeSegments ?? []) {
                 this.findComponentEdges(fv, codeSegment);
             }
         });

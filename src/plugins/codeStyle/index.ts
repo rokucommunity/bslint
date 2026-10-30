@@ -437,7 +437,8 @@ export default class CodeStyle implements Plugin {
             }
 
             const diagnostics: (BsDiagnostic)[] = [];
-            for (const codeSegment of file.codeSegments ?? []) {
+            // undefined when the file provides no code segments (i.e. an xml component with no CDATA `<script>` blocks)
+            for (const codeSegment of util.getCodeSegments(file) ?? []) {
                 diagnostics.push(...this.validateBrsCodeInScope(codeSegment));
             }
 

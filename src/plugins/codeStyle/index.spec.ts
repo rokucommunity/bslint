@@ -2136,6 +2136,27 @@ describe('codeStyle', () => {
             expect(secondBlockActions.map(a => a.title)).to.not.include('Fix all: Add comma after the expression');
         });
 
+        it('validates scope rules for a component with no script blocks', () => {
+            init({ 'type-reassignment': 'error' });
+            // the component provides no code segments of its own
+            program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
+                <component name="Widget" extends="Group">
+                    <script uri="Widget.brs" />
+                </component>
+            `);
+            program.setFile('components/Widget.brs', `
+                sub init()
+                    x = 1
+                    x = "hello"
+                    print x
+                end sub
+            `);
+            program.validate();
+            expectDiagnosticsFmt(program, [
+                `04:type-reassignment:Strictness: Reassignment of the type of 'x' from integer to string`
+            ]);
+        });
+
         it('validates scope rules in script blocks', () => {
             init({ 'type-reassignment': 'error' });
             program.setFile('components/Widget.xml', `<?xml version="1.0" encoding="utf-8" ?>
