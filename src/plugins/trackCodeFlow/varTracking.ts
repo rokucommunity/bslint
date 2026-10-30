@@ -1,7 +1,6 @@
-import { BscFile, FunctionExpression, BsDiagnostic, Range, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnosticInput, Identifier, Locatable, isForStatement, isForEachStatement, isIfStatement, isAssignmentStatement, isNamespaceStatement, NamespaceStatement, Expression, isVariableExpression, isBinaryExpression, TokenKind, Scope, CallableContainerMap, DiagnosticSeverity, isLiteralInvalid, isWhileStatement, isCatchStatement, isLabelStatement, isGotoStatement, ParseMode, util, isMethodStatement, isTryCatchStatement, isConditionalCompileStatement, VariableExpression } from 'brighterscript';
 import { LintState, StatementInfo, NarrowingInfo, VarInfo, VarRestriction } from '.';
 import { PluginContext } from '../../util';
-import { Location } from 'vscode-languageserver-types';
 
 export enum VarLintError {
     UninitializedVar = 'uninitialized-variable',
@@ -29,7 +28,7 @@ enum ValidationKind {
 
 
 export const VarTrackingMessages = {
-    varCasing: (curr: VarInfo, name: { text: string; location: Location }) => ({
+    varCasing: (curr: VarInfo, name: NamedLocatable) => ({
         severity: DiagnosticSeverity.Warning,
         source: 'bslint',
         code: VarLintError.CaseMismatch,
@@ -37,7 +36,7 @@ export const VarTrackingMessages = {
         message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
         data: {
             name: curr.name,
-            location: name.location
+            location: util.getLocation(name)
         }
     }),
     unsafeIterator: (name: string) => ({
@@ -71,11 +70,16 @@ export const VarTrackingMessages = {
 };
 
 
+/**
+ * A token-like item with a name and a position, such as an `Identifier` or a `NarrowingInfo`
+ */
+type NamedLocatable = Pick<Identifier, 'text'> & Locatable;
+
 interface ValidationInfo {
     kind: ValidationKind;
     name: string;
     local?: VarInfo;
-    location: Location;
+    locatable: Locatable;
     namespace?: NamespaceStatement;
 }
 
@@ -94,34 +98,34 @@ export function createVarLinter(
     file: BscFile,
     fun: FunctionExpression,
     state: LintState,
-    diagnostics: BsDiagnostic[]
+    diagnostics: BsDiagnosticInput[]
 ) {
     const { severity } = lintContext;
     const deferred = getDeferred(file);
     let foundLabelAt = 0;
 
     const args: Map<string, VarInfo> = new Map();
-    args.set('m', { name: 'm', location: Location.create('', Range.create(0, 0, 0, 0)), isParam: true, isUnsafe: false, isUsed: true });
+    args.set('m', { name: 'm', locatable: undefined, isParam: true, isUnsafe: false, isUsed: true });
     fun.parameters.forEach((p) => {
         const name = p.tokens.name.text;
-        args.set(name.toLowerCase(), { name: name, location: p.tokens.name.location, isParam: true, isUnsafe: false, isUsed: false });
+        args.set(name.toLowerCase(), { name: name, locatable: p.tokens.name, isParam: true, isUnsafe: false, isUsed: false });
     });
 
     if (isMethodStatement(fun.parent)) {
-        args.set('super', { name: 'super', location: null, isParam: true, isUnsafe: false, isUsed: true });
+        args.set('super', { name: 'super', locatable: undefined, isParam: true, isUnsafe: false, isUsed: true });
     }
 
-    function verifyVarCasing(curr: VarInfo, name: { text: string; location: Location }) {
+    function verifyVarCasing(curr: VarInfo, name: NamedLocatable) {
         if (curr && curr.name !== name.text) {
             diagnostics.push({
                 ...VarTrackingMessages.varCasing(curr, name),
                 severity: severity.caseSensitivity,
-                location: name.location
+                location: name
             });
         }
     }
 
-    function setLocal(parent: StatementInfo, name: { text: string; location: Location }, restriction?: VarRestriction): VarInfo {
+    function setLocal(parent: StatementInfo, name: NamedLocatable, restriction?: VarRestriction): VarInfo {
         if (!name) {
             return;
         }
@@ -129,7 +133,7 @@ export function createVarLinter(
         const arg = args.get(key);
         const local = {
             name: name.text,
-            location: name.location,
+            locatable: name,
             parent: parent,
             restriction: restriction,
             metBranches: 1,
@@ -152,7 +156,7 @@ export function createVarLinter(
             kind: ValidationKind.Assignment,
             name: name.text,
             local: local,
-            location: name.location
+            locatable: name
         });
 
         return local;
@@ -239,7 +243,7 @@ export function createVarLinter(
         } else if (isCatchStatement(stat) && state.parent) {
             setLocal(curr, (stat.exceptionVariableExpression as VariableExpression)?.tokens?.name, VarRestriction.CatchedError);
         } else if (isLabelStatement(stat) && !foundLabelAt) {
-            foundLabelAt = stat.location.range.start.line;
+            foundLabelAt = util.getStartPosition(stat).line;
         } else if (foundLabelAt && isGotoStatement(stat) && state.parent) {
             // To avoid false positives when finding a goto statement,
             // very generously mark as used all unused variables after 1st found label line.
@@ -249,7 +253,7 @@ export function createVarLinter(
             for (let i = state.stack.length - 1; i >= 0; i--) {
                 const block = blocks.get(stack[i]);
                 block?.locals?.forEach(local => {
-                    if (local.location.range?.start.line > labelLine) {
+                    if (util.getStartPosition(local.locatable)?.line > labelLine) {
                         local.isUsed = true;
                     }
                 });
@@ -363,7 +367,7 @@ export function createVarLinter(
                 deferred.push({
                     kind: ValidationKind.UninitializedVar,
                     name: name,
-                    location: expr.location,
+                    locatable: expr,
                     namespace: expr.findAncestor<NamespaceStatement>(isNamespaceStatement)
                 });
                 return;
@@ -377,13 +381,13 @@ export function createVarLinter(
                     diagnostics.push({
                         ...VarTrackingMessages.unsafeIterator(name),
                         severity: severity.unsafeIterators,
-                        location: expr.location
+                        location: expr
                     });
                 } else if (!isNarrowing(local, expr, parent, curr)) {
                     diagnostics.push({
                         ...VarTrackingMessages.unsafeInitialization(name),
                         severity: severity.unsafePathLoop, // should this be severity.assignAllPath?
-                        location: expr.location
+                        location: expr
                     });
                 }
             }
@@ -409,7 +413,9 @@ export function createVarLinter(
         }
         const narrow: NarrowingInfo = {
             text: local.name,
-            location: local.location,
+            startPosition: local.locatable?.startPosition,
+            endPosition: local.locatable?.endPosition,
+            sourceInfo: local.locatable?.sourceInfo,
             type: operator === TokenKind.Equal ? 'invalid' : 'valid',
             block
         };
@@ -426,7 +432,7 @@ export function createVarLinter(
                 diagnostics.push({
                     ...VarTrackingMessages.unusedVariable(local.name),
                     severity: severity.unusedVariable,
-                    location: local.location
+                    location: local.locatable
                 });
             }
         });
@@ -439,7 +445,7 @@ export function createVarLinter(
                     code: VarLintError.UnusedParameter,
                     legacyCode: VarLintLegacyError.UnusedParameter,
                     message: `Parameter '${arg.name}' is set but value is never used`,
-                    location: arg.location
+                    location: arg.locatable
                 });
             }
         });
@@ -460,7 +466,7 @@ export function runDeferredValidation(
     callables: CallableContainerMap
 ) {
     const topLevelVars = buildTopLevelVars(scope, lintContext.globals);
-    const diagnostics: BsDiagnostic[] = [];
+    const diagnostics: BsDiagnosticInput[] = [];
     files.forEach((file) => {
         const deferred = deferredValidation.get(file.srcPath);
         if (deferred) {
@@ -499,9 +505,9 @@ function deferredVarLinter(
     callables: CallableContainerMap,
     toplevel: Set<string>,
     deferred: ValidationInfo[],
-    diagnostics: BsDiagnostic[]
+    diagnostics: BsDiagnosticInput[]
 ) {
-    deferred.forEach(({ kind, name, local, location, namespace }) => {
+    deferred.forEach(({ kind, name, locatable, namespace }) => {
         const key = name?.toLowerCase();
         let hasCallable = key ? callables.has(key) || toplevel.has(key) : false;
         if (key && !hasCallable && namespace) {
@@ -515,7 +521,7 @@ function deferredVarLinter(
                     diagnostics.push({
                         ...VarTrackingMessages.uninitializedVariable(name, scope.name),
                         severity: DiagnosticSeverity.Error,
-                        location: location
+                        location: locatable
                     });
                 }
                 // TODO else test case

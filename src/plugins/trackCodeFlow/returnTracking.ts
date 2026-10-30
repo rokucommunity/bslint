@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
+import { BscFile, FunctionExpression, BsDiagnosticInput, Locatable, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -34,7 +34,7 @@ export function createReturnLinter(
     file: BscFile,
     fun: FunctionExpression,
     state: LintState,
-    diagnostics: BsDiagnostic[]
+    diagnostics: BsDiagnosticInput[]
 ) {
     const { severity } = lintContext;
     const returns: ReturnInfo[] = [];
@@ -93,11 +93,11 @@ export function createReturnLinter(
         const kind = fun.tokens.functionType?.kind === TokenKind.Sub ? 'Sub' : 'Function';
         const returnedValues = returns.filter((r) => r.hasValue);
         const hasReturnedValue = returnedValues.length > 0;
-        // Function range only includes the function signature
-        const funRangeStart = (fun.tokens.functionType ?? fun.tokens.leftParen).location.range.start;
-        const funRangeEnd = (fun.returnTypeExpression ?? fun.tokens.rightParen).location.range.end;
-        const funRange = util.createRangeFromPositions(funRangeStart, funRangeEnd);
-        const funLocation = util.createLocationFromRange(fun.location.uri, funRange);
+        // Function location only includes the function signature
+        const funLocatable = util.setBounds({} as Locatable,
+            fun.tokens.functionType ?? fun.tokens.leftParen,
+            fun.returnTypeExpression ?? fun.tokens.rightParen
+        );
         // Explicit `as void` or `sub` without return type should never return a value
         const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime });
 
@@ -112,7 +112,7 @@ export function createReturnLinter(
                         code: ReturnLintError.ReturnValueUnexpected,
                         legacyCode: ReturnLintLegacyError.ReturnValueUnexpected,
                         message: `${kind} as void should not return a value`,
-                        location: r.stat?.location ?? funLocation
+                        location: util.firstLocatable(r.stat, funLocatable)
                     });
                 });
             }
@@ -134,7 +134,7 @@ export function createReturnLinter(
                 code: ReturnLintError.UnsafeReturnValue,
                 legacyCode: ReturnLintLegacyError.ReturnValueRequired,
                 message: 'Not all code paths return a value',
-                location: funLocation
+                location: funLocatable
             });
         }
 
@@ -148,7 +148,7 @@ export function createReturnLinter(
                         code: ReturnLintError.ReturnValueMissing,
                         legacyCode: ReturnLintLegacyError.ReturnValueMissing,
                         message: `${kind} should consistently return a value`,
-                        location: r.stat.location || funLocation
+                        location: util.firstLocatable(r.stat, funLocatable)
                     });
                 });
         }

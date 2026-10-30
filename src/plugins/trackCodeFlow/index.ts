@@ -1,15 +1,13 @@
-import { BsDiagnostic, BrsFile, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateFileEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
+import { BsDiagnosticInput, BrsFile, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateFileEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement, Locatable } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
 import { extractFixes } from './trackFixes';
 import { addFixesToEvent } from '../../textEdit';
 import { BsLintDiagnosticContext, BsLintScopeDiagnosticContext, BsLintScopeDiagnosticTag } from '../../Linter';
-import type { Location } from 'vscode-languageserver-types'; // TODO: Get this from brighterscript
 
-export interface NarrowingInfo {
+export interface NarrowingInfo extends Locatable {
     text: string;
-    location: Location;
     type: 'valid' | 'invalid';
     block: Statement;
 }
@@ -31,7 +29,10 @@ export enum VarRestriction {
 
 export interface VarInfo {
     name: string;
-    location: Location;
+    /**
+     * Where the variable was declared
+     */
+    locatable: Locatable;
     isGlobal?: boolean;
     isParam?: boolean;
     isUnsafe: boolean;
@@ -71,7 +72,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         event.program.diagnostics.clearByFilter({ tag: BsLintScopeDiagnosticTag, scope: scope });
         const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
         const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
-        event.program.diagnostics.register(diagnostics as any, {
+        event.program.diagnostics.register(diagnostics, {
             ...BsLintScopeDiagnosticContext,
             scope: scope
         });
@@ -82,7 +83,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         if (!isBrsFile(file) || this.lintContext.ignores(file)) {
             return;
         }
-        let diagnostics: BsDiagnostic[] = [];
+        let diagnostics: BsDiagnosticInput[] = [];
 
         resetVarContext(file);
 
