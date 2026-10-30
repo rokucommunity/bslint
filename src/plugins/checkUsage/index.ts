@@ -1,4 +1,4 @@
-import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util, isVariableExpression, isLiteralExpression } from 'brighterscript';
+import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, BrsCodeSegment, isFunctionExpression, Cache, util, isVariableExpression, isLiteralExpression } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 import { BsLintDiagnosticContext } from '../../Linter';
@@ -115,7 +115,7 @@ export default class CheckUsage implements Plugin {
         }
     }
 
-    private functionExpressionCache = new Cache<BscFile, FunctionExpression[]>();
+    private functionExpressionCache = new Cache<BrsCodeSegment, FunctionExpression[]>();
 
     beforeValidateProgram() {
         this.functionExpressionCache.clear();
@@ -148,6 +148,22 @@ export default class CheckUsage implements Plugin {
             }
         }
         scope.getOwnFiles().forEach(file => {
+            if (isXmlFile(file)) {
+                // the BrightScript in a component's `<script>` blocks is part of that component
+                const name = file.componentName?.text;
+                const cv = name && this.map.get(`"${name.toLowerCase()}"`);
+                if (cv) {
+                    // undefined when the component has no CDATA `<script>` blocks
+                    for (const codeSegment of file.codeSegments ?? []) {
+                        if (this.parsed.has(codeSegment.key)) {
+                            continue;
+                        }
+                        this.parsed.add(codeSegment.key);
+                        this.findComponentEdges(cv, codeSegment);
+                    }
+                }
+                return;
+            }
             if (!isBrsFile(file)) {
                 return;
             }
@@ -167,49 +183,56 @@ export default class CheckUsage implements Plugin {
                 edges: []
             };
             this.vertices.push(fv);
-            const map = this.map;
             this.map.set(pkgPath, fv);
             if (pkgPath === 'source/main.brs' || pkgPath === 'source/main.bs') {
                 this.main = fv;
             }
 
-            // look up all function expressions exactly 1 time for this file, even if it's used across many scopes
-            const functionExpressions = this.functionExpressionCache.getOrAdd(file, () => {
-                return file.parser.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive });
-            });
-
-
-            // find component names passed to CreateObject("roSGNode", componentName)
-            for (const func of functionExpressions) {
-                func.body.walk(createVisitor({
-                    CallExpression: (e) => {
-                        const componentType = e.args[0];
-                        const componentName = e.args[1];
-                        if (
-                            isVariableExpression(e.callee) &&
-                            e.callee.tokens.name.text.toLowerCase() === 'createobject' &&
-                            isLiteralExpression(componentType) &&
-                            componentType.tokens.value.kind === TokenKind.StringLiteral &&
-                            componentType.tokens.value.text.toLowerCase() === '"rosgnode"' &&
-                            isLiteralExpression(componentName) &&
-                            componentName.tokens.value.kind === TokenKind.StringLiteral
-                        ) {
-                            const name = componentName.tokens.value.text.toLowerCase();
-                            if (map.has(name)) {
-                                fv.edges.push({
-                                    name,
-                                    range: componentName.tokens.value.location.range,
-                                    file
-                                });
-                            }
-                        }
-
-                    }
-                }), { walkMode: WalkMode.visitExpressions });
+            for (const codeSegment of file.codeSegments ?? []) {
+                this.findComponentEdges(fv, codeSegment);
             }
         });
     }
 
+    /**
+     * Find component names passed to `CreateObject("roSGNode", componentName)` in the code segment, and add them as edges of the vertice
+     */
+    private findComponentEdges(v: Vertice, codeSegment: BrsCodeSegment) {
+        const map = this.map;
+        const file = codeSegment.document;
+        // look up all function expressions exactly 1 time for this code segment, even if it's used across many scopes
+        const functionExpressions = this.functionExpressionCache.getOrAdd(codeSegment, () => {
+            return codeSegment.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive });
+        });
+
+        for (const func of functionExpressions) {
+            func.body.walk(createVisitor({
+                CallExpression: (e) => {
+                    const componentType = e.args[0];
+                    const componentName = e.args[1];
+                    if (
+                        isVariableExpression(e.callee) &&
+                        e.callee.tokens.name.text.toLowerCase() === 'createobject' &&
+                        isLiteralExpression(componentType) &&
+                        componentType.tokens.value.kind === TokenKind.StringLiteral &&
+                        componentType.tokens.value.text.toLowerCase() === '"rosgnode"' &&
+                        isLiteralExpression(componentName) &&
+                        componentName.tokens.value.kind === TokenKind.StringLiteral
+                    ) {
+                        const name = componentName.tokens.value.text.toLowerCase();
+                        if (map.has(name)) {
+                            v.edges.push({
+                                name,
+                                range: componentName.tokens.value.location.range,
+                                file
+                            });
+                        }
+                    }
+
+                }
+            }), { walkMode: WalkMode.visitExpressions });
+        }
+    }
     afterValidateProgram(_: AfterValidateProgramEvent) {
         if (!this.main) {
             throw new Error('No `main.brs`');

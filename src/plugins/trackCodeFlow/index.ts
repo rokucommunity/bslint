@@ -1,4 +1,4 @@
-import { BsDiagnostic, BrsFile, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isBrsFile, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateFileEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
+import { BsDiagnostic, BrsCodeSegment, ProvideCodeActionsEvent, Statement, EmptyStatement, FunctionExpression, isForEachStatement, isForStatement, isIfStatement, isWhileStatement, createStackedVisitor, isStatement, isExpression, WalkMode, isTryCatchStatement, isCatchStatement, CompilerPlugin, AfterValidateScopeEvent, AfterValidateBrsCodeSegmentEvent, util, isFunctionExpression, InternalWalkMode, isConditionalCompileStatement } from 'brighterscript';
 import { PluginContext } from '../../util';
 import { createReturnLinter } from './returnTracking';
 import { createVarLinter, resetVarContext, runDeferredValidation } from './varTracking';
@@ -43,7 +43,7 @@ export interface VarInfo {
 }
 
 export interface LintState {
-    file: BrsFile;
+    codeSegment: BrsCodeSegment;
     fun: FunctionExpression;
     parent?: StatementInfo;
     stack: Statement[];
@@ -70,25 +70,25 @@ export default class TrackCodeFlow implements CompilerPlugin {
         const { scope } = event;
         event.program.diagnostics.clearByFilter({ tag: BsLintScopeDiagnosticTag, scope: scope });
         const callablesMap = util.getCallableContainersByLowerName(scope.getAllCallables());
-        const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllFiles(), callablesMap);
+        const diagnostics = runDeferredValidation(this.lintContext, scope, scope.getAllCodeSegments(), callablesMap);
         event.program.diagnostics.register(diagnostics as any, {
             ...BsLintScopeDiagnosticContext,
             scope: scope
         });
     }
 
-    afterValidateFile(event: AfterValidateFileEvent) {
-        const { file } = event;
-        if (!isBrsFile(file) || this.lintContext.ignores(file)) {
+    afterValidateBrsCodeSegment(event: AfterValidateBrsCodeSegmentEvent) {
+        const { codeSegment, file } = event;
+        if (this.lintContext.ignores(file)) {
             return;
         }
         let diagnostics: BsDiagnostic[] = [];
 
-        resetVarContext(file);
+        resetVarContext(codeSegment);
 
-        for (const fun of file.parser.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive })) {
+        for (const fun of codeSegment.ast.findChildren<FunctionExpression>(isFunctionExpression, { walkMode: WalkMode.visitExpressionsRecursive })) {
             const state: LintState = {
-                file: file,
+                codeSegment: codeSegment,
                 fun: fun,
                 parent: undefined,
                 stack: [],
@@ -101,8 +101,8 @@ export default class TrackCodeFlow implements CompilerPlugin {
             let curr: StatementInfo = {
                 stat: new EmptyStatement()
             };
-            const returnLinter = createReturnLinter(this.lintContext, file, fun, state, diagnostics);
-            const varLinter = createVarLinter(this.lintContext, file, fun, state, diagnostics);
+            const returnLinter = createReturnLinter(this.lintContext, codeSegment, fun, state, diagnostics);
+            const varLinter = createVarLinter(this.lintContext, codeSegment, fun, state, diagnostics);
 
             // 1. close
             // 2. visit -> curr
@@ -194,7 +194,7 @@ export default class TrackCodeFlow implements CompilerPlugin {
         }
 
         if (this.lintContext.fix) {
-            diagnostics = extractFixes(event.file, this.lintContext.addFixes, diagnostics);
+            diagnostics = extractFixes(file, this.lintContext.addFixes, diagnostics);
         }
         event.program.diagnostics.register(diagnostics, BsLintDiagnosticContext);
     }

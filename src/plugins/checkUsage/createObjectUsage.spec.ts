@@ -65,4 +65,51 @@ describe('checkUsage CreateObject usage', () => {
             }
         ]);
     });
+
+    it('counts roSGNode usage in xml script blocks', async () => {
+        const linter = new Linter();
+        linter.builder.plugins.add({
+            name: 'test',
+            afterProvideProgram: (event: AfterProvideProgramEvent) => {
+                const program = event.program;
+                program.setFile('source/main.brs', `
+                    sub main()
+                        scene = CreateObject("roSGNode", "Parent")
+                    end sub
+                `);
+                program.setFile('components/parent.xml', `
+                    <component name="Parent" extends="Group">
+                        <script type="text/brightscript"><![CDATA[
+                            sub init()
+                                child = CreateObject("roSGNode", "Used")
+                            end sub
+                        ]]></script>
+                    </component>
+                `);
+                for (const name of ['Used', 'Unrelated']) {
+                    program.setFile(`components/${name.toLowerCase()}.xml`, `
+                        <component name="${name}" extends="Group">
+                        </component>
+                    `);
+                }
+
+                program.plugins.add(new CheckUsage(createContext(program)));
+            }
+        });
+
+        const diagnostics = await linter.run({
+            rootDir: 'test/project1',
+            files: [],
+            rules: {
+                'unused-variable': 'off'
+            }
+        } as any);
+
+        expectDiagnostics(diagnostics, [
+            {
+                code: UnusedCode.UnusedComponent,
+                message: `Component 'components${path.sep}unrelated.xml' does not seem to be used`
+            }
+        ]);
+    });
 });

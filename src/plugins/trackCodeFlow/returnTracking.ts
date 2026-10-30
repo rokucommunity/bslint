@@ -1,4 +1,4 @@
-import { BscFile, FunctionExpression, BsDiagnostic, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
+import { BrsCodeSegment, FunctionExpression, BsDiagnostic, isReturnStatement, isIfStatement, isThrowStatement, TokenKind, util, ReturnStatement, ThrowStatement, isTryCatchStatement, isCatchStatement, isVoidType, SymbolTypeFlag, isConditionalCompileStatement } from 'brighterscript';
 import { LintState, StatementInfo } from '.';
 import { PluginContext } from '../../util';
 
@@ -31,7 +31,7 @@ enum ReturnLintLegacyError {
 
 export function createReturnLinter(
     lintContext: PluginContext,
-    file: BscFile,
+    codeSegment: BrsCodeSegment,
     fun: FunctionExpression,
     state: LintState,
     diagnostics: BsDiagnostic[]
