@@ -46,9 +46,33 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
             return replaceForTerminator(diagnostic, 'end for');
         case CodeStyleError.ForTerminatorNextExpected:
             return replaceForTerminator(diagnostic, 'next');
+        case CodeStyleError.RedundantScriptImport:
+            return removeScriptImport(diagnostic);
+        case CodeStyleError.MissingComponentExtends:
+            return addComponentExtends(diagnostic, 'Group');
         default:
             return null;
     }
+}
+
+function removeScriptImport(diagnostic: BsDiagnostic): ChangeEntry {
+    const { line } = diagnostic.location.range.start;
+    return {
+        diagnostic,
+        changes: [
+            replaceText(Range.create(line, 0, line + 1, 0), '')
+        ]
+    };
+}
+
+export function addComponentExtends(diagnostic: BsDiagnostic, parentName: string): ChangeEntry {
+    const insertPosition: Position = diagnostic.data;
+    return {
+        diagnostic,
+        changes: [
+            insertText(insertPosition, ` extends="${parentName}"`)
+        ]
+    };
 }
 
 function replaceForTerminator(diagnostic: BsDiagnostic, text: string): ChangeEntry {

@@ -167,7 +167,9 @@ Default rules:
 
         "no-assocarray-component-field-type": "off",
         "no-array-component-field-type": "off",
-        "no-regex-duplicates": "off"
+        "no-regex-duplicates": "off",
+        "no-redundant-script-import": "warn",
+        "missing-component-extends": "warn"
     }
 }
 ```
@@ -262,6 +264,24 @@ Default rules:
 
 -   `no-regex-duplicates`: Avoid creating multiple roRegex objects with the same pattern as it leads to less performant code. (`error | warn | info | off`)
 
+-   `no-redundant-script-import`: flags a `<script>` import in a component when an ancestor component (via `extends`) already imports the same file. The component inherits the script, so the import does nothing. The fix removes the import. Replaces brighterscript's `redundant-import` diagnostic, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**)
+
+    ```xml
+    <!-- Parent.xml -->
+    <component name="Parent" extends="Group">
+        <script type="text/brightscript" uri="pkg:/source/lib.brs" />
+    </component>
+
+    <!-- Child.xml -->
+    <component name="Child" extends="Parent">
+        <script type="text/brightscript" uri="pkg:/source/lib.brs" /> <!-- flagged -->
+    </component>
+    ```
+
+-   `missing-component-extends`: flags a `<component>` with no `extends` attribute. Roku defaults it to `Group`, but stating it explicitly is clearer. The fix adds `extends="Group"`; the editor also offers `Task` and `ContentNode`. Replaces brighterscript's `missing-extends-attribute` diagnostic, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**)
+
+    Both rules stay quiet on brighterscript versions that still report these diagnostics themselves, so nothing is reported twice.
+
 ### Strictness rules
 
 - `type-annotations`: validation of presence of `as` type annotations, for function
@@ -329,6 +349,8 @@ Running `bslint` with `--fix` parameter will attempt to fix common code-style is
 - Adding/removing Associative Array (AA) literals' commas where needed.
 - Case sensitivity (align with first occurence)
 - Adding/removing newlines the end of non-empty files.
+- Removing script imports already imported by an ancestor component.
+- Adding a missing `extends="Group"` to components.
 
 ## Usage checking (approximative)
 
