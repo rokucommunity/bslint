@@ -1212,7 +1212,8 @@ describe('codeStyle', () => {
             });
         });
 
-        describe('no-unnecessary-codebehind-import', () => {
+        describe('no-redundant-script-import (codebehind)', () => {
+            const codebehindMessage = `Code style: remove script import already auto-imported as the component's codebehind file ('autoImportComponentScript')`;
             const compXml = lines(
                 '<?xml version="1.0" encoding="utf-8" ?>',
                 '<component name="comp1" extends="Scene">',
@@ -1229,13 +1230,13 @@ describe('codeStyle', () => {
             }
 
             it('flags an explicit import of the codebehind file', () => {
-                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                init({ 'no-redundant-script-import': 'warn' });
                 setFiles();
                 program.validate();
-                expectDiagnostics(getLintDiagnostics('no-unnecessary-codebehind-import'), [{
-                    code: 'no-unnecessary-codebehind-import',
+                expectDiagnostics(getLintDiagnostics('no-redundant-script-import'), [{
+                    code: 'no-redundant-script-import',
                     severity: DiagnosticSeverity.Warning,
-                    message: `Code style: remove script import of the component's codebehind file ('autoImportComponentScript' imports it automatically)`,
+                    message: codebehindMessage,
                     location: {
                         uri: util.pathToUri(program.getFile('components/comp1.xml').srcPath),
                         range: util.createRange(2, 42, 2, 67)
@@ -1244,32 +1245,32 @@ describe('codeStyle', () => {
             });
 
             it('does not flag when autoImportComponentScript is disabled', () => {
-                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                init({ 'no-redundant-script-import': 'warn' });
                 setFiles(false);
                 program.validate();
-                expect(getLintDiagnostics('no-unnecessary-codebehind-import')).to.have.length(0);
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(0);
             });
 
             it('can be turned off', () => {
-                init({ 'no-unnecessary-codebehind-import': 'off' });
+                init({ 'no-redundant-script-import': 'off' });
                 setFiles();
                 program.validate();
-                expect(getLintDiagnostics('no-unnecessary-codebehind-import')).to.have.length(0);
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(0);
             });
 
             it('does not double-report when brighterscript reports it', () => {
                 bscCompat.reportsDiagnostic = () => true;
-                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                init({ 'no-redundant-script-import': 'warn' });
                 setFiles();
                 program.validate();
-                expect(getLintDiagnostics('no-unnecessary-codebehind-import')).to.have.length(0);
+                expect(getLintDiagnostics('no-redundant-script-import')).to.have.length(0);
             });
 
             it('fix removes the codebehind import line', () => {
-                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                init({ 'no-redundant-script-import': 'warn' });
                 setFiles();
                 program.validate();
-                expect(applyAllFixes(compXml, 'no-unnecessary-codebehind-import')).to.equal(lines(
+                expect(applyAllFixes(compXml, 'no-redundant-script-import')).to.equal(lines(
                     '<?xml version="1.0" encoding="utf-8" ?>',
                     '<component name="comp1" extends="Scene">',
                     '    <script type="text/brightscript" uri="pkg:/source/lib.brs" />',
@@ -1278,17 +1279,70 @@ describe('codeStyle', () => {
             });
 
             it('offers a code action to remove the import', () => {
-                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                init({ 'no-redundant-script-import': 'warn' });
                 setFiles();
                 program.validate();
                 const actions = getCodeActions('components/comp1.xml', 2, 50);
-                expect(actions.map(a => a.title)).to.eql([
-                    `Code style: remove script import of the component's codebehind file ('autoImportComponentScript' imports it automatically)`
-                ]);
+                expect(actions.map(a => a.title)).to.eql([codebehindMessage]);
                 expect(getEdits(actions[0])).to.eql([{
                     range: util.createRange(2, 0, 3, 0),
                     newText: ''
                 }]);
+            });
+
+            it('reports an import once when it is both inherited and the codebehind file', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                program.options.autoImportComponentScript = true;
+                program.setFile('components/comp1.brs', '');
+                program.setFile('components/parent.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="ParentScene" extends="Scene">',
+                    '    <script type="text/brightscript" uri="pkg:/components/comp1.brs" />',
+                    '</component>'
+                ));
+                program.setFile('components/comp1.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1" extends="ParentScene">',
+                    '    <script type="text/brightscript" uri="pkg:/components/comp1.brs" />',
+                    '</component>'
+                ));
+                program.validate();
+                const diagnostics = getLintDiagnostics('no-redundant-script-import')
+                    .filter(d => d.location.uri.endsWith('comp1.xml'));
+                expect(diagnostics.map(d => d.message)).to.eql([
+                    `Code style: remove script import already imported by ancestor component 'ParentScene'`
+                ]);
+            });
+
+            it('fix-all removes inherited and codebehind imports together', () => {
+                init({ 'no-redundant-script-import': 'warn' });
+                program.options.autoImportComponentScript = true;
+                program.setFile('components/comp1.brs', '');
+                program.setFile('source/lib.brs', '');
+                program.setFile('components/parent.xml', lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="ParentScene" extends="Scene">',
+                    '    <script type="text/brightscript" uri="pkg:/source/lib.brs" />',
+                    '</component>'
+                ));
+                const child = lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1" extends="ParentScene">',
+                    '    <script type="text/brightscript" uri="pkg:/components/comp1.brs" />',
+                    '    <script type="text/brightscript" uri="pkg:/source/lib.brs" />',
+                    '</component>'
+                );
+                program.setFile('components/comp1.xml', child);
+                program.validate();
+
+                const fixAll = getCodeActions('components/comp1.xml', 2, 50).find(a => a.title.startsWith('Fix all:'));
+                expect(fixAll).to.not.equal(undefined);
+                expect(getEdits(fixAll)).to.have.length(2);
+                expect(applyAllFixes(child, 'no-redundant-script-import')).to.equal(lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1" extends="ParentScene">',
+                    '</component>'
+                ));
             });
         });
     });

@@ -66,8 +66,7 @@ export enum CodeStyleError {
     ForTerminatorNextExpected = 'missing-next',
     UnsortedImport = 'unsorted-import',
     RedundantScriptImport = 'no-redundant-script-import',
-    MissingComponentExtends = 'missing-component-extends',
-    UnnecessaryCodebehindImport = 'no-unnecessary-codebehind-import'
+    MissingComponentExtends = 'missing-component-extends'
 }
 
 const CS = 'Code style:';
@@ -352,11 +351,11 @@ export const messages = {
         location,
         data: insertPosition
     }),
-    unnecessaryCodebehindImport: (location: Location, severity: DiagnosticSeverity) => ({
+    redundantCodebehindImport: (location: Location, severity: DiagnosticSeverity) => ({
         severity: severity,
-        code: CodeStyleError.UnnecessaryCodebehindImport,
+        code: CodeStyleError.RedundantScriptImport,
         source: 'bslint',
-        message: `${CS} remove script import of the component's codebehind file ('autoImportComponentScript' imports it automatically)`,
+        message: `${CS} remove script import already auto-imported as the component's codebehind file ('autoImportComponentScript')`,
         location
     })
 };

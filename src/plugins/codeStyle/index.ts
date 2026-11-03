@@ -108,28 +108,12 @@ export default class CodeStyle implements Plugin {
 
     validateXMLFile(file: XmlFile) {
         const diagnostics: BsDiagnostic[] = [];
-        const { noArrayComponentFieldType, noAssocarrayComponentFieldType, missingComponentExtends, noUnnecessaryCodebehindImport } = this.lintContext.severity;
+        const { noArrayComponentFieldType, noAssocarrayComponentFieldType, missingComponentExtends } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
-        // older brighterscript versions report these themselves
+        // older brighterscript versions report this themselves
         const validateMissingComponentExtends = missingComponentExtends !== DiagnosticSeverity.Hint && !bscCompat.reportsDiagnostic('xmlComponentMissingExtendsAttribute');
-        const validateUnnecessaryCodebehindImport = noUnnecessaryCodebehindImport !== DiagnosticSeverity.Hint && !bscCompat.reportsDiagnostic('unnecessaryCodebehindScriptImport');
-
-        // the codebehind file is imported automatically when `autoImportComponentScript` is enabled
-        if (validateUnnecessaryCodebehindImport && file.program?.options?.autoImportComponentScript === true) {
-            const codebehindPaths = file.possibleCodebehindDestPaths ?? [];
-            for (const scriptImport of file.scriptTagImports) {
-                if (scriptImport.destPath && scriptImport.filePathRange && codebehindPaths.includes(scriptImport.destPath)) {
-                    diagnostics.push(
-                        messages.unnecessaryCodebehindImport(
-                            util.createLocationFromFileRange(file, scriptImport.filePathRange),
-                            noUnnecessaryCodebehindImport
-                        )
-                    );
-                }
-            }
-        }
 
         const componentElement = file.parser?.ast?.componentElement;
         if (validateMissingComponentExtends && componentElement && !componentElement.extends) {
@@ -514,7 +498,8 @@ export default class CodeStyle implements Plugin {
     }
 
     /**
-     * Detect when a component imports a script that one of its ancestor components already imports
+     * Detect when a component imports a script it already gets some other way: from an ancestor
+     * component, or as its codebehind file when `autoImportComponentScript` is enabled
      */
     validateXmlScope(event: ValidateScopeEvent, scope: XmlScope) {
         const { xmlFile } = scope;
@@ -522,33 +507,44 @@ export default class CodeStyle implements Plugin {
         event.program.diagnostics.clearByFilter({ scope: scope, fileUri: util.pathToUri(xmlFile?.srcPath), tag: RedundantScriptImportTag });
 
         const { noRedundantScriptImport } = this.lintContext.severity;
-        // older brighterscript versions report this themselves
-        if (noRedundantScriptImport === DiagnosticSeverity.Hint || bscCompat.reportsDiagnostic('unnecessaryScriptImportInChildFromParent')) {
+        if (!xmlFile || noRedundantScriptImport === DiagnosticSeverity.Hint || this.lintContext.ignores(xmlFile)) {
             return;
         }
-        if (!xmlFile?.parentComponent || this.lintContext.ignores(xmlFile)) {
-            return;
-        }
+        // older brighterscript versions report these themselves
+        const validateAncestorImports = !!xmlFile.parentComponent && !bscCompat.reportsDiagnostic('unnecessaryScriptImportInChildFromParent');
+        const validateCodebehindImports = xmlFile.program?.options?.autoImportComponentScript === true && !bscCompat.reportsDiagnostic('unnecessaryCodebehindScriptImport');
 
         // keep the first occurrence of each path. Closest ancestor imports come first
         const ancestorImports = new Map<string, FileReference>();
-        for (const ancestorImport of xmlFile.getAncestorScriptTagImports()) {
-            if (!ancestorImports.has(ancestorImport.destPath)) {
-                ancestorImports.set(ancestorImport.destPath, ancestorImport);
+        if (validateAncestorImports) {
+            for (const ancestorImport of xmlFile.getAncestorScriptTagImports()) {
+                if (!ancestorImports.has(ancestorImport.destPath)) {
+                    ancestorImports.set(ancestorImport.destPath, ancestorImport);
+                }
             }
         }
+        const codebehindPaths = validateCodebehindImports ? xmlFile.possibleCodebehindDestPaths ?? [] : [];
 
         let diagnostics: BsDiagnostic[] = [];
         for (const scriptImport of xmlFile.scriptTagImports) {
+            if (!scriptImport.destPath || !scriptImport.filePathRange) {
+                continue;
+            }
+            const location = util.createLocationFromFileRange(xmlFile, scriptImport.filePathRange);
             const ancestorImport = ancestorImports.get(scriptImport.destPath);
-            if (ancestorImport && scriptImport.filePathRange) {
+            if (ancestorImport) {
                 const ancestorComponent = ancestorImport.sourceFile as XmlFile;
                 diagnostics.push({
                     ...messages.redundantScriptImport(
-                        util.createLocationFromFileRange(xmlFile, scriptImport.filePathRange),
+                        location,
                         ancestorComponent.componentName?.text ?? ancestorComponent.destPath,
                         noRedundantScriptImport
                     ),
+                    file: xmlFile
+                } as BsDiagnostic);
+            } else if (codebehindPaths.includes(scriptImport.destPath)) {
+                diagnostics.push({
+                    ...messages.redundantCodebehindImport(location, noRedundantScriptImport),
                     file: xmlFile
                 } as BsDiagnostic);
             }

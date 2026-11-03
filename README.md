@@ -169,8 +169,7 @@ Default rules:
         "no-array-component-field-type": "off",
         "no-regex-duplicates": "off",
         "no-redundant-script-import": "warn",
-        "missing-component-extends": "warn",
-        "no-unnecessary-codebehind-import": "warn"
+        "missing-component-extends": "warn"
     }
 }
 ```
@@ -265,7 +264,9 @@ Default rules:
 
 -   `no-regex-duplicates`: Avoid creating multiple roRegex objects with the same pattern as it leads to less performant code. (`error | warn | info | off`)
 
--   `no-redundant-script-import`: flags a `<script>` import in a component when an ancestor component (via `extends`) already imports the same file. The component inherits the script, so the import does nothing. The fix removes the import. Replaces brighterscript's `redundant-import` diagnostic, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**)
+-   `no-redundant-script-import`: flags a `<script>` import that does nothing because the component already gets that script another way. The fix removes the import. Replaces brighterscript's `redundant-import` and `unnecessary-codebehind-script-import` diagnostics, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**). It covers two cases:
+    -   an ancestor component (via `extends`) already imports the same file, so the component inherits it
+    -   the file is the component's codebehind file (e.g. `MyComponent.brs` next to `MyComponent.xml`) and brighterscript's `autoImportComponentScript` option is enabled, so it is imported automatically
 
     ```xml
     <!-- Parent.xml -->
@@ -280,8 +281,6 @@ Default rules:
     ```
 
 -   `missing-component-extends`: flags a `<component>` with no `extends` attribute. Roku defaults it to `Group`, but stating it explicitly is clearer. The fix adds `extends="Group"`; the editor also offers `Task` and `ContentNode`. Replaces brighterscript's `missing-extends-attribute` diagnostic, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**)
-
--   `no-unnecessary-codebehind-import`: flags a `<script>` import of a component's codebehind file (e.g. `MyComponent.brs` next to `MyComponent.xml`) when brighterscript's `autoImportComponentScript` option is enabled. That file is imported automatically, so the import does nothing. The fix removes the import. Replaces brighterscript's `unnecessary-codebehind-script-import` diagnostic, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**)
 
     These rules stay quiet on brighterscript versions that still report these diagnostics themselves, so nothing is reported twice.
 
@@ -352,8 +351,7 @@ Running `bslint` with `--fix` parameter will attempt to fix common code-style is
 - Adding/removing Associative Array (AA) literals' commas where needed.
 - Case sensitivity (align with first occurence)
 - Adding/removing newlines the end of non-empty files.
-- Removing script imports already imported by an ancestor component.
-- Removing script imports of a component's auto-imported codebehind file.
+- Removing script imports already imported by an ancestor component, or auto-imported as the component's codebehind file.
 - Adding a missing `extends="Group"` to components.
 
 ## Usage checking (approximative)

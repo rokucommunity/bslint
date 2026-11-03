@@ -36,8 +36,7 @@ export function getDefaultRules(): BsLintConfig['rules'] {
         'no-regex-duplicates': 'off',
         'for-terminator-style': 'end-for',
         'no-redundant-script-import': 'warn',
-        'missing-component-extends': 'warn',
-        'no-unnecessary-codebehind-import': 'warn'
+        'missing-component-extends': 'warn'
     };
 }
 
@@ -191,8 +190,7 @@ function rulesToSeverity(rules: BsLintConfig['rules']) {
         noRegexDuplicates: ruleToSeverity(rules['no-regex-duplicates']),
         forTerminatorStyle: rules['for-terminator-style'],
         noRedundantScriptImport: ruleToSeverity(rules['no-redundant-script-import']),
-        missingComponentExtends: ruleToSeverity(rules['missing-component-extends']),
-        noUnnecessaryCodebehindImport: ruleToSeverity(rules['no-unnecessary-codebehind-import'])
+        missingComponentExtends: ruleToSeverity(rules['missing-component-extends'])
     };
 }
 

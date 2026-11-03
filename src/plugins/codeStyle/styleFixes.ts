@@ -47,7 +47,6 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
         case CodeStyleError.ForTerminatorNextExpected:
             return replaceForTerminator(diagnostic, 'next');
         case CodeStyleError.RedundantScriptImport:
-        case CodeStyleError.UnnecessaryCodebehindImport:
             return removeScriptImport(diagnostic);
         case CodeStyleError.MissingComponentExtends:
             return addComponentExtends(diagnostic, 'Group');
