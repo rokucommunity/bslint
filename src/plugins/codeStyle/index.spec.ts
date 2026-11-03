@@ -1211,6 +1211,86 @@ describe('codeStyle', () => {
                 ));
             });
         });
+
+        describe('no-unnecessary-codebehind-import', () => {
+            const compXml = lines(
+                '<?xml version="1.0" encoding="utf-8" ?>',
+                '<component name="comp1" extends="Scene">',
+                '    <script type="text/brightscript" uri="pkg:/components/comp1.brs" />',
+                '    <script type="text/brightscript" uri="pkg:/source/lib.brs" />',
+                '</component>'
+            );
+
+            function setFiles(autoImportComponentScript = true) {
+                program.options.autoImportComponentScript = autoImportComponentScript;
+                program.setFile('components/comp1.brs', '');
+                program.setFile('source/lib.brs', '');
+                program.setFile('components/comp1.xml', compXml);
+            }
+
+            it('flags an explicit import of the codebehind file', () => {
+                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                setFiles();
+                program.validate();
+                expectDiagnostics(getLintDiagnostics('no-unnecessary-codebehind-import'), [{
+                    code: 'no-unnecessary-codebehind-import',
+                    severity: DiagnosticSeverity.Warning,
+                    message: `Code style: remove script import of the component's codebehind file ('autoImportComponentScript' imports it automatically)`,
+                    location: {
+                        uri: util.pathToUri(program.getFile('components/comp1.xml').srcPath),
+                        range: util.createRange(2, 42, 2, 67)
+                    }
+                }]);
+            });
+
+            it('does not flag when autoImportComponentScript is disabled', () => {
+                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                setFiles(false);
+                program.validate();
+                expect(getLintDiagnostics('no-unnecessary-codebehind-import')).to.have.length(0);
+            });
+
+            it('can be turned off', () => {
+                init({ 'no-unnecessary-codebehind-import': 'off' });
+                setFiles();
+                program.validate();
+                expect(getLintDiagnostics('no-unnecessary-codebehind-import')).to.have.length(0);
+            });
+
+            it('does not double-report when brighterscript reports it', () => {
+                bscCompat.reportsDiagnostic = () => true;
+                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                setFiles();
+                program.validate();
+                expect(getLintDiagnostics('no-unnecessary-codebehind-import')).to.have.length(0);
+            });
+
+            it('fix removes the codebehind import line', () => {
+                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                setFiles();
+                program.validate();
+                expect(applyAllFixes(compXml, 'no-unnecessary-codebehind-import')).to.equal(lines(
+                    '<?xml version="1.0" encoding="utf-8" ?>',
+                    '<component name="comp1" extends="Scene">',
+                    '    <script type="text/brightscript" uri="pkg:/source/lib.brs" />',
+                    '</component>'
+                ));
+            });
+
+            it('offers a code action to remove the import', () => {
+                init({ 'no-unnecessary-codebehind-import': 'warn' });
+                setFiles();
+                program.validate();
+                const actions = getCodeActions('components/comp1.xml', 2, 50);
+                expect(actions.map(a => a.title)).to.eql([
+                    `Code style: remove script import of the component's codebehind file ('autoImportComponentScript' imports it automatically)`
+                ]);
+                expect(getEdits(actions[0])).to.eql([{
+                    range: util.createRange(2, 0, 3, 0),
+                    newText: ''
+                }]);
+            });
+        });
     });
 
     describe('AA style', () => {

@@ -108,12 +108,28 @@ export default class CodeStyle implements Plugin {
 
     validateXMLFile(file: XmlFile) {
         const diagnostics: BsDiagnostic[] = [];
-        const { noArrayComponentFieldType, noAssocarrayComponentFieldType, missingComponentExtends } = this.lintContext.severity;
+        const { noArrayComponentFieldType, noAssocarrayComponentFieldType, missingComponentExtends, noUnnecessaryCodebehindImport } = this.lintContext.severity;
 
         const validateArrayComponentFieldType = noArrayComponentFieldType !== DiagnosticSeverity.Hint;
         const validateAssocarrayComponentFieldType = noAssocarrayComponentFieldType !== DiagnosticSeverity.Hint;
-        // older brighterscript versions report this themselves
+        // older brighterscript versions report these themselves
         const validateMissingComponentExtends = missingComponentExtends !== DiagnosticSeverity.Hint && !bscCompat.reportsDiagnostic('xmlComponentMissingExtendsAttribute');
+        const validateUnnecessaryCodebehindImport = noUnnecessaryCodebehindImport !== DiagnosticSeverity.Hint && !bscCompat.reportsDiagnostic('unnecessaryCodebehindScriptImport');
+
+        // the codebehind file is imported automatically when `autoImportComponentScript` is enabled
+        if (validateUnnecessaryCodebehindImport && file.program?.options?.autoImportComponentScript === true) {
+            const codebehindPaths = file.possibleCodebehindDestPaths ?? [];
+            for (const scriptImport of file.scriptTagImports) {
+                if (scriptImport.destPath && scriptImport.filePathRange && codebehindPaths.includes(scriptImport.destPath)) {
+                    diagnostics.push(
+                        messages.unnecessaryCodebehindImport(
+                            util.createLocationFromFileRange(file, scriptImport.filePathRange),
+                            noUnnecessaryCodebehindImport
+                        )
+                    );
+                }
+            }
+        }
 
         const componentElement = file.parser?.ast?.componentElement;
         if (validateMissingComponentExtends && componentElement && !componentElement.extends) {

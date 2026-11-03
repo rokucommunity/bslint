@@ -59,6 +59,7 @@ export type BsLintConfig = Pick<BsConfig, 'project' | 'rootDir' | 'files' | 'cwd
         'for-terminator-style'?: RuleForTerminator;
         'no-redundant-script-import'?: RuleSeverity;
         'missing-component-extends'?: RuleSeverity;
+        'no-unnecessary-codebehind-import'?: RuleSeverity;
     };
     globals?: string[];
     ignores?: string[];
@@ -101,6 +102,7 @@ export interface BsLintRules {
     forTerminatorStyle: RuleForTerminator;
     noRedundantScriptImport: BsLintSeverity;
     missingComponentExtends: BsLintSeverity;
+    noUnnecessaryCodebehindImport: BsLintSeverity;
 }
 
 export { Linter };

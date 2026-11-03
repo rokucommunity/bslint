@@ -66,7 +66,8 @@ export enum CodeStyleError {
     ForTerminatorNextExpected = 'missing-next',
     UnsortedImport = 'unsorted-import',
     RedundantScriptImport = 'no-redundant-script-import',
-    MissingComponentExtends = 'missing-component-extends'
+    MissingComponentExtends = 'missing-component-extends',
+    UnnecessaryCodebehindImport = 'no-unnecessary-codebehind-import'
 }
 
 const CS = 'Code style:';
@@ -350,5 +351,12 @@ export const messages = {
         message: `${CS} add 'extends' attribute (components extend 'Group' by default)`,
         location,
         data: insertPosition
+    }),
+    unnecessaryCodebehindImport: (location: Location, severity: DiagnosticSeverity) => ({
+        severity: severity,
+        code: CodeStyleError.UnnecessaryCodebehindImport,
+        source: 'bslint',
+        message: `${CS} remove script import of the component's codebehind file ('autoImportComponentScript' imports it automatically)`,
+        location
     })
 };

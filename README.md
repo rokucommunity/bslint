@@ -169,7 +169,8 @@ Default rules:
         "no-array-component-field-type": "off",
         "no-regex-duplicates": "off",
         "no-redundant-script-import": "warn",
-        "missing-component-extends": "warn"
+        "missing-component-extends": "warn",
+        "no-unnecessary-codebehind-import": "warn"
     }
 }
 ```
@@ -280,7 +281,9 @@ Default rules:
 
 -   `missing-component-extends`: flags a `<component>` with no `extends` attribute. Roku defaults it to `Group`, but stating it explicitly is clearer. The fix adds `extends="Group"`; the editor also offers `Task` and `ContentNode`. Replaces brighterscript's `missing-extends-attribute` diagnostic, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**)
 
-    Both rules stay quiet on brighterscript versions that still report these diagnostics themselves, so nothing is reported twice.
+-   `no-unnecessary-codebehind-import`: flags a `<script>` import of a component's codebehind file (e.g. `MyComponent.brs` next to `MyComponent.xml`) when brighterscript's `autoImportComponentScript` option is enabled. That file is imported automatically, so the import does nothing. The fix removes the import. Replaces brighterscript's `unnecessary-codebehind-script-import` diagnostic, which brighterscript v1 removed (`error | warn | info | off`, **default: `warn`**)
+
+    These rules stay quiet on brighterscript versions that still report these diagnostics themselves, so nothing is reported twice.
 
 ### Strictness rules
 
@@ -350,6 +353,7 @@ Running `bslint` with `--fix` parameter will attempt to fix common code-style is
 - Case sensitivity (align with first occurence)
 - Adding/removing newlines the end of non-empty files.
 - Removing script imports already imported by an ancestor component.
+- Removing script imports of a component's auto-imported codebehind file.
 - Adding a missing `extends="Group"` to components.
 
 ## Usage checking (approximative)
