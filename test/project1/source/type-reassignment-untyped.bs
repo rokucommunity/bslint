@@ -1,0 +1,12 @@
+sub assignsUntypedValue()
+    text = "abc"
+    ' `string` has no `EMPTY` member, so this value has no type
+    value = text.EMPTY
+    print value
+end sub
+
+sub reassignsAfterwards()
+    count = 1
+    count = "one"
+    print count
+end sub

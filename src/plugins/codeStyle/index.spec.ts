@@ -1874,6 +1874,20 @@ describe('codeStyle', () => {
                 '44:type-reassignment:Strictness: Reassignment of the type of \'arg\' from Child to Parent'
             ]);
         });
+
+        it('does not crash on a value with no type', async () => {
+            const diagnostics = await linter.run({
+                ...project1,
+                files: ['source/type-reassignment-untyped.bs'],
+                rules: {
+                    'type-reassignment': 'error'
+                }
+            });
+            // the reassignment after the untyped value is still checked
+            expectDiagnosticsFmt(diagnostics.filter(x => x.code === 'type-reassignment'), [
+                '10:type-reassignment:Strictness: Reassignment of the type of \'count\' from integer to string'
+            ]);
+        });
     });
 
     describe('fix', () => {
