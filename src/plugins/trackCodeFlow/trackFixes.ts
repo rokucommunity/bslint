@@ -1,5 +1,5 @@
-import { BscFile, BsDiagnostic, BsDiagnosticInput, Location } from 'brighterscript';
-import { ChangeEntry, replaceText } from '../../textEdit';
+import { BscFile, BsDiagnostic, BsDiagnosticInput } from 'brighterscript';
+import { ChangeEntry, getDiagnosticLocation, replaceText } from '../../textEdit';
 import { VarLintError } from './varTracking';
 
 export function extractFixes<T extends BsDiagnostic | BsDiagnosticInput>(
@@ -27,11 +27,11 @@ export function getFixes(diagnostic: BsDiagnostic | BsDiagnosticInput): ChangeEn
 }
 
 function fixCasing(diagnostic: BsDiagnostic | BsDiagnosticInput) {
-    const data: { name: string; location: Location } = diagnostic.data;
+    const data: { name: string } = diagnostic.data;
     return {
         diagnostic,
         changes: [
-            replaceText(data.location.range, data.name)
+            replaceText(getDiagnosticLocation(diagnostic.location)?.range, data.name)
         ]
     };
 }

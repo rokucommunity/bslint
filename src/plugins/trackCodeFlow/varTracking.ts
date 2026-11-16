@@ -35,8 +35,7 @@ export const VarTrackingMessages = {
         legacyCode: VarLintLegacyError.CaseMismatch,
         message: `Variable '${name.text}' was previously set with a different casing as '${curr.name}'`,
         data: {
-            name: curr.name,
-            location: util.getLocation(name)
+            name: curr.name
         }
     }),
     unsafeIterator: (name: string) => ({
