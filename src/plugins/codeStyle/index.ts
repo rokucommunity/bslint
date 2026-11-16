@@ -714,7 +714,7 @@ export default class CodeStyle implements Plugin {
             return;
         }
         const rhsType = assignStmt.value?.getType({ flags: SymbolTypeFlag.runtime });
-        if (!rhsType.isResolvable()) {
+        if (!rhsType?.isResolvable()) {
             return;
         }
         const varName = assignStmt.tokens.name.text;
