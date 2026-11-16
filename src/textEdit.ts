@@ -1,6 +1,6 @@
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs-extra';
-import { BscFile, BsDiagnostic, ProvideCodeActionsEvent, Position, Range } from 'brighterscript';
+import { BscFile, BsDiagnostic, BsDiagnosticInput, DiagnosticLocationInput, Location, ProvideCodeActionsEvent, Position, Range, util } from 'brighterscript';
 import { CodeActionKind, codeActionUtil } from 'brighterscript/dist/CodeActionUtil';
 
 interface LintCodeAction {
@@ -16,8 +16,19 @@ export interface TextEdit {
 }
 
 export interface ChangeEntry {
-    diagnostic: BsDiagnostic;
+    diagnostic: BsDiagnostic | BsDiagnosticInput;
     changes: TextEdit[];
+}
+
+/**
+ * Get the line/character `Location` of a diagnostic location, which is either a `Locatable` (such as a token or node)
+ * or an already-resolved `Location` (i.e. diagnostics coming back from the program)
+ */
+export function getDiagnosticLocation(location: DiagnosticLocationInput): Location | undefined {
+    if (location && 'startPosition' in location) {
+        return util.getLocation(location);
+    }
+    return location as Location;
 }
 
 export function replaceText(range: Range, text: string) {
@@ -134,7 +145,8 @@ export function addFixesToEvent(event: ProvideCodeActionsEvent) {
         }));
         const action = {
             title: entry.diagnostic.message,
-            diagnostics: [entry.diagnostic],
+            // code actions are only built for diagnostics coming back from the program, which have resolved locations
+            diagnostics: [entry.diagnostic as BsDiagnostic],
             kind: CodeActionKind.QuickFix,
             isPreferred: true,
             changes
@@ -146,7 +158,7 @@ export function addFixesToEvent(event: ProvideCodeActionsEvent) {
 export function addFixAllToEvent(event: ProvideCodeActionsEvent, entries: ChangeEntry[]) {
     const changes: LintCodeAction[] = entries.flatMap(entry => entry.changes.map(change => ({
         type: 'replace',
-        filePath: entry.diagnostic.location.uri,
+        filePath: getDiagnosticLocation(entry.diagnostic.location)?.uri,
         range: change.range,
         newText: change.text
     })));

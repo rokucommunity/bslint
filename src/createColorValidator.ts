@@ -1,10 +1,10 @@
-import { BsDiagnostic, Location } from 'brighterscript';
+import { BsDiagnosticInput, DiagnosticLocationInput } from 'brighterscript';
 import { messages } from './plugins/codeStyle/diagnosticMessages';
 import { BsLintRules, RuleColorFormat, RuleColorCase, RuleColorAlpha, RuleColorAlphaDefaults, RuleColorCertCompliant } from './index';
 
 export function createColorValidator(severity: Readonly<BsLintRules>) {
     const { colorFormat, colorCase, colorAlpha, colorAlphaDefaults, colorCertCompliant } = severity;
-    return (text: string, location: Location, diagnostics: BsDiagnostic[]) => {
+    return (text: string, location: DiagnosticLocationInput, diagnostics: BsDiagnosticInput[]) => {
         const len = text.length;
         if (len < 7 || len > 12) {
             // we're only interested in string length is between 7 (#EBEBEB) to 12 ("0xEBEBEBFF") chars long
@@ -42,7 +42,7 @@ export function createColorValidator(severity: Readonly<BsLintRules>) {
     };
 }
 
-function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpMatchArray, quotedNumericHexMatches: RegExpMatchArray, location: Location, diagnostics: (BsDiagnostic)[], alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults) {
+function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpMatchArray, quotedNumericHexMatches: RegExpMatchArray, location: DiagnosticLocationInput, diagnostics: BsDiagnosticInput[], alpha: RuleColorAlpha, alphaDefaults: RuleColorAlphaDefaults) {
     const validateColorAlpha = (alpha === 'never' || alpha === 'always' || alpha === 'allowed');
     if (validateColorAlpha) {
         if (alpha === 'never' && alphaMatches) {
@@ -63,7 +63,7 @@ function validateColorAlpha(alphaMatches: RegExpMatchArray, hashMatches: RegExpM
     }
 }
 
-function validateColorCase(matches: RegExpMatchArray, location: Location, diagnostics: (BsDiagnostic)[], colorCase: RuleColorCase, colorFormat: RuleColorFormat) {
+function validateColorCase(matches: RegExpMatchArray, location: DiagnosticLocationInput, diagnostics: BsDiagnosticInput[], colorCase: RuleColorCase, colorFormat: RuleColorFormat) {
     const validateColorCase = colorCase === 'upper' || colorCase === 'lower';
     if (validateColorCase && matches) {
         let colorValue = matches[0];
@@ -78,7 +78,7 @@ function validateColorCase(matches: RegExpMatchArray, location: Location, diagno
     }
 }
 
-function validateColorCertCompliance(matches: RegExpMatchArray, location: Location, diagnostics: (BsDiagnostic)[], colorFormat: RuleColorFormat, certCompliant: RuleColorCertCompliant) {
+function validateColorCertCompliance(matches: RegExpMatchArray, location: DiagnosticLocationInput, diagnostics: BsDiagnosticInput[], colorFormat: RuleColorFormat, certCompliant: RuleColorCertCompliant) {
     const validateCertCompliant = certCompliant === 'always';
     if (validateCertCompliant && matches) {
         const BROADCAST_SAFE_BLACK = '161616';

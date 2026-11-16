@@ -1,13 +1,13 @@
-import { BscFile, BsDiagnostic, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Position, Range, VoidType, WhileStatement, SymbolTypeFlag, util } from 'brighterscript';
-import { ChangeEntry, comparePos, insertText, replaceText } from '../../textEdit';
+import { BscFile, BsDiagnostic, BsDiagnosticInput, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Locatable, Position, Range, VoidType, WhileStatement, SymbolTypeFlag, util } from 'brighterscript';
+import { ChangeEntry, getDiagnosticLocation, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
 
-export function extractFixes(
+export function extractFixes<T extends BsDiagnostic | BsDiagnosticInput>(
     file: BscFile,
     addFixes: (file: BscFile, changes: ChangeEntry) => void,
-    diagnostics: BsDiagnostic[]
-): BsDiagnostic[] {
+    diagnostics: T[]
+): T[] {
     return diagnostics.filter(diagnostic => {
         const fix = getFixes(diagnostic);
         if (fix) {
@@ -18,7 +18,7 @@ export function extractFixes(
     });
 }
 
-export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
+export function getFixes(diagnostic: BsDiagnostic | BsDiagnosticInput): ChangeEntry {
     switch (diagnostic.code) {
         case CodeStyleError.FunctionKeywordExpected:
             return replaceFunctionTokens(diagnostic, 'function');
@@ -55,8 +55,8 @@ export function getFixes(diagnostic: BsDiagnostic): ChangeEntry {
     }
 }
 
-function removeScriptImport(diagnostic: BsDiagnostic): ChangeEntry {
-    const { line } = diagnostic.location.range.start;
+function removeScriptImport(diagnostic: BsDiagnostic | BsDiagnosticInput): ChangeEntry {
+    const { line } = getDiagnosticLocation(diagnostic.location).range.start;
     return {
         diagnostic,
         changes: [
@@ -65,7 +65,7 @@ function removeScriptImport(diagnostic: BsDiagnostic): ChangeEntry {
     };
 }
 
-export function addComponentExtends(diagnostic: BsDiagnostic, parentName: string): ChangeEntry {
+export function addComponentExtends(diagnostic: BsDiagnostic | BsDiagnosticInput, parentName: string): ChangeEntry {
     const insertPosition: Position = diagnostic.data;
     return {
         diagnostic,
@@ -75,17 +75,17 @@ export function addComponentExtends(diagnostic: BsDiagnostic, parentName: string
     };
 }
 
-function replaceForTerminator(diagnostic: BsDiagnostic, text: string): ChangeEntry {
+function replaceForTerminator(diagnostic: BsDiagnostic | BsDiagnosticInput, text: string): ChangeEntry {
     return {
         diagnostic,
         changes: [
-            replaceText(diagnostic.location?.range, text)
+            replaceText(getDiagnosticLocation(diagnostic.location)?.range, text)
         ]
     };
 }
 
-function addAAComma(diagnostic: BsDiagnostic) {
-    const { location } = diagnostic;
+function addAAComma(diagnostic: BsDiagnostic | BsDiagnosticInput) {
+    const location = getDiagnosticLocation(diagnostic.location);
     return {
         diagnostic,
         changes: [
@@ -94,8 +94,8 @@ function addAAComma(diagnostic: BsDiagnostic) {
     };
 }
 
-function removeAAComma(diagnostic: BsDiagnostic) {
-    const { location } = diagnostic;
+function removeAAComma(diagnostic: BsDiagnostic | BsDiagnosticInput) {
+    const location = getDiagnosticLocation(diagnostic.location);
     return {
         diagnostic,
         changes: [
@@ -104,19 +104,19 @@ function removeAAComma(diagnostic: BsDiagnostic) {
     };
 }
 
-function addConditionGroup(diagnostic: BsDiagnostic) {
+function addConditionGroup(diagnostic: BsDiagnostic | BsDiagnosticInput) {
     const stat: IfStatement | WhileStatement = diagnostic.data;
-    const { start, end } = stat.condition.location.range;
+    const { start, end } = util.getLocation(stat.condition).range;
     return {
         diagnostic,
         changes: [
-            insertText(Position.create(start.line, start.character), '('),
-            insertText(Position.create(end.line, end.character), ')')
+            insertText(start, '('),
+            insertText(end, ')')
         ]
     };
 }
 
-function removeConditionGroup(diagnostic: BsDiagnostic) {
+function removeConditionGroup(diagnostic: BsDiagnostic | BsDiagnosticInput) {
     const stat: (IfStatement | WhileStatement) & { condition: GroupingExpression } = diagnostic.data;
     const { leftParen, rightParen } = stat.condition.tokens;
     const spaceBefore = util.getLeadingWhitespace(leftParen).length > 0 ? '' : ' ';
@@ -130,53 +130,58 @@ function removeConditionGroup(diagnostic: BsDiagnostic) {
     return {
         diagnostic,
         changes: [
-            replaceText(leftParen.location.range, spaceBefore),
-            replaceText(rightParen.location.range, spaceAfter)
+            replaceText(util.getLocation(leftParen).range, spaceBefore),
+            replaceText(util.getLocation(rightParen).range, spaceAfter)
         ]
     };
 }
 
-function addThenToken(diagnostic: BsDiagnostic) {
+function addThenToken(diagnostic: BsDiagnostic | BsDiagnosticInput) {
     const stat: IfStatement = diagnostic.data;
-    const { end } = stat.condition.location.range;
-    // const { start } = stat.thenBranch.range; // TODO: use when Block range bug is fixed
-    const start = stat.thenBranch.statements[0]?.location.range.start;
-    const space = stat.isInline && comparePos(end, start) === 0 ? ' ' : '';
+    const firstStatement = stat.thenBranch.statements[0];
+    // the condition is directly followed by the first statement (i.e. `if(x)print x`), or there is no statement
+    const space = stat.isInline && (!firstStatement || firstStatement.startPosition === stat.condition.endPosition) ? ' ' : '';
     return {
         diagnostic,
         changes: [
-            insertText(end, ` then${space}`)
+            insertText(util.getLocation(stat.condition).range.end, ` then${space}`)
         ]
     };
 }
 
-function removeThenToken(diagnostic: BsDiagnostic) {
+function removeThenToken(diagnostic: BsDiagnostic | BsDiagnosticInput) {
     const stat: IfStatement = diagnostic.data;
     const { then } = stat.tokens;
-    const { line, character } = then.location.range.start;
-    const range = Range.create(
-        line, character - util.getLeadingWhitespace(then).length, line, character + then.text.length
-    );
+    // remove the `then` keyword along with the whitespace before it
+    const thenWithWhitespace: Locatable = {
+        startPosition: then.startPosition - util.getLeadingWhitespace(then).length,
+        endPosition: then.endPosition,
+        sourceInfo: then.sourceInfo
+    };
     return {
         diagnostic,
         changes: [
-            replaceText(range, '')
+            replaceText(util.getLocation(thenWithWhitespace).range, '')
         ]
     };
 }
 
-function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
+function replaceFunctionTokens(diagnostic: BsDiagnostic | BsDiagnosticInput, token: string) {
     const fun: FunctionExpression = diagnostic.data;
     const space = fun.tokens.endFunctionType?.text.indexOf(' ') > 0 ? ' ' : '';
     // sub/function keyword
     const keywordChanges = [
-        replaceText(fun.tokens.functionType.location.range, token),
-        replaceText(fun.tokens.endFunctionType?.location.range, `end${space}${token}`)
+        replaceText(util.getLocation(fun.tokens.functionType).range, token),
+        replaceText(util.getLocation(fun.tokens.endFunctionType)?.range, `end${space}${token}`)
     ];
     // remove `as void` in case of `sub`
     const returnType = fun.returnTypeExpression?.getType({ flags: SymbolTypeFlag.typetime }) ?? VoidType.instance;
     const returnChanges = token === 'sub' && fun.returnTypeExpression && isVoidType(returnType) ? [
-        replaceText(Range.create(fun.tokens.rightParen?.location.range.end, fun.returnTypeExpression?.location.range.end), '')
+        replaceText(util.getLocation({
+            startPosition: fun.tokens.rightParen?.endPosition,
+            endPosition: fun.returnTypeExpression?.endPosition,
+            sourceInfo: fun.returnTypeExpression?.sourceInfo
+        })?.range, '')
     ] : [];
     return {
         diagnostic,
@@ -187,12 +192,12 @@ function replaceFunctionTokens(diagnostic: BsDiagnostic, token: string) {
     };
 }
 
-function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
+function addEolLast(diagnostic: BsDiagnostic | BsDiagnosticInput): ChangeEntry {
     return {
         diagnostic,
         changes: [
             insertText(
-                diagnostic.location.range.end,
+                getDiagnosticLocation(diagnostic.location).range.end,
                 // In single line files, the `preferredEol` cannot be determined
                 // e.g: `sub foo() end sub\EOF`
                 diagnostic.data.preferredEol ?? (platform.toString() === 'win32' ? '\r\n' : '\n')
@@ -201,11 +206,11 @@ function addEolLast(diagnostic: BsDiagnostic): ChangeEntry {
     };
 }
 
-function removeEolLast(diagnostic: BsDiagnostic): ChangeEntry {
+function removeEolLast(diagnostic: BsDiagnostic | BsDiagnosticInput): ChangeEntry {
     return {
         diagnostic,
         changes: [
-            replaceText(diagnostic.location.range, '')
+            replaceText(getDiagnosticLocation(diagnostic.location).range, '')
         ]
     };
 }

@@ -1,4 +1,4 @@
-import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, Range, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util, isVariableExpression, isLiteralExpression } from 'brighterscript';
+import { AfterValidateFileEvent, AfterValidateProgramEvent, AfterValidateScopeEvent, Plugin, createVisitor, DiagnosticSeverity, isBrsFile, isXmlFile, TokenKind, WalkMode, XmlFile, FunctionExpression, BscFile, isFunctionExpression, Cache, util, isVariableExpression, isLiteralExpression } from 'brighterscript';
 import { SGNode } from 'brighterscript/dist/parser/SGTypes';
 import { PluginContext } from '../../util';
 import { BsLintDiagnosticContext } from '../../Linter';
@@ -48,11 +48,11 @@ export default class CheckUsage implements Plugin {
         children.forEach(node => {
             const name = node.tagName;
             if (name) {
-                v.edges.push(createComponentEdge(name, node.tokens.startTagName.location.range, file));
+                v.edges.push(createComponentEdge(name, file));
             }
             const itemComponentName = node.getAttribute('itemcomponentname');
             if (itemComponentName) {
-                v.edges.push(createComponentEdge(itemComponentName.value, itemComponentName.location.range, file));
+                v.edges.push(createComponentEdge(itemComponentName.value, file));
             }
             if (node.elements) {
                 this.walkChildren(v, node.elements, file);
@@ -83,11 +83,11 @@ export default class CheckUsage implements Plugin {
             if (!file.componentName) {
                 return;
             }
-            const { text, location } = file.componentName;
+            const { text } = file.componentName;
             if (!text) {
                 return;
             }
-            const edge = createComponentEdge(text, location?.range, file);
+            const edge = createComponentEdge(text, file);
 
             let v: Vertice;
             if (this.map.has(edge.name)) {
@@ -104,8 +104,7 @@ export default class CheckUsage implements Plugin {
             }
 
             if (file.parentComponentName) {
-                const { text, location } = file.parentComponentName;
-                v.edges.push(createComponentEdge(text, location?.range, file));
+                v.edges.push(createComponentEdge(file.parentComponentName.text, file));
             }
 
             const children = file.ast.componentElement?.childrenElement;
@@ -154,7 +153,6 @@ export default class CheckUsage implements Plugin {
             const pkgPath = normalizePath(file.pkgPath);
             v.edges.push({
                 name: pkgPath,
-                range: null,
                 file
             });
             if (this.parsed.has(pkgPath)) {
@@ -198,7 +196,6 @@ export default class CheckUsage implements Plugin {
                             if (map.has(name)) {
                                 fv.edges.push({
                                     name,
-                                    range: componentName.tokens.value.location.range,
                                     file
                                 });
                             }
@@ -224,7 +221,7 @@ export default class CheckUsage implements Plugin {
                         message: `Script '${v.file.pkgPath}' does not seem to be used`,
                         location: util.createLocationFromFileRange(v.file, util.createRange(0, 0, 1, 0))
                     }, BsLintDiagnosticContext);
-                } else if (isXmlFile(v.file) && v.file.componentName?.location.range) {
+                } else if (isXmlFile(v.file) && v.file.componentName?.location) {
                     v.file.program.diagnostics.register({
                         severity: DiagnosticSeverity.Warning,
                         code: UnusedCode.UnusedComponent,
@@ -245,10 +242,9 @@ function normalizePath(s: string) {
     return p;
 }
 
-function createComponentEdge(name: string, range: Range = null, file: BscFile = null) {
+function createComponentEdge(name: string, file: BscFile = null) {
     return {
         name: `"${name.toLowerCase()}"`,
-        range,
         file
     };
 }
@@ -263,5 +259,4 @@ interface Vertice {
 interface Edge {
     name: string;
     file?: BscFile;
-    range?: Range;
 }
