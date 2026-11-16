@@ -1,4 +1,4 @@
-import { BscFile, BsDiagnostic, BsDiagnosticInput, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Locatable, VoidType, WhileStatement, SymbolTypeFlag, util } from 'brighterscript';
+import { BscFile, BsDiagnostic, BsDiagnosticInput, FunctionExpression, GroupingExpression, IfStatement, isIfStatement, isVoidType, Locatable, Position, Range, VoidType, WhileStatement, SymbolTypeFlag, util } from 'brighterscript';
 import { ChangeEntry, getDiagnosticLocation, insertText, replaceText } from '../../textEdit';
 import { CodeStyleError } from './diagnosticMessages';
 import { platform } from 'process';
@@ -46,9 +46,33 @@ export function getFixes(diagnostic: BsDiagnostic | BsDiagnosticInput): ChangeEn
             return replaceForTerminator(diagnostic, 'end for');
         case CodeStyleError.ForTerminatorNextExpected:
             return replaceForTerminator(diagnostic, 'next');
+        case CodeStyleError.RedundantScriptImport:
+            return removeScriptImport(diagnostic);
+        case CodeStyleError.MissingComponentExtends:
+            return addComponentExtends(diagnostic, 'Group');
         default:
             return null;
     }
+}
+
+function removeScriptImport(diagnostic: BsDiagnostic | BsDiagnosticInput): ChangeEntry {
+    const { line } = getDiagnosticLocation(diagnostic.location).range.start;
+    return {
+        diagnostic,
+        changes: [
+            replaceText(Range.create(line, 0, line + 1, 0), '')
+        ]
+    };
+}
+
+export function addComponentExtends(diagnostic: BsDiagnostic | BsDiagnosticInput, parentName: string): ChangeEntry {
+    const insertPosition: Position = diagnostic.data;
+    return {
+        diagnostic,
+        changes: [
+            insertText(insertPosition, ` extends="${parentName}"`)
+        ]
+    };
 }
 
 function replaceForTerminator(diagnostic: BsDiagnostic | BsDiagnosticInput, text: string): ChangeEntry {
