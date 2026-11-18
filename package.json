@@ -64,7 +64,10 @@
   },
   "overrides": {
     "serialize-javascript": "^7",
-    "istanbul-lib-processinfo": "^3.0.1"
+    "istanbul-lib-processinfo": {
+      ".": "^3.0.1",
+      "rimraf": "^6.1.4"
+    }
   },
   "mocha": {
     "config": ".mocharc.cjs"
