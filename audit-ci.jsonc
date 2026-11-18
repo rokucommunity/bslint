@@ -10,13 +10,6 @@
                 "active": true,
                 "notes": "`braces` <=3.0.3: stack exhaustion on deeply nested brace patterns. No patched version is published, so it cannot be upgraded or overridden. Dev-only (`npm audit --omit=dev` is clean): reachable only through devDependency tooling globbing repo-controlled patterns."
             }
-        },
-        {
-            "GHSA-fc5q-39xc-vjpf": {
-                // Added: 2026-11-18
-                "active": true,
-                "notes": "`picomatch` <=4.0.7: ReDoS on single-branch repeated extglob patterns such as `+(*)`. GitHub has withdrawn this advisory but npm still reports it, and no patched version exists to upgrade or override to. Dev-only (`npm audit --omit=dev` is clean): reachable only through devDependency tooling globbing repo-controlled patterns. Remove once npm drops the withdrawn advisory."
-            }
         }
     ]
 }
